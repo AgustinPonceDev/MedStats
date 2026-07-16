@@ -15,14 +15,26 @@ return new class extends Migration
             $table->id();
 
             // Claves foráneas (Relaciones)
-            // cascadeOnDelete() evita errores si se borra un registro raíz, o puedes usar nullable() si lo deseas
             $table->foreignId('paciente_id')->constrained('pacientes')->cascadeOnDelete();
             $table->foreignId('medico_solicitante_id')->constrained('empleados')->cascadeOnDelete();
 
-            // Campos de datos del estudio
-            $table->string('tipo_estudio', 150);
+            // Ámbito del paciente: Interno (I) o Ambulatorio (A)
+            $table->string('ia', 20)->nullable();
+
+            // Campos de datos del estudio (Rayos / Tomografías / etc.)
+            $table->string('tipo_estudio', 150); // Este mapea conceptualmente a tu "Estudio Real"
+            $table->string('regiones')->nullable(); // Regiones anatómicas estudiadas
             $table->date('fecha');
-            $table->text('resultado')->nullable(); // nullable porque puede que se cargue el estudio antes del resultado
+
+            // Control de insumos y medios de contraste consumidos
+            $table->integer('cont_50ml')->default(0);
+            $table->integer('cont_100ml')->default(0);
+            $table->integer('jeringa_prellenada')->default(0);
+            $table->string('descartables')->nullable();
+            $table->string('otros_agujas')->nullable(); // Otros insumos y agujas de punción
+
+            // Resultados u observaciones clínicas
+            $table->text('resultado')->nullable(); 
 
             $table->timestamps();
         });

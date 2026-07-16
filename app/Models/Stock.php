@@ -10,11 +10,12 @@ class Stock extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nombre',
         'lote',
         'fecha_vencimiento',
         'cantidad_act',
         'servicio_id',
+        'umbral_aviso',
+        'umbral_critico',
         'creado_por',
         'modificado_por'
     ];
@@ -33,7 +34,27 @@ class Stock extends Model
         return $this->hasMany(Historial_stock::class, 'stock_id', 'id');
     }
     public function historial_stock()
-{
-    return $this->hasMany(Historial_stock::class, 'stock_id');
-}
+    {
+        return $this->hasMany(Historial_stock::class, 'stock_id');
+    }
+
+    /**
+     * Devuelve 'critico', 'aviso' o 'ok' según los umbrales cargados por el
+     * médico/encargado para este insumo puntual (con fallback a 30/50 si no se cargaron).
+     */
+    public function estadoStock(): string
+    {
+        $critico = $this->umbral_critico ?? 30;
+        $aviso = $this->umbral_aviso ?? 50;
+
+        if ($this->cantidad_act < $critico) {
+            return 'critico';
+        }
+
+        if ($this->cantidad_act < $aviso) {
+            return 'aviso';
+        }
+
+        return 'ok';
+    }
 }

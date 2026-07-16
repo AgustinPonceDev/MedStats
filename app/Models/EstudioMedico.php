@@ -11,27 +11,30 @@ class EstudioMedico extends Model
 
     protected $table = 'estudio_medicos';
 
-    // Mantenemos tus fillable intactos, pero recordá que ahora 'link_imagen' no será el único
     protected $fillable = [
         'paciente_id',
-        'tipo_estudio',
+        'ia',
+        'especialidad_id',
+        'estudio_id',
+        'tipo_estudio', // Se mantiene como caché legible del nombre del estudio (compatibilidad con vistas existentes)
+        'regiones',
         'fecha',
+        'cont_50ml',
+        'cont_100ml',
+        'jeringa_prellenada',
+        'descartables',
+        'otros_agujas',
         'resultado',
         'medico_solicitante_id',
-        'link_imagen', // Lo dejamos por compatibilidad si tenés datos viejos
     ];
 
     protected $casts = [
         'fecha' => 'date',
+        'regiones' => 'integer',
+        'cont_50ml' => 'integer',
+        'cont_100ml' => 'integer',
+        'jeringa_prellenada' => 'integer',
     ];
-
-    /**
-     * RELACIÓN AGREGADA: Obtiene todas las imágenes/links del estudio
-     */
-    public function get_imagenes()
-    {
-        return $this->hasMany(\Illuminate\Support\Facades\DB::table('estudio_medico_imagenes')->getProcess() ? null : \App\Models\EstudioMedicoImagen::class, 'estudio_medico_id');
-    }
 
     public function paciente()
     {
@@ -43,8 +46,19 @@ class EstudioMedico extends Model
         return $this->belongsTo(Empleado::class, 'medico_solicitante_id');
     }
 
-    public function imagenes()
+    public function especialidad()
     {
-        return $this->hasMany(EstudioMedicoImagen::class, 'estudio_medico_id');
+        return $this->belongsTo(Especialidad::class, 'especialidad_id');
+    }
+
+    public function estudio()
+    {
+        return $this->belongsTo(Estudio::class, 'estudio_id');
+    }
+
+    // Movimientos de stock (insumos) generados automáticamente al cargar este estudio
+    public function movimientos_stock()
+    {
+        return $this->hasMany(Historial_stock::class, 'estudio_medico_id');
     }
 }

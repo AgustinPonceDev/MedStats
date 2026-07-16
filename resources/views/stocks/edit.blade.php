@@ -45,6 +45,32 @@
             </div>
         </div>
 
+        <!-- Umbrales de aviso / crítico -->
+        <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Umbrales de Stock Bajo</h3>
+            <p class="text-xs text-gray-500 mb-4">Definen cuándo este insumo se marca en amarillo (aviso) o rojo (crítico).</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
+                    <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400"
+                        value="{{ old('umbral_aviso', $stock->umbral_aviso) }}">
+                    @error('umbral_aviso')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
+                    <input type="number" name="umbral_critico" id="umbral_critico" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400"
+                        value="{{ old('umbral_critico', $stock->umbral_critico) }}">
+                    @error('umbral_critico')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         <!-- Modificación de stock -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             @if ($modo === 'agregar')

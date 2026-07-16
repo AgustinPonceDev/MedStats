@@ -12,6 +12,7 @@ class Historial_stock extends Model
     use HasFactory;
     protected $fillable = [
         'stock_id',
+        'estudio_medico_id',
         'cantidad', 
         'fecha', 
         'empleado_id', 
@@ -37,6 +38,12 @@ class Historial_stock extends Model
     public function get_creador()
     {
         return $this->belongsTo(User::class, 'creado_por', 'id');
+    }
+
+    // Estudio médico (Diagnóstico por Imagen) que generó este movimiento de stock, si aplica
+    public function get_estudio_medico()
+    {
+        return $this->belongsTo(EstudioMedico::class, 'estudio_medico_id', 'id');
     }
     /*protected static function booted()
     {   

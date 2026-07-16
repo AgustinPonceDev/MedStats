@@ -74,6 +74,36 @@
                 @enderror
             </div>
 
+            <!-- Umbrales de aviso / crítico, definidos por quien carga el insumo -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Umbrales de Stock Bajo</h3>
+                <p class="text-xs text-gray-500 mb-4">
+                    Definen cuándo este insumo se muestra en amarillo (aviso) o en rojo (crítico) en el listado.
+                    Si los dejás vacíos, se usan 50 y 30 por defecto.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
+                        <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-500"
+                            placeholder="Ej: 50" value="{{ old('umbral_aviso') }}">
+                        @error('umbral_aviso')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
+                        <input type="number" name="umbral_critico" id="umbral_critico" min="0"
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400 focus:border-red-500"
+                            placeholder="Ej: 30" value="{{ old('umbral_critico') }}">
+                        @error('umbral_critico')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
 
 
             <!-- Botón -->

@@ -32,6 +32,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Ruta dinámica para los selectores encadenados de estudios médicos
+    Route::get('/especialidades/{especialidad}/procedimientos', [EspecialidadController::class, 'getProcedimientos'])
+        ->name('especialidades.procedimientos');
 });
 
 
@@ -255,6 +259,10 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
     Route::get('/especialidades/{especialidad}/edit', [EspecialidadController::class, 'edit'])->name('especialidades.edit');
     Route::put('/especialidades/{especialidad}', [EspecialidadController::class, 'update'])->name('especialidades.update');
     Route::delete('/especialidades/{especialidad}', [EspecialidadController::class, 'destroy'])->name('especialidades.destroy');
+
+    // CRUD del catálogo de Estudios (Ajustes de Administración)
+    Route::resource('estudios', App\Http\Controllers\EstudioController::class)
+        ->except(['show']);
 });
 
 //Servicios
@@ -282,6 +290,11 @@ Route::middleware(['auth', 'roles:estudios_medicos'])->group(function () {
     Route::resource('estudios-medicos', EstudioMedicoController::class)
         ->names('estudios_medicos')
         ->parameters(['estudios-medicos' => 'estudio_medico']);
+
+    // Nueva ruta para el select dinámico de estudios por especialidad
+    Route::get('/estudios-medicos/especialidad/{especialidad}/estudios',
+        [App\Http\Controllers\EstudioMedicoController::class, 'estudiosPorEspecialidad']
+    )->name('estudios_medicos.estudios_por_especialidad');
 });
 
 // 👇 Debe ir fuera de cualquier grupo con 'auth' o 'roles'

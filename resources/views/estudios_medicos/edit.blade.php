@@ -5,202 +5,183 @@
 @section('contenido')
     <div class="max-w-4xl mx-auto px-4 py-8">
 
-        {{-- Título institucional --}}
-        <h1
-            class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md mb-6">
-            Modificar Registro de Estudio Médico
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md mb-6">
+            Modificar Registro de Diagnóstico e Insumos
         </h1>
 
-        {{-- Formulario (Con enctype habilitado para recibir nuevos archivos) --}}
-        <form action="{{ route('estudios_medicos.update', $estudio->id) }}" method="POST" enctype="multipart/form-data"
+        <form action="{{ route('estudios_medicos.update', $estudio->id) }}" method="POST"
             class="bg-white shadow rounded-lg p-6 border border-gray-200 space-y-6">
             @csrf
             @method('PUT')
 
-            {{-- Fila 1: Fecha y Tipo de Estudio --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Fila 1: Fecha y Paciente --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">Fecha del Estudio</label>
                     <input type="date" name="fecha" id="fecha"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500 @error('fecha') is-invalid @enderror"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
                         max="{{ now()->format('Y-m-d') }}"
                         value="{{ old('fecha', $estudio->fecha ? $estudio->fecha->format('Y-m-d') : '') }}" required>
-                    @error('fecha')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                <div>
-                    <label for="tipo_estudio" class="block text-sm font-medium text-gray-700 mb-1">Estudio / Región
-                        Concretada</label>
-                    <input type="text" name="tipo_estudio" id="tipo_estudio"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500 @error('tipo_estudio') is-invalid @enderror"
-                        value="{{ old('tipo_estudio', $estudio->tipo_estudio) }}" required>
-                    @error('tipo_estudio')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            {{-- Fila 2: Paciente y Médico Solicitante --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div class="md:col-span-2">
                     <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
-                    <select name="paciente_id" id="paciente_id"
-                        class="select2 w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                    <select name="paciente_id" id="paciente_id" class="select2 w-full">
                         <option value="">Seleccione un paciente</option>
                         @foreach ($pacientes as $paciente)
-                            <option value="{{ $paciente->id }}"
-                                {{ old('paciente_id', $estudio->paciente_id) == $paciente->id ? 'selected' : '' }}>
+                            <option value="{{ $paciente->id }}" {{ old('paciente_id', $estudio->paciente_id) == $paciente->id ? 'selected' : '' }}>
                                 {{ $paciente->apellido }}, {{ $paciente->nombre }} (DNI: {{ $paciente->dni }})
                             </option>
                         @endforeach
                     </select>
-                    @error('paciente_id')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
+                </div>
+            </div>
+
+            {{-- Fila 2: I-A, Modalidad, Estudio Real --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">I-A (Interno / Ambulatorio)</label>
+                    <div class="flex items-center gap-3 h-[42px]">
+                        <span id="ia_label_a" class="text-sm font-semibold text-blue-700">Ambulatorio</span>
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="ia_toggle" class="sr-only peer"
+                                {{ old('ia', $estudio->ia) == 'I' ? 'checked' : '' }}>
+                            <div class="w-11 h-6 bg-blue-200 rounded-full peer peer-checked:bg-amber-400 transition-colors duration-300"></div>
+                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform duration-300 peer-checked:translate-x-5"></div>
+                        </label>
+                        <span id="ia_label_i" class="text-sm font-semibold text-amber-700">Internado</span>
+                        <input type="hidden" name="ia" id="ia" value="{{ old('ia', $estudio->ia ?? 'A') }}">
+                    </div>
                 </div>
 
                 <div>
-                    <label for="medico_solicitante_id" class="block text-sm font-medium text-gray-700 mb-1">Médico
-                        Solicitante</label>
-                    <select name="medico_solicitante_id" id="medico_solicitante_id"
-                        class="select2 w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500">
-                        <option value="">Seleccione el médico</option>
-                        @foreach ($medicos as $medico)
-                            <option value="{{ $medico->id }}"
-                                {{ old('medico_solicitante_id', $estudio->medico_solicitante_id) == $medico->id ? 'selected' : '' }}>
-                                {{ $medico->apellido }}, {{ $medico->nombre }}
-                                {{ $medico->matricula ? '(M.P. ' . $medico->matricula . ')' : '(Sin Matrícula)' }}
+                    <label for="especialidad_id" class="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
+                    <select name="especialidad_id" id="especialidad_id"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]" required>
+                        <option value="">Seleccione</option>
+                        @foreach ($especialidades as $especialidad)
+                            <option value="{{ $especialidad->id }}" {{ old('especialidad_id', $estudio->especialidad_id) == $especialidad->id ? 'selected' : '' }}>
+                                {{ $especialidad->nombre }}
                             </option>
                         @endforeach
                     </select>
-                    @error('medico_solicitante_id')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
+                </div>
+
+                <div>
+                    <label for="estudio_id" class="block text-sm font-medium text-gray-700 mb-1">Estudio Real</label>
+                    <select name="estudio_id" id="estudio_id"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]" required>
+                        <option value="">Seleccione un estudio</option>
+                        @foreach ($estudios as $item)
+                            <option value="{{ $item->id }}" {{ old('estudio_id', $estudio->estudio_id) == $item->id ? 'selected' : '' }}>
+                                {{ $item->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
-            {{-- Fila 3: Resultado / Informe Clínico --}}
+            {{-- Fila 3: Regiones --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="regiones" class="block text-sm font-medium text-gray-700 mb-1">Cantidad de Regiones Vistas</label>
+                    <input type="number" name="regiones" id="regiones" min="1" max="20"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                        value="{{ old('regiones', $estudio->regiones) }}" required>
+                </div>
+            </div>
+
+            {{-- Sección de Insumos --}}
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Medios de Contraste e Insumos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">
+                            Contraste 50ml
+                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Contraste 50ml'] ?? 0 }}</span>
+                        </label>
+                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                            <button type="button" data-target="cont_50ml" data-step="-1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
+                            <input type="number" name="cont_50ml" id="cont_50ml" min="0"
+                                class="w-14 text-center font-bold text-gray-800 border-0 focus:ring-0 p-0"
+                                value="{{ old('cont_50ml', $estudio->cont_50ml) }}">
+                            <button type="button" data-target="cont_50ml" data-step="1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-[#1B7D8F] hover:bg-[#156370] text-white font-bold text-lg leading-none flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">
+                            Contraste 100ml
+                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Contraste 100ml'] ?? 0 }}</span>
+                        </label>
+                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                            <button type="button" data-target="cont_100ml" data-step="-1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
+                            <input type="number" name="cont_100ml" id="cont_100ml" min="0"
+                                class="w-14 text-center font-bold text-gray-800 border-0 focus:ring-0 p-0"
+                                value="{{ old('cont_100ml', $estudio->cont_100ml) }}">
+                            <button type="button" data-target="cont_100ml" data-step="1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-[#1B7D8F] hover:bg-[#156370] text-white font-bold text-lg leading-none flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">
+                            Jeringa Prellenada
+                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Jeringa Prellenada'] ?? 0 }}</span>
+                        </label>
+                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                            <button type="button" data-target="jeringa_prellenada" data-step="-1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
+                            <input type="number" name="jeringa_prellenada" id="jeringa_prellenada" min="0"
+                                class="w-14 text-center font-bold text-gray-800 border-0 focus:ring-0 p-0"
+                                value="{{ old('jeringa_prellenada', $estudio->jeringa_prellenada) }}">
+                            <button type="button" data-target="jeringa_prellenada" data-step="1"
+                                class="stepper-btn w-8 h-8 rounded-full bg-[#1B7D8F] hover:bg-[#156370] text-white font-bold text-lg leading-none flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="descartables" class="block text-xs font-semibold text-gray-600 mb-1">Descartables</label>
+                        <input type="text" name="descartables" id="descartables"
+                            class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                            value="{{ old('descartables', $estudio->descartables) }}">
+                    </div>
+
+                    <div>
+                        <label for="otros_agujas" class="block text-xs font-semibold text-gray-600 mb-1">Otros y Agujas de Punción</label>
+                        <input type="text" name="otros_agujas" id="otros_agujas"
+                            class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                            value="{{ old('otros_agujas', $estudio->otros_agujas) }}">
+                    </div>
+                </div>
+            </div>
+
+            {{-- Fila: Médico Solicitante --}}
             <div>
-                <label for="resultado" class="block text-sm font-medium text-gray-700 mb-1">Resultado / Informe Clínico
-                    (Opcional)</label>
-                <textarea name="resultado" id="resultado" rows="4"
-                    class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                    placeholder="Escriba los resultados preliminares o definitivos del estudio...">{{ old('resultado', $estudio->resultado) }}</textarea>
-                @error('resultado')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
+                <label for="medico_solicitante_id" class="block text-sm font-medium text-gray-700 mb-1">Médico Solicitante</label>
+                <select name="medico_solicitante_id" id="medico_solicitante_id" class="select2 w-full">
+                    <option value="">Seleccione el médico</option>
+                    @foreach ($medicos as $medico)
+                        <option value="{{ $medico->id }}" {{ old('medico_solicitante_id', $estudio->medico_solicitante_id) == $medico->id ? 'selected' : '' }}>
+                            {{ $medico->apellido }}, {{ $medico->nombre }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
-            {{-- SECCIÓN MULTIMEDIA HÍBRIDA EN EDICIÓN --}}
-            <div class="border-t border-gray-200 pt-6 space-y-4">
-                <h3 class="text-md font-bold text-gray-700 flex items-center gap-2">
-                    Archivos e Imágenes del Estudio
-                </h3>
-
-                {{-- 1. Vista de elementos existentes con opción de eliminar --}}
-                @if ($estudio->link_imagen || $estudio->imagenes->count() > 0)
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
-                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Adjuntos actuales cargados:</h4>
-                        <p class="text-xs text-gray-400 mb-3">Marque la casilla roja del elemento que desee eliminar al
-                            guardar.</p>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {{-- Link Base Original --}}
-                            @if ($estudio->link_imagen)
-                                <div
-                                    class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                    <div class="overflow-hidden pr-2">
-                                        <span class="text-[10px] font-bold text-teal-600 block uppercase">Link
-                                            Principal</span>
-                                        <a href="{{ $estudio->link_imagen }}" target="_blank"
-                                            class="text-xs text-blue-600 truncate block hover:underline">
-                                            {{ $estudio->link_imagen }}
-                                        </a>
-                                    </div>
-                                    <label
-                                        class="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded border border-red-200 text-xs font-semibold cursor-pointer hover:bg-red-100 transition">
-                                        <input type="checkbox" name="eliminar_link_principal" value="1"
-                                            class="rounded text-red-600 focus:ring-red-500">
-                                        Borrar
-                                    </label>
-                                </div>
-                            @endif
-
-                            {{-- Adjuntos existentes guardados en la tabla secundaria (Tip opcional aplicado con visor) --}}
-                            @foreach ($estudio->imagenes as $img)
-                                <div
-                                    class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm group">
-                                    <div class="flex items-center gap-2 overflow-hidden pr-2">
-                                        @if ($img->tipo === 'local')
-                                            {{-- Aplicado el Tip Opcional: cursor-pointer y onclick para ver grande --}}
-                                            <img src="{{ asset('storage/' . $img->ruta) }}"
-                                                class="w-10 h-10 object-cover rounded border border-gray-100 cursor-pointer hover:opacity-80 transition"
-                                                title="Haga clic para ampliar la imagen" onclick="abrirVisor(this.src)">
-                                            <span class="text-xs text-gray-500 font-medium truncate">Archivo local</span>
-                                        @else
-                                            <span
-                                                class="w-10 h-10 bg-blue-50 text-blue-600 flex items-center justify-center rounded text-lg font-bold">L</span>
-                                            <div class="overflow-hidden">
-                                                <span class="text-[9px] font-bold text-blue-600 block uppercase">Link
-                                                    Extra</span>
-                                                <a href="{{ $img->ruta }}" target="_blank"
-                                                    class="text-xs text-blue-600 truncate block hover:underline">{{ $img->ruta }}</a>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <label
-                                        class="flex items-center gap-1 bg-red-50 text-red-600 px-2 py-1 rounded border border-red-200 text-xs font-semibold cursor-pointer hover:bg-red-100 transition">
-                                        <input type="checkbox" name="eliminar_adjuntos[]" value="{{ $img->id }}"
-                                            class="rounded text-red-600 focus:ring-red-500">
-                                        Borrar
-                                    </label>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                {{-- 2. Campos para agregar nuevos elementos --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Subir nuevos archivos locales</label>
-                        {{-- Añadido id="imagenes_locales" para capturar el evento en JS --}}
-                        <input type="file" name="imagenes_locales[]" id="imagenes_locales" multiple accept="image/*"
-                            class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 cursor-pointer">
-
-                        <small class="text-gray-400 block mt-2">Podés seleccionar múltiples fotos manteniendo Ctrl o
-                            Shift.</small>
-
-                        {{-- CONTENEDOR PARA LAS NUEVAS VISTAS PREVIAS EN TIEMPO REAL --}}
-                        <div id="vista-previa-contenedor" class="grid grid-cols-3 gap-2 mt-4 hidden">
-                            {{-- Las miniaturas seleccionadas se inyectarán acá dinámicamente --}}
-                        </div>
-
-                        @error('imagenes_locales.*')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200" id="contenedor-links">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Agregar nuevos enlaces / Links
-                            Web</label>
-                        <div class="flex gap-2 mb-2">
-                            <input type="url" name="imagenes_urls[]"
-                                class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                                placeholder="Ej: https://...">
-                            <button type="button" onclick="agregarCampoLink()"
-                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md font-bold text-gray-700 border-0 cursor-pointer">+</button>
-                        </div>
-                        @error('imagenes_urls.*')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
+            {{-- Fila: Resultado --}}
+            <div>
+                <label for="resultado" class="block text-sm font-medium text-gray-700 mb-1">Observaciones / Informe</label>
+                <textarea name="resultado" id="resultado" rows="3"
+                    class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]">{{ old('resultado', $estudio->resultado) }}</textarea>
             </div>
 
-            {{-- Botones de Acción --}}
+            {{-- Botones --}}
             <div class="flex justify-between pt-4">
                 <a href="{{ route('estudios_medicos.index') }}"
                     class="btn btn-outline-danger px-5 py-2 rounded shadow-sm no-underline">
@@ -208,126 +189,160 @@
                 </a>
                 <button type="submit"
                     class="bg-gradient-to-r from-[#1B7D8F] to-[#2BA8A0] text-white px-6 py-2 rounded-xl font-semibold shadow-md hover:scale-105 transition duration-300">
-                    Guardar Cambios
+                    Actualizar Práctica
                 </button>
             </div>
         </form>
     </div>
+    <style>
+    /* 1. Contenedor principal de Select2 */
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #d1d5db !important; /* border-gray-300 */
+        height: 42px !important; /* Altura idéntica */
+        border-radius: 0.375rem !important; /* rounded-md */
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+        display: flex !important;
+        align-items: center !important;
+        background-color: #ffffff !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    }
 
-    {{-- MODAL VISOR FLOTANTE PARA AGRANDAR IMÁGENES (Compatible con guardadas y nuevas) --}}
-    <div id="modal-visor"
-        class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <button type="button" onclick="cerrarVisor()"
-            class="absolute top-5 right-5 text-white hover:text-gray-300 text-3xl font-bold border-0 bg-transparent cursor-pointer transition-colors z-50">
-            &times;
-        </button>
-        <div class="max-w-3xl max-h-[85vh] p-2 bg-white rounded-xl shadow-2xl transform scale-95 transition-transform duration-300"
-            id="modal-contenido">
-            <img id="imagen-grande" src="" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow">
-        </div>
-    </div>
+    /* 2. Formato de texto idéntico al input nativo */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px !important;
+        padding-left: 1rem !important; /* px-4 */
+        padding-right: 2.5rem !important;
+        color: #1f2937 !important; /* text-gray-800 - igual a Modalidad */
+        font-size: 0.95rem !important; /* Ajustado para igualar el tamaño visual */
+        font-weight: 400 !important;
+        width: 100% !important;
+    }
+
+    /* Si es un placeholder (por ejemplo, "Seleccione un paciente"), le damos un color gris más suave */
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #6b7280 !important; /* text-gray-500 */
+    }
+
+    /* 3. Reemplazar la flecha fea por una idéntica a la de Tailwind */
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        top: 1px !important;
+        right: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Eliminamos el triángulo gris clásico de Select2 */
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border: none !important; /* Borra el triángulo */
+        
+        /* Creamos la flecha angular (chevron) con CSS puro */
+        width: 6px !important;
+        height: 6px !important;
+        border-right: 2px solid #1f2937 !important; /* Color oscuro */
+        border-bottom: 2px solid #1f2937 !important;
+        transform: rotate(45deg) !important; /* Lo gira para hacer la "V" */
+        margin-top: -3px !important; /* Ajuste fino de altura */
+        transition: transform 0.2s ease;
+    }
+
+    /* Rotar la flecha hacia arriba cuando el select esté abierto */
+    .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+        transform: rotate(-135deg) !important;
+        margin-top: 1px !important;
+    }
+
+    /* 4. Efecto de Foco Activo */
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #1B7D8F !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(27, 125, 143, 0.3) !important;
+    }
+
+    /* 5. Dropdown de opciones */
+    .select2-dropdown {
+        border-color: #d1d5db !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
 @endsection
 
 @push('scripts')
     <script>
         $(document).ready(function() {
             if ($.fn.select2) {
-                $('.select2').select2({
-                    width: '100%',
-                    placeholder: 'Seleccione una opción...'
-                });
+                $('.select2').select2({ width: '100%' });
             }
-
-            // Escuchar la selección de nuevos archivos locales de la PC
-            $('#imagenes_locales').on('change', function(event) {
-                const contenedor = $('#vista-previa-contenedor');
-                contenedor.empty(); // Limpiar previsualizaciones del lote anterior
-
-                const archivos = event.target.files;
-
-                if (archivos.length > 0) {
-                    contenedor.removeClass('hidden'); // Mostrar la cuadrícula
-
-                    Array.from(archivos).forEach(archivo => {
-                        if (archivo.type.startsWith('image/')) {
-                            const lector = new FileReader();
-
-                            lector.onload = function(e) {
-                                const estructuraMiniatura = `
-                                    <div class="relative bg-white border border-gray-200 p-1 rounded-lg shadow-sm h-20 group overflow-hidden cursor-pointer" onclick="abrirVisor('${e.target.result}')">
-                                        <img src="${e.target.result}" class="w-full h-full object-cover rounded group-hover:scale-105 transition-transform duration-200">
-                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                                            <span class="text-[9px] text-white font-medium text-center px-1 truncate max-w-full">
-                                                Ver grande
-                                            </span>
-                                        </div>
-                                    </div>
-                                `;
-                                contenedor.append(estructuraMiniatura);
-                            };
-
-                            lector.readAsDataURL(archivo);
-                        }
-                    });
-                } else {
-                    contenedor.addClass('hidden');
-                }
-            });
-
-            // Cerrar el modal haciendo clic en el fondo oscuro
-            $('#modal-visor').on('click', function(e) {
-                if (e.target === this) {
-                    cerrarVisor();
-                }
-            });
         });
 
-        // Función dinámica para campos adicionales de enlaces/URLs
-        function agregarCampoLink() {
-            const contenedor = document.getElementById('contenedor-links');
-            const nuevoDiv = document.createElement('div');
-            nuevoDiv.className = 'flex gap-2 mb-2 align-items-center';
-            nuevoDiv.innerHTML = `
-                <input type="url" name="imagenes_urls[]" class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" placeholder="https://...">
-                <button type="button" onclick="this.parentElement.remove()" class="px-3.5 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-md font-bold border-0 cursor-pointer transition-colors">X</button>
-            `;
-            contenedor.appendChild(nuevoDiv);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // ---------- Toggle I-A ----------
+            const toggle = document.getElementById('ia_toggle');
+            const hidden = document.getElementById('ia');
+            const labelA = document.getElementById('ia_label_a');
+            const labelI = document.getElementById('ia_label_i');
 
-        // FUNCIÓN PARA ABRIR EL VISOR EN GRANDE (CORREGIDA)
-        function abrirVisor(srcUrl) {
-            const modal = document.getElementById('modal-visor');
-            const modalContenido = document.getElementById('modal-contenido');
-            const imagenGrande = document.getElementById('imagen-grande');
+            function syncIaLabels() {
+                const esInternado = toggle.checked;
+                hidden.value = esInternado ? 'I' : 'A';
+                labelA.classList.toggle('opacity-40', esInternado);
+                labelI.classList.toggle('opacity-40', !esInternado);
+            }
+            if (toggle) {
+                toggle.addEventListener('change', syncIaLabels);
+                syncIaLabels();
+            }
 
-            imagenGrande.src = srcUrl;
+            // ---------- Contadores +/- ----------
+            document.querySelectorAll('.stepper-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const input = document.getElementById(this.dataset.target);
+                    const step = parseInt(this.dataset.step, 10);
+                    let value = parseInt(input.value, 10);
+                    if (isNaN(value)) value = 0;
+                    value = Math.max(0, value + step);
+                    input.value = value;
+                });
+            });
 
-            // 1. Quitamos la clase hidden para que el navegador renderice el modal
-            modal.classList.remove('hidden');
+            // ---------- Select encadenado: Modalidad -> Estudio Real ----------
+            const especialidadSelect = document.getElementById('especialidad_id');
+            const estudioSelect = document.getElementById('estudio_id');
+            let primeraCarga = true;
 
-            // 2. Le damos un mini delay para que la transición de opacidad (fade-in) funcione
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalContenido.classList.remove('scale-95');
-                modalContenido.classList.add('scale-100');
-            }, 20);
-        }
+            especialidadSelect.addEventListener('change', function() {
+                const especialidadId = this.value;
+                const seleccionActual = primeraCarga ? "{{ $estudio->estudio_id }}" : null;
+                primeraCarga = false;
 
-        // FUNCIÓN PARA CERRAR EL VISOR (CORREGIDA - SOLUCIONA EL TRABADO)
-        function cerrarVisor() {
-            const modal = document.getElementById('modal-visor');
-            const modalContenido = document.getElementById('modal-contenido');
+                estudioSelect.innerHTML = '<option value="">Cargando...</option>';
 
-            // 1. Iniciamos la animación de desvanecido hacia afuera
-            modal.classList.add('opacity-0');
-            modalContenido.classList.remove('scale-100');
-            modalContenido.classList.add('scale-95');
+                if (!especialidadId) {
+                    estudioSelect.innerHTML = '<option value="">Seleccione primero la modalidad</option>';
+                    return;
+                }
 
-            // 2. CRUCIAL: Esperamos a que termine la animación (300ms) y le ponemos 'hidden' 
-            // para destruir el escudo invisible y liberar el formulario de fondo.
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
+                fetch(`/estudios-medicos/especialidad/${especialidadId}/estudios`)
+                    .then(res => res.json())
+                    .then(data => {
+                        estudioSelect.innerHTML = '<option value="">Seleccione un estudio</option>';
+                        data.forEach(function(item) {
+                            const opt = document.createElement('option');
+                            opt.value = item.id;
+                            opt.textContent = item.nombre;
+                            if (seleccionActual && String(seleccionActual) === String(item.id)) {
+                                opt.selected = true;
+                            }
+                            estudioSelect.appendChild(opt);
+                        });
+                    })
+                    .catch(() => {
+                        estudioSelect.innerHTML = '<option value="">Error al cargar los estudios</option>';
+                    });
+            });
+        });
     </script>
 @endpush

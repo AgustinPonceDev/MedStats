@@ -28,21 +28,42 @@
         <form method="GET" action="{{ route('stocks.estadisticasstock') }}"
               class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5 transition-all hover:shadow-md">
             <div class="row g-4 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="desde" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Desde
                     </label>
                     <input type="date" name="desde" id="desde" value="{{ request('desde') }}"
                            class="form-control bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="hasta" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Hasta
                     </label>
                     <input type="date" name="hasta" id="hasta" value="{{ request('hasta') }}"
                            class="form-control bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label for="servicio_id" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Servicio
+                    </label>
+                    <select name="servicio_id" id="servicio_id"
+                        class="form-select bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700"
+                        {{ auth()->user()->servicio_id ? 'disabled' : '' }}>
+                        @if (!auth()->user()->servicio_id)
+                            <option value="">Todos los Servicios</option>
+                        @endif
+                        @foreach ($servicios as $s)
+                            <option value="{{ $s->id }}" {{ (string) $servicioId === (string) $s->id ? 'selected' : '' }}>
+                                {{ $s->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @if (auth()->user()->servicio_id)
+                        {{-- El usuario está restringido a su servicio: se manda igual, oculto, para que el filtro no se pierda --}}
+                        <input type="hidden" name="servicio_id" value="{{ auth()->user()->servicio_id }}">
+                    @endif
+                </div>
+                <div class="col-md-3">
                     <button type="submit"
                             class="btn w-100 rounded-lg d-flex align-items-center justify-content-center gap-2 text-white font-medium shadow-md hover:shadow-lg transition-all"
                             style="background: linear-gradient(135deg, #1B7D8F 0%, #245360 100%);">
@@ -65,12 +86,23 @@
             </div>
         @endif
 
-        @if(request('desde') && request('hasta'))
-            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-5 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center text-blue-800">
-                    <i class="bi bi-calendar-check me-2"></i>
-                    <span class="font-medium me-2">Filtro activo:</span>
-                    <span>{{ \Carbon\Carbon::parse(request('desde'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('hasta'))->format('d/m/Y') }}</span>
+        @if(request('desde') && request('hasta') || $servicioId)
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-5 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center text-blue-800 flex-wrap gap-3">
+                    @if(request('desde') && request('hasta'))
+                        <span>
+                            <i class="bi bi-calendar-check me-2"></i>
+                            <span class="font-medium me-2">Período:</span>
+                            {{ \Carbon\Carbon::parse(request('desde'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('hasta'))->format('d/m/Y') }}
+                        </span>
+                    @endif
+                    @if($servicioId)
+                        <span>
+                            <i class="bi bi-building me-2"></i>
+                            <span class="font-medium me-2">Servicio:</span>
+                            {{ optional($servicios->firstWhere('id', $servicioId))->nombre }}
+                        </span>
+                    @endif
                 </div>
                 <a href="{{ route('stocks.estadisticasstock') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
                     Limpiar filtros
@@ -192,6 +224,9 @@
                             <p class="text-sm text-gray-500 mb-0">Stock inactivo por más de {{ $umbralDias }} días</p>
                         </div>
                         <form method="GET" action="{{ route('stocks.estadisticasstock') }}" class="d-flex gap-2 align-items-center">
+                            <input type="hidden" name="desde" value="{{ request('desde') }}">
+                            <input type="hidden" name="hasta" value="{{ request('hasta') }}">
+                            <input type="hidden" name="servicio_id" value="{{ $servicioId }}">
                             <input type="number" name="dias" id="dias"
                                    class="form-control form-control-sm w-20 border-gray-200 rounded-lg text-center"
                                    value="{{ request('dias', 30) }}" min="1">

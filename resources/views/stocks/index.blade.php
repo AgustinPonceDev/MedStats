@@ -69,13 +69,14 @@
                 <tbody>
                     @forelse($stock as $item)
                         @php
-                            if ($item->cantidad_act < 30) {
-                                $claseColor = 'text-red-600 font-bold'; // 🔴 Crítico
-                            } elseif ($item->cantidad_act < 50) {
-                                $claseColor = 'text-yellow-600 font-medium'; // 🟡 Advertencia
-                            } else {
-                                $claseColor = 'text-green-700 font-medium'; // 🟢 Suficiente
-                            }
+                            // El estado (crítico/aviso/ok) ahora lo define el umbral propio de
+                            // cada insumo (cargado por el médico/encargado), con fallback a 30/50.
+                            $estado = $item->estadoStock();
+                            $claseColor = match($estado) {
+                                'critico' => 'text-red-600 font-bold',
+                                'aviso' => 'text-yellow-600 font-medium',
+                                default => 'text-green-700 font-medium',
+                            };
                         @endphp
 
                         <tr class="hover:bg-gray-50">
@@ -84,7 +85,9 @@
                             <td class="px-4 py-2 border">{{ $item->lote }}</td>
                             <td class="px-4 py-2 border">{{ $item->fecha_vencimiento }}</td>
                             <td class="px-4 py-2 border text-center">
-                                <span class="{{ $claseColor }}">{{ $item->cantidad_act }}</span>
+                                <span class="{{ $claseColor }}" title="Aviso: {{ $item->umbral_aviso ?? 50 }} · Crítico: {{ $item->umbral_critico ?? 30 }}">
+                                    {{ $item->cantidad_act }}
+                                </span>
                             </td>
                             <td class="px-4 py-2 border text-center space-x-2">
                                 <a href="{{ route('stocks.show', $item) }}" class="btn btn-outline-primary btn-sm me-1">
