@@ -166,6 +166,7 @@
 
             <!-- Footer de la Tabla (Paginación custom si fuera necesario, o info) -->
             <div id="mis-controles-tabla"></div>
+        </div>
 
         <!-- Botones de Acción -->
         <div class="mt-6 flex flex-wrap gap-3 justify-start">
