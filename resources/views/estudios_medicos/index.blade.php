@@ -183,110 +183,277 @@
                     </tbody>
                 </table>
             </div>
+                    </div>
+
+        <!-- Botones de Acción -->
+        <div class="mt-6 flex flex-wrap gap-3 justify-start">
+            <button onclick="imprimirTablaCompleta()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-[#1B7D8F] transition-all shadow-sm">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Imprimir Tabla</span>
+            </button>
+            <button onclick="exportarFiltradoPDF()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-red-600 rounded-xl hover:bg-red-50 transition-all shadow-sm">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Exportar PDF</span>
+            </button>
+            <button id="btnExportarExcel" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-green-600 rounded-xl hover:bg-green-50 transition-all shadow-sm">
+                <i data-lucide="sheet" class="w-4 h-4"></i>
+                <span>Exportar Excel</span>
+            </button>
         </div>
+
     </div>
-<style>
-    @media print {
-        .no-print { display: none !important; }
-        body { background: white; }
-        .card, .shadow-sm { box-shadow: none !important; border: none !important; }
-    }
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .card, .shadow-sm { box-shadow: none !important; border: none !important; }
+            /* Ocultar sidebar/nav si existe en el layout */
+            aside, nav { display: none !important; }
+            main { margin: 0 !important; padding: 0 !important; }
+        }
 
-    /* CORRECCIÓN PARA EL ANCHO DE LA TABLA */
-    .dataTables_wrapper {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
+        /* CORRECCIÓN PARA EL ANCHO DE LA TABLA */
+        .dataTables_wrapper {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
-    #miTabla {
-        width: 100% !important;
-        margin: 0 !important;
-    }
+        #miTabla {
+            width: 100% !important;
+            margin: 0 !important;
+        }
 
-    /* Ocultar controles default de DataTables */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter { display: none !important; }
+        /* Ocultar controles default de DataTables */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter { display: none !important; }
 
-    /* Eliminar líneas superior e inferior de la tabla */
-    table.dataTable.no-footer {
-        border-top: none !important;
-        border-bottom: none !important;
-    }
+        /* Eliminar líneas superior e inferior de la tabla */
+        table.dataTable.no-footer {
+            border-top: none !important;
+            border-bottom: none !important;
+        }
 
-    /* Botón actual (página seleccionada) */
-    #miTabla_wrapper .dataTables_paginate .paginate_button.current,
-    #miTabla_wrapper .dataTables_paginate .paginate_button.current:hover,
-    #miTabla_wrapper .dataTables_paginate .paginate_button.current:active {
-        background: #32989D !important;   /* fondo teal */
-        color: #ffffff !important;        /* texto blanco */
-        border: none !important;
-        border-radius: 0.5rem !important;
-    }
+        /* Botón actual (página seleccionada) */
+        #miTabla_wrapper .dataTables_paginate .paginate_button.current,
+        #miTabla_wrapper .dataTables_paginate .paginate_button.current:hover,
+        #miTabla_wrapper .dataTables_paginate .paginate_button.current:active {
+            background: #32989D !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+        }
 
-    /* Botones normales */
-    #miTabla_wrapper .dataTables_paginate .paginate_button {
-        background: #f9fafb !important;   /* gris claro */
-        color: #374151 !important;        /* gris oscuro */
-        border: none !important;
-        border-radius: 0.5rem !important;
-    }
+        /* Botones normales */
+        #miTabla_wrapper .dataTables_paginate .paginate_button {
+            background: #f9fafb !important;
+            color: #374151 !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+        }
 
-    /* Hover en botones normales */
-    #miTabla_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #e5e7eb !important;   /* gris medio */
-        color: #111827 !important;        /* casi negro */
-        border: none !important;
-        border-radius: 0.5rem !important;
-    }
+        /* Hover en botones normales */
+        #miTabla_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #e5e7eb !important;
+            color: #111827 !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+        }
 
-    /* Estado activo (cuando se hace clic) */
-    #miTabla_wrapper .dataTables_paginate .paginate_button:active {
-        background: #25636d !important;   /* teal más oscuro */
-        color: #ffffff !important;        /* texto blanco */
-        border: none !important;
-        border-radius: 0.5rem !important;
-    }
-</style>
+        /* Estado activo */
+        #miTabla_wrapper .dataTables_paginate .paginate_button:active {
+            background: #25636d !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+        }
+    </style>
 @endsection
 
 @push('scripts')
+    <!-- jsPDF y autoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <!-- SheetJS para generar archivos Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if (window.lucide) lucide.createIcons();
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.lucide) lucide.createIcons();
 
-        const idiomaEspanol = {
-            processing: "Procesando...",
-            search: "Buscar:",
-            lengthMenu: "Mostrar _MENU_ registros",
-            info: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            infoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
-            infoFiltered: "(filtrado de un total de _MAX_ registros)",
-            loadingRecords: "Cargando...",
-            zeroRecords: "No se encontraron resultados",
-            emptyTable: "Ningún dato disponible en esta tabla",
-            paginate: {
-                first: "Primero",
-                previous: "Anterior",
-                next: "Siguiente",
-                last: "Último"
-            }
-        };
+            const idiomaEspanol = {
+                processing: "Procesando...",
+                search: "Buscar:",
+                lengthMenu: "Mostrar _MENU_ registros",
+                info: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                infoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                infoFiltered: "(filtrado de un total de _MAX_ registros)",
+                loadingRecords: "Cargando...",
+                zeroRecords: "No se encontraron resultados",
+                emptyTable: "Ningún dato disponible en esta tabla",
+                paginate: {
+                    first: "Primero",
+                    previous: "Anterior",
+                    next: "Siguiente",
+                    last: "Último"
+                }
+            };
 
-        const tabla = $('#miTabla').DataTable({
-            dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
-            language: idiomaEspanol,
-            pageLength: 10,
-            order: [[0, 'desc']],
-            drawCallback: function() {
-                if (window.lucide) lucide.createIcons();
-            }
+            const tabla = $('#miTabla').DataTable({
+                dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
+                language: idiomaEspanol,
+                pageLength: 10,
+                order: [[0, 'desc']],
+                drawCallback: function() {
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
+
+            // --- BÚSQUEDA CUSTOM ---
+            $('#customSearch').on('keyup', function() {
+                tabla.search(this.value).draw();
+            });
+
+            // --- FILTRO DE FECHAS ---
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                const fechaDesde = $('#fechaDesde').val();
+                const fechaHasta = $('#fechaHasta').val();
+                const rowNode = tabla.row(dataIndex).node();
+                const fechaTexto = $(rowNode).find('td').eq(0).data('fecha');
+
+                if (!fechaTexto) return true;
+
+                const fechaEstudio = new Date(fechaTexto);
+                const desde = fechaDesde ? new Date(fechaDesde) : null;
+                const hasta = fechaHasta ? new Date(fechaHasta) : null;
+
+                if(desde) desde.setHours(0,0,0,0);
+                if(hasta) hasta.setHours(23,59,59,999);
+                if(fechaEstudio) fechaEstudio.setHours(12,0,0,0);
+
+                return (!desde || fechaEstudio >= desde) && (!hasta || fechaEstudio <= hasta);
+            });
+
+            $('#fechaDesde, #fechaHasta').on('change', function() {
+                tabla.draw();
+            });
+
+            $('#limpiarFechas').on('click', function() {
+                $('#fechaDesde').val('');
+                $('#fechaHasta').val('');
+                $('#customSearch').val('');
+                tabla.search('').draw();
+            });
         });
 
-        // ... resto del código igual (no cambies nada más)
-    });
-</script>
+        // --- FUNCIONES DE EXPORTACIÓN ---
+        function imprimirTablaCompleta() {
+            const tablaOriginal = document.querySelector('#miTabla');
+            const encabezado = tablaOriginal.querySelector('thead').outerHTML;
+            const cuerpo = tablaOriginal.querySelector('tbody').outerHTML;
+
+            const ventana = window.open('', '', 'width=900,height=700');
+            ventana.document.write(`
+                <html>
+                <head>
+                    <title>Estudios Médicos</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+                        th { background-color: #1B7D8F; color: white; font-weight: bold; }
+                        .no-print { display: none; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Reporte de Estudios Médicos</h2>
+                    <table>
+                        ${encabezado}
+                        ${cuerpo}
+                    </table>
+                </body>
+                </html>
+            `);
+            ventana.document.close();
+            ventana.focus();
+            setTimeout(() => { ventana.print(); ventana.close(); }, 500);
+        }
+
+        async function exportarFiltradoPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', format: 'legal' });
+
+            const tablaDT = $('#miTabla').DataTable();
+            const datosFiltrados = tablaDT.rows({ search: 'applied' }).data();
+
+            const headers = [['Fecha', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real', 'Regiones', 'Cont 50ml', 'Cont 100ml', 'Jer. Prel.', 'Descartables', 'Otros y Agujas']];
+            const body = [];
+
+            datosFiltrados.each(function(value, index) {
+                const clean = (html) => {
+                    const tmp = document.createElement("DIV");
+                    tmp.innerHTML = html;
+                    return tmp.textContent || tmp.innerText || "";
+                }
+
+                body.push([
+                    clean(value[0]), // Fecha
+                    clean(value[1]), // Apellido y Nombre
+                    clean(value[2]), // I-A
+                    clean(value[3]), // DNI
+                    clean(value[4]), // Estudio Real
+                    clean(value[5]), // Regiones
+                    clean(value[6]), // Cont 50ml
+                    clean(value[7]), // Cont 100ml
+                    clean(value[8]), // Jer. Prel.
+                    clean(value[9]), // Descartables
+                    clean(value[10]) // Otros y Agujas
+                ]);
+            });
+
+            doc.text("Reporte de Estudios Médicos", 14, 20);
+            doc.autoTable({
+                head: headers,
+                body: body,
+                startY: 30,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [27, 125, 143] }
+            });
+            doc.save('estudios_medicos_filtrados.pdf');
+        }
+
+        document.getElementById('btnExportarExcel').addEventListener('click', function() {
+            const tablaDT = $('#miTabla').DataTable();
+            const datos = tablaDT.rows({ search: 'applied' }).data().toArray();
+
+            const clean = (html) => {
+                const tmp = document.createElement("DIV");
+                tmp.innerHTML = html;
+                return tmp.textContent || tmp.innerText || "";
+            }
+
+            const dataExport = datos.map(row => ({
+                Fecha: clean(row[0]),
+                Apellido_y_Nombre: clean(row[1]),
+                IA: clean(row[2]),
+                DNI: clean(row[3]),
+                Estudio_Real: clean(row[4]),
+                Regiones: clean(row[5]),
+                Contraste_50ml: clean(row[6]),
+                Contraste_100ml: clean(row[7]),
+                Jeringa_Prellenada: clean(row[8]),
+                Descartables: clean(row[9]),
+                Otros_y_Agujas: clean(row[10])
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Estudios Medicos");
+            XLSX.writeFile(wb, "reporte_estudios_medicos.xlsx");
+        });
+    </script>
 @endpush
