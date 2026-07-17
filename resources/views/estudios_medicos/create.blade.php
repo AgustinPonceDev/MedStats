@@ -24,7 +24,7 @@
 
                 <div class="md:col-span-2">
                     <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
-                    <select name="paciente_id" id="paciente_id" class="select2 w-full">
+                    <select name="paciente_id" id="paciente_id" class="select2 w-full" required>
                         <option value="">Seleccione un paciente</option>
                         @foreach ($pacientes as $paciente)
                             <option value="{{ $paciente->id }}" {{ old('paciente_id') == $paciente->id ? 'selected' : '' }}>
@@ -160,7 +160,7 @@
             {{-- Fila: Médico Solicitante (Ahora hereda automáticamente el estilo de arriba) --}}
             <div>
                 <label for="medico_solicitante_id" class="block text-sm font-medium text-gray-700 mb-1">Médico Solicitante</label>
-                <select name="medico_solicitante_id" id="medico_solicitante_id" class="select2 w-full">
+                <select name="medico_solicitante_id" id="medico_solicitante_id" class="select2 w-full" required>
                     <option value="">Seleccione el médico</option>
                     @foreach ($medicos as $medico)
                         <option value="{{ $medico->id }}" {{ old('medico_solicitante_id') == $medico->id ? 'selected' : '' }}>
