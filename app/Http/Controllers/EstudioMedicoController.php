@@ -27,13 +27,14 @@ class EstudioMedicoController extends Controller
     private const INSUMO_JERINGA = 'Jeringa Prellenada';
 
     public function index()
-    {
-        $estudios = EstudioMedico::with(['paciente', 'medico_solicitante', 'especialidad', 'estudio'])
-            ->latest()
-            ->get();
+{
+    $estudios = EstudioMedico::with(['paciente', 'medico_solicitante', 'especialidad', 'estudio'])
+        ->orderBy('fecha', 'asc')
+        ->orderBy('hora_estudio', 'asc')
+        ->get();
 
-        return view('estudios_medicos.index', compact('estudios'));
-    }
+    return view('estudios_medicos.index', compact('estudios'));
+}
 
     public function create()
     {
@@ -108,6 +109,7 @@ class EstudioMedicoController extends Controller
     {
         $data = $request->validate([
             'fecha'                 => 'required|date|before_or_equal:today',
+            'hora_estudio'          => 'nullable|date_format:H:i',
             'paciente_id'           => 'required|exists:pacientes,id',
             'ia'                    => 'nullable|string|max:20',
             'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn ($q) => $q->where('es_modalidad_imagen', true))],

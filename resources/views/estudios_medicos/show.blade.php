@@ -32,11 +32,12 @@
         <div class="bg-white shadow-sm rounded-2xl p-6 border border-gray-100 space-y-6 text-[15px]">
 
             {{-- Sección 1: Información del Paciente --}}
+            {{-- Sección 1: Información del Paciente --}}
             <div>
                 <h3 class="text-xs font-bold text-[#1B7D8F] uppercase tracking-wider mb-3 flex items-center gap-2">
                     <i data-lucide="user" class="w-4 h-4"></i> Datos del Paciente
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <div>
                         <p class="text-xs text-gray-400 font-semibold uppercase">Apellido y Nombre</p>
                         <p class="font-bold text-gray-800 mt-0.5">
@@ -55,7 +56,14 @@
                             {{ $estudio->fecha ? $estudio->fecha->format('d/m/Y') : '-' }}
                         </p>
                     </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-semibold uppercase">Hora del Estudio</p>
+                        <p class="font-semibold text-gray-800 mt-0.5">
+                            {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
+                        </p>
+                    </div>
                 </div>
+            </div>
             </div>
 
             {{-- Sección 2: Especificaciones del Estudio --}}

@@ -19,6 +19,7 @@ class EstudioMedico extends Model
         'tipo_estudio', // Se mantiene como caché legible del nombre del estudio (compatibilidad con vistas existentes)
         'regiones',
         'fecha',
+        'hora_estudio',
         'cont_50ml',
         'cont_100ml',
         'jeringa_prellenada',
@@ -30,6 +31,7 @@ class EstudioMedico extends Model
 
     protected $casts = [
         'fecha' => 'date',
+        'hora_estudio' => 'datetime:H:i',
         'regiones' => 'integer',
         'cont_50ml' => 'integer',
         'cont_100ml' => 'integer',

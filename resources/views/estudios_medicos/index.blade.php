@@ -77,6 +77,7 @@
                     <thead class="bg-[#1B7D8F] text-white uppercase text-[11px] tracking-wider">
                         <tr>
                             <th class="px-3 py-4 font-semibold whitespace-nowrap">Fecha</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Hora</th>
                             <th class="px-3 py-4 font-semibold whitespace-nowrap">Apellido y Nombre</th>
                             <th class="px-3 py-4 font-semibold text-center">I-A</th>
                             <th class="px-3 py-4 font-semibold">DNI</th>
@@ -93,13 +94,16 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse($estudios as $estudio)
                             <tr class="hover:bg-gray-50 transition-colors">
-                                {{-- Fecha --}}
-                                <td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
-                                    data-fecha="{{ $estudio->fecha->format('Y-m-d') }}">
-                                    {{ $estudio->fecha->format('d/m/Y') }}
-                                </td>
-                                {{-- Apellido y Nombre --}}
-                                <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
+{{-- Fecha --}}
+<td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
+    data-order="{{ $estudio->fecha->format('Y-m-d') }}">
+    {{ $estudio->fecha->format('d/m/Y') }}
+</td>
+                                 {{-- Hora --}}
+                                 <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
+                                     {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
+                                 </td>
+                                 {{-- Apellido y Nombre --}}                                <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                     {{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}
                                 </td>
                                 {{-- I-A --}}
@@ -174,8 +178,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="px-6 py-10 text-center text-gray-400">
-                                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                <td colspan="13" class="px-6 py-10 text-center text-gray-400">                                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                                     No se encontraron registros de diagnóstico por imágenes.
                                 </td>
                             </tr>
@@ -302,15 +305,19 @@
                 }
             };
 
-            const tabla = $('#miTabla').DataTable({
-                dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
-                language: idiomaEspanol,
-                pageLength: 10,
-                order: [[0, 'desc']],
-                drawCallback: function() {
-                    if (window.lucide) lucide.createIcons();
-                }
-            });
+const tabla = $('#miTabla').DataTable({
+    dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
+    language: idiomaEspanol,
+    pageLength: 10,
+    order: [[0, 'desc']], // Al cargar: Fecha descendente
+    columnDefs: [
+        { orderable: true, targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, // Todas ordenables excepto Acciones
+        { orderable: false, targets: [12] } // Acciones NO ordenable
+    ],
+    drawCallback: function() {
+        if (window.lucide) lucide.createIcons();
+    }
+});
 
             // --- BÚSQUEDA CUSTOM ---
             $('#customSearch').on('keyup', function() {

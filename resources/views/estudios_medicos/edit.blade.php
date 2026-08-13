@@ -15,6 +15,7 @@
             @method('PUT')
 
             {{-- Fila 1: Fecha y Paciente --}}
+            {{-- Fila 1: Fecha, Hora y Paciente --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">Fecha del Estudio</label>
@@ -24,7 +25,14 @@
                         value="{{ old('fecha', $estudio->fecha ? $estudio->fecha->format('Y-m-d') : '') }}" required>
                 </div>
 
-                <div class="md:col-span-2">
+                <div>
+                    <label for="hora_estudio" class="block text-sm font-medium text-gray-700 mb-1">Hora del Estudio</label>
+                    <input type="time" name="hora_estudio" id="hora_estudio"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                        value="{{ old('hora_estudio', $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : now()->format('H:i')) }}">
+                </div>
+
+                <div class="md:col-span-1">
                     <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                     <select name="paciente_id" id="paciente_id" class="select2 w-full">
                         <option value="">Seleccione un paciente</option>
@@ -36,7 +44,7 @@
                     </select>
                 </div>
             </div>
-
+            
             {{-- Fila 2: I-A, Modalidad, Estudio Real --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
