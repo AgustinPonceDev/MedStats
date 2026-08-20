@@ -25,13 +25,13 @@
                         value="{{ old('fecha', $estudio->fecha ? $estudio->fecha->format('Y-m-d') : '') }}" required>
                 </div>
 
-                <div>
-                    <label for="hora_estudio" class="block text-sm font-medium text-gray-700 mb-1">Hora del Estudio</label>
-                    <input type="time" name="hora_estudio" id="hora_estudio"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
-                        value="{{ old('hora_estudio', $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : now()->format('H:i')) }}">
-                </div>
-
+<div>
+    <label for="hora_estudio" class="block text-sm font-medium text-gray-700 mb-1">Hora del Estudio</label>
+    <input type="time" name="hora_estudio" id="hora_estudio"
+        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+        max="{{ now()->format('H:i') }}" 
+        value="{{ old('hora_estudio', $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : now()->format('H:i')) }}">
+</div>
                 <div class="md:col-span-1">
                     <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                     <select name="paciente_id" id="paciente_id" class="select2 w-full">
@@ -285,7 +285,23 @@
                 $('.select2').select2({ width: '100%' });
             }
         });
+            // ---------- Control de Hora del Estudio ----------
+            const horaInput = document.getElementById('hora_estudio');
+            if (horaInput) {
+                const corregirHora = () => {
+                    const ahora = new Date();
+                    const horaActual = String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0');
+                    horaInput.max = horaActual;
+                    if (horaInput.value && horaInput.value > horaActual) {
+                        horaInput.value = horaActual;
+                    }
+                };
 
+                corregirHora();
+                horaInput.addEventListener('input', corregirHora);
+                horaInput.addEventListener('change', corregirHora);
+                document.querySelector('form').addEventListener('submit', corregirHora);
+            }
         document.addEventListener('DOMContentLoaded', function() {
             // ---------- Toggle I-A ----------
             const toggle = document.getElementById('ia_toggle');

@@ -109,7 +109,7 @@ class EstudioMedicoController extends Controller
     {
         $data = $request->validate([
             'fecha'                 => 'required|date|before_or_equal:today',
-            'hora_estudio'          => 'nullable|date_format:H:i',
+            'hora_estudio'          => 'nullable|date_format:H:i|before_or_equal:today',
             'paciente_id'           => 'required|exists:pacientes,id',
             'ia'                    => 'nullable|string|max:20',
             'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn ($q) => $q->where('es_modalidad_imagen', true))],
