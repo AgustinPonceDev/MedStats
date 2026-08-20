@@ -39,7 +39,7 @@ class StoreEstudioMedicoRequest extends FormRequest
             'regiones'              => ['required', 'integer', 'min:1', 'max:20'],
 
             'fecha'                 => ['required', 'date', 'before_or_equal:today'],
-            'hora_estudio'          => ['nullable', 'date_format:H:i'],
+            'hora_estudio'          => ['nullable', 'date_format:H:i', 'before_or_equal:now'],
 
             // Insumos y medios de contraste (contadores +/-)
             'cont_50ml'             => ['required', 'integer', 'min:0'],
