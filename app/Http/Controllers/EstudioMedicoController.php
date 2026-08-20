@@ -58,9 +58,9 @@ class EstudioMedicoController extends Controller
     {
         $data = $request->validated();
 
-        $estudioReal = Estudio::findOrFail($data['estudio_id']);
+        $estudioReal = Estudio::findOrFail($data['tipo_estudio_id']);
         // Mantenemos "tipo_estudio" como caché legible del nombre (columna existente, NOT NULL)
-        $data['tipo_estudio'] = $estudioReal->nombre;
+        //$data['tipo_estudio'] = $estudioReal->nombre;
 
         DB::beginTransaction();
         try {

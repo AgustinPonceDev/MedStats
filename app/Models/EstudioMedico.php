@@ -16,7 +16,7 @@ class EstudioMedico extends Model
         'ia',
         'especialidad_id',
         'estudio_id',
-        'tipo_estudio', // Se mantiene como caché legible del nombre del estudio (compatibilidad con vistas existentes)
+        'tipo_estudio_id', // Se mantiene como caché legible del nombre del estudio (compatibilidad con vistas existentes)
         'regiones',
         'fecha',
         'hora_estudio',
@@ -55,9 +55,13 @@ class EstudioMedico extends Model
 
     public function estudio()
     {
-        return $this->belongsTo(Estudio::class, 'estudio_id');
+        return $this->belongsTo(Estudio::class, 'tipo_estudio_id');
     }
 
+    public function estudioReal()
+    {
+        return $this->belongsTo(estudio::class,'tipo_estudio_id');
+    }
     // Movimientos de stock (insumos) generados automáticamente al cargar este estudio
     public function movimientos_stock()
     {

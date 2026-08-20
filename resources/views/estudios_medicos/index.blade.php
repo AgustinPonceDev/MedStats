@@ -124,7 +124,7 @@
                                 </td>
                                 {{-- Estudio Real --}}
                                 <td class="px-3 py-3.5 font-medium text-gray-800 whitespace-nowrap">
-                                    {{ $estudio->tipo_estudio }}
+                                    {{ optional ($estudio->estudioReal)-> nombre??'-'}}
                                 </td>
                                 {{-- Regiones --}}
                                 <td class="px-3 py-3.5 text-gray-600 max-w-[150px] truncate" title="{{ $estudio->regiones }}">
