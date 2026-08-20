@@ -95,14 +95,16 @@
                         @forelse($estudios as $estudio)
                             <tr class="hover:bg-gray-50 transition-colors">
 {{-- Fecha --}}
+{{-- Fecha --}}
 <td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
-    data-order="{{ $estudio->fecha->format('Y-m-d') }}">
+    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
     {{ $estudio->fecha->format('d/m/Y') }}
+</td>       
+{{-- Hora --}}
+<td class="px-3 py-3.5 text-gray-600 whitespace-nowrap"
+    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
+    {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
 </td>
-                                 {{-- Hora --}}
-                                 <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
-                                     {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
-                                 </td>
                                  {{-- Apellido y Nombre --}}                                <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                     {{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}
                                 </td>
@@ -309,7 +311,7 @@ const tabla = $('#miTabla').DataTable({
     dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
     language: idiomaEspanol,
     pageLength: 10,
-    order: [[0, 'desc']], // Al cargar: Fecha descendente
+    order: [[1, 'desc']], // Al cargar: Fecha descendente
     columnDefs: [
         { orderable: true, targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, // Todas ordenables excepto Acciones
         { orderable: false, targets: [12] } // Acciones NO ordenable
