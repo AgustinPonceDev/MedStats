@@ -1,0 +1,10 @@
+1. IMPORTANTE: Si hiciste cambios o cargaste datos nuevos que querés conservar, hacé un backup antes: seleccioná tu base de datos, andá a la pestaña Exportar y descargá una copia.
+2. Abrir phpMyAdmin y seleccionar la base de datos actual en la barra lateral izquierda.
+3. Limpiar la base de datos:
+   * Ir a la pestaña Operaciones en el menú superior.
+   * Hacer clic abajo en Eliminar la base de datos (DROP) y confirmar.
+   * Ir a la pestaña Bases de datos, crearla nuevamente con el mismo nombre y hacer clic sobre ella para seleccionarla vacía.
+4. Importar:
+   * Ir a la pestaña Importar.
+   * En Seleccionar archivo, cargar el archivo .sql.
+   * Bajar al final y hacer clic en Importar (o Continuar).
