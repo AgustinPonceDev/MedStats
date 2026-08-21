@@ -29,7 +29,6 @@ class EstudioMedicoSeeder extends Seeder
         EstudioMedico::create([
             'paciente_id' => $paciente->id,
             'medico_solicitante_id' => $medico->id,
-            'tipo_estudio' => 'Radiografía de Tórax',
             'fecha' => Carbon::now()->subDays(5),
             'resultado' => 'Estructuras óseas conservadas. Campos pulmonares limpios sin infiltrados.',
         ]);
@@ -37,7 +36,6 @@ class EstudioMedicoSeeder extends Seeder
         EstudioMedico::create([
             'paciente_id' => $paciente->id,
             'medico_solicitante_id' => $medico->id,
-            'tipo_estudio' => 'Laboratorio Clínico Completo',
             'fecha' => Carbon::now()->subDays(2),
             'resultado' => 'Hemograma completo dentro de los parámetros normales. Glucemia en ayunas: 95 mg/dL.',
         ]);

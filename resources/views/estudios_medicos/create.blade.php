@@ -77,7 +77,7 @@
                 {{-- Select 2: Estudio Real --}}
                 <div>
                     <label for="estudio_id" class="block text-sm font-medium text-gray-700 mb-1">Estudio Real</label>
-                    <select name="tipo_estudio_id" id="tipo_estudio_id"
+                    <select name="estudio_id" id="estudio_id"
                         class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]" required disabled>
                         <option value="">Seleccione primero la modalidad</option>
                     </select>
@@ -332,8 +332,8 @@
 
             // ---------- Select encadenado: Modalidad -> Estudio Real ----------
             const especialidadSelect = document.getElementById('especialidad_id');
-            const estudioSelect = document.getElementById('tipo_estudio_id');
-            const oldEstudioId = "{{ old('tipo_estudio_id') }}";
+            const estudioSelect = document.getElementById('estudio_id');
+            const oldEstudioId = "{{ old('estudio_id') }}";
 
             function cargarEstudios(especialidadId, seleccionado) {
                 estudioSelect.innerHTML = '<option value="">Cargando...</option>';

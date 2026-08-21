@@ -30,7 +30,7 @@ class StoreEstudioMedicoRequest extends FormRequest
             ],
 
             // Estudio real -> tiene que pertenecer a la modalidad seleccionada arriba
-            'tipo_estudio_id'            => [
+            'estudio_id'            => [
                 'required', 'integer',
                 Rule::exists('estudios', 'id')->where(fn ($q) => $q->where('especialidad_id', $this->input('especialidad_id'))),
             ],
