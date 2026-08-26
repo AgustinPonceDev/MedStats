@@ -50,13 +50,17 @@
                 <div>
                     <label for="servicio_id" class="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
                     <select name="servicio_id" id="servicio_id"
-                        class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-700">
+                        class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-700"
+                        {{ isset($servicioRestringido) && $servicioRestringido ? 'disabled' : '' }}>
                         @foreach ($servicios as $servicio)
-                            <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>
+                            <option value="{{ $servicio->id }}" {{ old('servicio_id', $servicioRestringido ?? $servicio->id) == $servicio->id ? 'selected' : '' }}>
                                 {{ $servicio->nombre }}
                             </option>
                         @endforeach
                     </select>
+                    @if(isset($servicioRestringido) && $servicioRestringido)
+                        <input type="hidden" name="servicio_id" value="{{ $servicioRestringido }}">
+                    @endif
                     @error('servicio_id')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror

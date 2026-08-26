@@ -42,6 +42,7 @@
                         'estadisticas' => 'Estadísticas',
                         'camas' => 'Camas',
                         'cirugias' => 'Cirugías',
+                        'estudios_medicos' => 'Estudios Médicos',
                     ];
                 @endphp
 
@@ -55,6 +56,24 @@
                         </label>
                     </div>
                 @endforeach
+
+                <!-- Servicio -->
+                <div>
+                    <label for="servicio_id" class="form-label fw-semibold text-secondary">
+                        Servicio Asociado
+                    </label>
+                    <select name="servicio_id" id="servicio_id" class="form-control border shadow-sm">
+                        <option value="">Sin servicio asociado</option>
+                        @foreach($servicios as $s)
+                            <option value="{{ $s->id }}" {{ old('servicio_id', $perfil->servicio_id) == $s->id ? 'selected' : '' }}>
+                                {{ $s->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('servicio_id')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
 
                 {{-- Botones --}}
                 <div class="flex justify-between pt-4">

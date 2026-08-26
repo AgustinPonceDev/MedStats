@@ -215,7 +215,7 @@ Route::middleware(['auth', 'roles:admin,insumos'])->group(function () {
 });
 
 //Stock
-Route::middleware(['auth', 'roles:insumos'])->group(function () {
+Route::middleware(['auth', 'roles:insumos,estudios_medicos'])->group(function () {
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
     Route::get('/stocks/create', [StockController::class, 'create'])->name('stocks.create');
     Route::post('/stocks', [StockController::class, 'store'])->name('stocks.store');

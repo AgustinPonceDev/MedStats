@@ -31,6 +31,7 @@
                 case 'estadisticas':
                 case 'camas.index':
                 case 'cirugias.estadisticas':
+                case 'stocks.estadisticasstock':
                 //case 'cirugias.index':
                 case 'ajustes':
                     $rutaAnterior = 'inicio';
@@ -209,7 +210,7 @@
         @php
             $menuItems = [
                 ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
-                ['route' => 'cirugias.estadisticas', 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
+                ['route' => 'stocks.estadisticasstock', 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
                 ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
                 ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
                 ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],

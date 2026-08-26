@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\UsuarioPerfil;
-use App\Models\User; // Agregar este import
+use App\Models\User;
+use App\Models\Servicio;
 use Illuminate\Http\Request;
 
 class UsuarioPerfilController extends Controller
@@ -13,7 +14,8 @@ class UsuarioPerfilController extends Controller
      */
     public function create()
     {
-        return view('UsuarioPerfil.create');
+        $servicios = Servicio::all();
+        return view('UsuarioPerfil.create', compact('servicios'));
     }
 
     /**
@@ -63,6 +65,14 @@ class UsuarioPerfilController extends Controller
         } else {
             $perfil->cirugias = false;
         }
+        //estudios_medicos
+        if ($request->input('estudios_medicos') != null) {
+            $perfil->estudios_medicos = true;
+        } else {
+            $perfil->estudios_medicos = false;
+        }
+        //servicio_id
+        $perfil->servicio_id = $request->input('servicio_id');
 
         $perfil->save();
 
@@ -74,7 +84,8 @@ class UsuarioPerfilController extends Controller
      */
     public function edit(UsuarioPerfil $perfil)
     {
-        return view('UsuarioPerfil.edit', compact('perfil'));
+        $servicios = Servicio::all();
+        return view('UsuarioPerfil.edit', compact('perfil', 'servicios'));
     }
 
     /**
@@ -123,6 +134,16 @@ class UsuarioPerfilController extends Controller
         } else {
             $perfil->cirugias = false;
         }
+        
+        //estudios_medicos
+        if ($request->input('estudios_medicos') != null) {
+            $perfil->estudios_medicos = true;
+        } else {
+            $perfil->estudios_medicos = false;
+        }
+        
+        //servicio_id
+        $perfil->servicio_id = $request->input('servicio_id');
         
         $perfil->save();
 

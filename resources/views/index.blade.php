@@ -99,7 +99,7 @@
 
                 <!-- CARD 2: Estadísticas -->
                 @if(Auth::user()->hasAccess('estadisticas'))
-                <a href="{{ route('cirugias.estadisticas') }}"
+                <a href="{{ route('stocks.estadisticasstock') }}"
                     class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white text-decoration-none h-40">
                     <div class="w-1/2 p-6 flex flex-col justify-between">
                         <div>

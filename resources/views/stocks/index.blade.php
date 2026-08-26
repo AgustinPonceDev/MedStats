@@ -27,18 +27,18 @@
                             class="form-select"
                             style="border: 2px solid #1B7D8F; border-radius: 8px; min-width: 200px; font-weight: 500;"
                             onchange="this.form.submit()"
-                            {{ (count($servicios) == 1 && auth()->user()->servicio_id) ? 'disabled' : '' }}
+                            {{ (count($servicios) == 1 && (auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id)) ? 'disabled' : '' }}
                         >
-                            @if(!auth()->user()->servicio_id)
+                            @if(!auth()->user()->servicio_id && !auth()->user()->perfil?->servicio_id)
                                 <option value="">Todos los Servicios</option>
                             @endif
                             @foreach($servicios as $s)
-                                <option value="{{ $s->id }}" {{ request('servicio_id') == $s->id ? 'selected' : '' }}>
+                                <option value="{{ $s->id }}" {{ request('servicio_id', $servicioRestringido ?? $s->id) == $s->id ? 'selected' : '' }}>
                                     {{ $s->nombre }}
                                 </option>
                             @endforeach
                         </select>
-                        @if(auth()->user()->servicio_id)
+                        @if(auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id)
                             <span class="badge" style="background-color: #1B7D8F; font-size: 0.75rem;">
                                 Restringido
                             </span>

@@ -93,7 +93,7 @@
                     @enderror
                 </div>
 
-                <!-- Cirugías -->
+                 <!-- Cirugías -->
                 <div class="switches-group-compact">
                     <span class="switch-label">Cirugías</span>
                     <label class="switch">
@@ -102,6 +102,36 @@
                     </label>
                     @error('cirugias')
                         <div><small class="text-danger">{{ $message }}</small></div>
+                    @enderror
+                </div>
+
+                <!-- Estudios Médicos -->
+                <div class="switches-group-compact">
+                    <span class="switch-label">Estudios Médicos</span>
+                    <label class="switch">
+                        <input type="checkbox" name="estudios_medicos" id="estudios_medicos" {{ old('estudios_medicos') ? 'checked' : '' }}>
+                        <span class="slider round"></span>
+                    </label>
+                    @error('estudios_medicos')
+                        <div><small class="text-danger">{{ $message }}</small></div>
+                    @enderror
+                </div>
+
+                <!-- Servicio -->
+                <div>
+                    <label for="servicio_id" class="form-label fw-semibold text-secondary">
+                        Servicio Asociado
+                    </label>
+                    <select name="servicio_id" id="servicio_id" class="form-control border shadow-sm">
+                        <option value="">Sin servicio asociado</option>
+                        @foreach($servicios as $s)
+                            <option value="{{ $s->id }}" {{ old('servicio_id') == $s->id ? 'selected' : '' }}>
+                                {{ $s->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('servicio_id')
+                        <small class="text-danger">{{ $message }}</small>
                     @enderror
                 </div>
 

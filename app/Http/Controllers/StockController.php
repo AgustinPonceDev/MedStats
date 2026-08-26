@@ -18,13 +18,12 @@ class StockController extends Controller
         $user = auth()->user();
         $query = Stock::with(['get_medicamento', 'get_servicio']);
 
-        // Check if user is restricted to a service
-        if ($user->servicio_id) {
-            $query->where('servicio_id', $user->servicio_id);
-            // Limit available filters
-            $servicios = Servicio::where('id', $user->servicio_id)->get();
+        $servicioRestringido = $user->perfil->servicio_id ?? $user->servicio_id;
+
+        if ($servicioRestringido) {
+            $query->where('servicio_id', $servicioRestringido);
+            $servicios = Servicio::where('id', $servicioRestringido)->get();
         } else {
-             // Admin/Global: Show all or filter by request
              if ($request->filled('servicio_id')) {
                 $query->where('servicio_id', $request->servicio_id);
             }
@@ -32,7 +31,7 @@ class StockController extends Controller
         }
 
         $stock = $query->get();
-        return view('stocks.index', compact('stock', 'servicios'));
+        return view('stocks.index', compact('stock', 'servicios', 'servicioRestringido'));
     }
 
     public function create()
@@ -40,13 +39,15 @@ class StockController extends Controller
         $medicamentos = Medicamento::pluck('nombre', 'id');
         
         $user = auth()->user();
-        if ($user->servicio_id) {
-            $servicios = Servicio::where('id', $user->servicio_id)->get();
+        $servicioRestringido = $user->perfil->servicio_id ?? $user->servicio_id;
+        
+        if ($servicioRestringido) {
+            $servicios = Servicio::where('id', $servicioRestringido)->get();
         } else {
             $servicios = Servicio::all();
         }
         
-        return view('stocks.create', compact('medicamentos', 'servicios'));
+        return view('stocks.create', compact('medicamentos', 'servicios', 'servicioRestringido'));
     }
 
     public function store(Request $request)
@@ -66,10 +67,11 @@ class StockController extends Controller
         
         $user = auth()->user();
         $inputServicio = $request->input('servicio_id');
+        $servicioRestringido = $user->perfil->servicio_id ?? $user->servicio_id;
         
-        // If user is restricted, force their service ID
-        if ($user->servicio_id) {
-            $inputServicio = $user->servicio_id;
+        // If user is restricted by role or user record, force their service ID
+        if ($servicioRestringido) {
+            $inputServicio = $servicioRestringido;
         } else {
             // If explicit input is missing for admin, validation fails
             $request->validate(['servicio_id' => 'required|exists:servicios,id']);
@@ -228,10 +230,10 @@ class StockController extends Controller
         $fechaLimite = now()->subDays($umbralDias)->toDateString();
 
         $user = auth()->user();
-        $servicioId = $user->servicio_id ?: $request->input('servicio_id');
+        $servicioId = $user->perfil->servicio_id ?? $user->servicio_id ?: $request->input('servicio_id');
 
-        if ($user->servicio_id) {
-            $servicios = \App\Models\Servicio::where('id', $user->servicio_id)->get();
+        if ($user->perfil->servicio_id ?? $user->servicio_id) {
+            $servicios = \App\Models\Servicio::where('id', $user->perfil->servicio_id ?? $user->servicio_id)->get();
         } else {
             $servicios = \App\Models\Servicio::all();
         }
@@ -328,15 +330,19 @@ class StockController extends Controller
                 $query->where('fecha', '>', $fechaLimite);
             })->with('get_medicamento')->get();
 
-        // Proyección de duración de stock (últimos 30 días) basándonos también en el neto diario
+        // Proyección de duración de stock (últimos 30 días) con algoritmos avanzados
         $periodoAnalisis = 30;
-        $fechaInicio = now()->subDays($periodoAnalisis)->toDateString();
-        $fechaFin = now()->toDateString();
+        $fechaInicioProyeccion = now()->subDays($periodoAnalisis)->toDateString();
+        $fechaFinProyeccion = now()->toDateString();
 
-        $consumos = Historial_stock::join('stocks', 'historial_stocks.stock_id', '=', 'stocks.id')
-            ->select('stocks.medicamento_id', DB::raw('ABS(SUM(historial_stocks.cantidad)) as total_consumo_neto'))
+        // Obtener consumos netos diarios por stock_id en el período de análisis
+        $consumosDiariosRaw = Historial_stock::select(
+                'historial_stocks.stock_id',
+                'historial_stocks.fecha',
+                DB::raw('ABS(SUM(historial_stocks.cantidad)) as total_dia')
+            )
             ->whereIn('historial_stocks.stock_id', $stockIdsFiltrados)
-            ->whereBetween('historial_stocks.fecha', [$fechaInicio, $fechaFin])
+            ->whereBetween('historial_stocks.fecha', [$fechaInicioProyeccion, $fechaFinProyeccion])
             ->where(function($query) {
                 $query->where('historial_stocks.cantidad', '<', 0)
                       ->orWhere(function($q) {
@@ -344,21 +350,151 @@ class StockController extends Controller
                             ->whereNotNull('historial_stocks.estudio_medico_id');
                       });
             })
-            ->groupBy('stocks.medicamento_id')
+            ->groupBy('historial_stocks.stock_id', 'historial_stocks.fecha')
+            ->orderBy('historial_stocks.fecha')
             ->get()
-            ->keyBy('medicamento_id');
+            ->groupBy('stock_id');
 
-        $proyecciones = (clone $stocksQuery)->with('get_medicamento')->get()->map(function ($stock) use ($consumos, $periodoAnalisis) {
-            $consumoTotal = $consumos[$stock->medicamento_id]->total_consumo_neto ?? 0;
-            $consumoDiario = $consumoTotal / $periodoAnalisis;
-            $diasRestantes = $consumoDiario > 0 ? round($stock->cantidad_act / $consumoDiario) : null;
+        $proyecciones = (clone $stocksQuery)->with(['get_medicamento', 'get_servicio'])->get()->map(function ($stock) use ($consumosDiariosRaw, $periodoAnalisis) {
+            $valoresDiarios = [];
+            
+            // Obtener serie de consumos diarios para este stock (ordenado por fecha)
+            if ($consumosDiariosRaw->has($stock->id)) {
+                $valoresDiarios = $consumosDiariosRaw[$stock->id]
+                    ->sortBy('fecha')
+                    ->pluck('total_dia')
+                    ->values()
+                    ->all();
+            }
+
+            $diasConConsumo = count($valoresDiarios);
+            $consumoTotal = array_sum($valoresDiarios);
+            
+            // Calcular media móvil ponderada exponencial (EMWA)
+            // Alpha = 2/(n+1), donde n es el período de análisis
+            // Esto da más peso a los consumos más recientes
+            $alpha = 2 / ($periodoAnalisis + 1);
+            $emwa = 0;
+            if ($diasConConsumo > 0) {
+                $emwa = $valoresDiarios[0];
+                for ($i = 1; $i < $diasConConsumo; $i++) {
+                    $emwa = $alpha * $valoresDiarios[$i] + (1 - $alpha) * $emwa;
+                }
+            }
+            
+            // Calcular promedio simple como fallback
+            $promedioSimple = $diasConConsumo > 0 ? $consumoTotal / $periodoAnalisis : 0;
+
+            // Usar EMWA si hay datos suficientes, sino promedio simple
+            $consumoDiarioPromedio = $diasConConsumo > 5 ? $emwa : $promedioSimple;
+
+            // Calcular regresión lineal simple para detectar tendencia
+            // y = mx + b, donde x es el tiempo (día 0 a n-1) e y es el consumo
+            $pendiente = 0;
+            $intercepto = 0;
+            $tendencia = 'estable';
+            
+            if ($diasConConsumo >= 3) {
+                $n = $diasConConsumo;
+                $sumX = ($n - 1) * $n / 2; // Suma de 0 a n-1
+                $sumY = array_sum($valoresDiarios);
+                $sumXY = 0;
+                $sumX2 = ($n - 1) * $n * (2 * $n - 1) / 6; // Suma de cuadrados
+                
+                foreach ($valoresDiarios as $i => $y) {
+                    $sumXY += $i * $y;
+                }
+                
+                $denominador = $n * $sumX2 - $sumX * $sumX;
+                if ($denominador != 0) {
+                    $pendiente = ($n * $sumXY - $sumX * $sumY) / $denominador;
+                    $intercepto = ($sumY - $pendiente * $sumX) / $n;
+                }
+                
+                // Clasificar tendencia
+                if ($pendiente > 0.1) {
+                    $tendencia = 'creciente';
+                } elseif ($pendiente < -0.1) {
+                    $tendencia = 'decreciente';
+                }
+            }
+
+            // Calcular desviación estándar del consumo diario (medida de variabilidad)
+            $desviacionEstandar = 0;
+            if ($diasConConsumo > 1) {
+                $media = $consumoTotal / $diasConConsumo;
+                $sumaCuadrados = 0;
+                foreach ($valoresDiarios as $valor) {
+                    $sumaCuadrados += pow($valor - $media, 2);
+                }
+                $desviacionEstandar = sqrt($sumaCuadrados / $diasConConsumo);
+            }
+
+            // Proyección ajustada por tendencia
+            $proyeccionAjustada = $consumoDiarioPromedio + $pendiente;
+            if ($proyeccionAjustada < 0) {
+                $proyeccionAjustada = 0;
+            }
+
+            // Calcular días restantes con la proyección ajustada
+            $diasRestantes = $proyeccionAjustada > 0 ? round($stock->cantidad_act / $proyeccionAjustada) : null;
+
+            // Calcular confianza de la proyección (coeficiente de variación)
+            $confianza = 'alta';
+            if ($diasConConsumo > 1 && $consumoDiarioPromedio > 0) {
+                $coefVariacion = ($desviacionEstandar / $consumoDiarioPromedio) * 100;
+                if ($coefVariacion > 50) {
+                    $confianza = 'baja';
+                } elseif ($coefVariacion > 25) {
+                    $confianza = 'media';
+                }
+            }
+
+            // Calcular fecha estimada de agotamiento
+            $fechaAgotamiento = null;
+            if ($diasRestantes !== null && is_numeric($diasRestantes)) {
+                $fechaAgotamiento = now()->addDays($diasRestantes)->format('Y-m-d');
+            }
+
+            // Calcular cantidad sugerida de pedido (basada en 30 días de cobertura proyectada)
+            $diasCobertura = 30;
+            $cantidadSugerida = 0;
+            if ($proyeccionAjustada > 0) {
+                $demandaProyectada = $proyeccionAjustada * $diasCobertura;
+                $cantidadSugerida = max(0, ceil($demandaProyectada - $stock->cantidad_act));
+            }
+
+            // Determinar estado
+            $estado = 'Normal';
+            $claseBadge = 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+            if ($diasRestantes === null) {
+                $estado = 'Sin consumo';
+                $claseBadge = 'bg-gray-100 text-gray-500 border border-gray-200';
+            } elseif ($diasRestantes < 10) {
+                $estado = 'Crítico';
+                $claseBadge = 'bg-red-100 text-red-700 border border-red-200';
+            } elseif ($diasRestantes < 20) {
+                $estado = 'Bajo';
+                $claseBadge = 'bg-amber-100 text-amber-700 border border-amber-200';
+            }
 
             return [
                 'medicamento' => optional($stock->get_medicamento)->nombre,
                 'lote' => $stock->lote,
+                'servicio' => optional($stock->get_servicio)->nombre,
                 'cantidad_act' => $stock->cantidad_act,
-                'consumo_diario' => round($consumoDiario, 2),
+                'umbral_aviso' => $stock->umbral_aviso,
+                'umbral_critico' => $stock->umbral_critico,
+                'consumo_diario' => round($consumoDiarioPromedio, 2),
+                'consumo_total_periodo' => round($consumoTotal, 2),
                 'dias_restantes' => $diasRestantes,
+                'fecha_agotamiento' => $fechaAgotamiento,
+                'tendencia' => $tendencia,
+                'desviacion' => round($desviacionEstandar, 2),
+                'confianza' => $confianza,
+                'cantidad_sugerida' => $cantidadSugerida,
+                'estado' => $estado,
+                'clase_badge' => $claseBadge,
             ];
         });
 

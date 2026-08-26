@@ -17,6 +17,12 @@ class UsuarioPerfil extends Model
         'pacientes',
         'camas',
         'cirugias',
-        'estudios_medicos'
+        'estudios_medicos',
+        'servicio_id'
     ];
+
+    public function servicio()
+    {
+        return $this->belongsTo(Servicio::class);
+    }
 }

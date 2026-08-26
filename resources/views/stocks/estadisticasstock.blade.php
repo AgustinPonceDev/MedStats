@@ -48,8 +48,8 @@
                     </label>
                     <select name="servicio_id" id="servicio_id"
                         class="form-select bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700"
-                        {{ auth()->user()->servicio_id ? 'disabled' : '' }}>
-                        @if (!auth()->user()->servicio_id)
+                        {{ (auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id) ? 'disabled' : '' }}>
+                        @if (!auth()->user()->servicio_id && !auth()->user()->perfil?->servicio_id)
                             <option value="">Todos los Servicios</option>
                         @endif
                         @foreach ($servicios as $s)
@@ -58,9 +58,8 @@
                             </option>
                         @endforeach
                     </select>
-                    @if (auth()->user()->servicio_id)
-                        {{-- El usuario está restringido a su servicio: se manda igual, oculto, para que el filtro no se pierda --}}
-                        <input type="hidden" name="servicio_id" value="{{ auth()->user()->servicio_id }}">
+                    @if (auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id)
+                        <input type="hidden" name="servicio_id" value="{{ auth()->user()->perfil->servicio_id ?? auth()->user()->servicio_id }}">
                     @endif
                 </div>
                 <div class="col-md-3">
@@ -272,40 +271,80 @@
                 <div class="card border-0 shadow-sm rounded-xl h-100">
                     <div class="card-header bg-white border-0 pt-4 px-4">
                         <h5 class="font-bold text-gray-800 mb-1">Proyección de Agotamiento</h5>
-                        <p class="text-sm text-gray-500 mb-0">Estimación basada en consumo de últimos 30 días</p>
+                        <p class="text-sm text-gray-500 mb-0">Algoritmo avanzado con tendencia y variabilidad</p>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="table-responsive">
                         <table id="tablaProyeccion" class="table table-hover align-middle w-100">
                             <thead class="bg-gray-50 text-xs text-gray-500 uppercase font-bold">
                                 <tr>
-                                    <th class="border-0 rounded-start">Medicamento</th>
+                                    <th class="border-0 rounded-start">Medicamento / Lote</th>
                                     <th class="border-0">Stock</th>
                                     <th class="border-0">Consumo/Día</th>
-                                    <th class="border-0 rounded-end">Estado</th>
+                                    <th class="border-0">Tendencia</th>
+                                    <th class="border-0">Agotamiento</th>
+                                    <th class="border-0 rounded-end">Pedido Sugerido</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm">
                                 @foreach($proyecciones as $item)
                                     <tr>
-                                        <td class="font-medium text-gray-800">{{ $item['medicamento'] }} <span class="text-xs text-gray-400 block">{{ $item['lote'] }}</span></td>
+                                        <td class="font-medium text-gray-800">
+                                            {{ $item['medicamento'] }}
+                                            <span class="text-xs text-gray-400 block">{{ $item['lote'] }}</span>
+                                            <span class="text-xs text-gray-400 block">{{ $item['servicio'] }}</span>
+                                        </td>
                                         <td class="text-gray-600">{{ $item['cantidad_act'] }}</td>
                                         <td class="text-gray-600">{{ $item['consumo_diario'] }}</td>
                                         <td>
-                                            @if(!is_null($item['dias_restantes']) && $item['dias_restantes'] < 10)
-                                                <span class="badge bg-red-100 text-red-700 border border-red-200 rounded-pill px-2 py-1">Crítico: {{ $item['dias_restantes'] }} días</span>
-                                            @elseif(!is_null($item['dias_restantes']) && $item['dias_restantes'] < 20)
-                                                <span class="badge bg-amber-100 text-amber-700 border border-amber-200 rounded-pill px-2 py-1">Bajo: {{ $item['dias_restantes'] }} días</span>
-                                            @elseif(!is_null($item['dias_restantes']))
-                                                <span class="badge bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-pill px-2 py-1">Normal: {{ $item['dias_restantes'] }} días</span>
+                                            @if($item['tendencia'] == 'creciente')
+                                                <span class="badge bg-orange-100 text-orange-700 border border-orange-200 rounded-pill px-2 py-1">
+                                                    <i class="bi bi-arrow-up-short"></i> Creciente
+                                                </span>
+                                            @elseif($item['tendencia'] == 'decreciente')
+                                                <span class="badge bg-blue-100 text-blue-700 border border-blue-200 rounded-pill px-2 py-1">
+                                                    <i class="bi bi-arrow-down-short"></i> Decreciente
+                                                </span>
                                             @else
-                                                <span class="badge bg-gray-100 text-gray-500 border border-gray-200 rounded-pill px-2 py-1">Sin consumo</span>
+                                                <span class="badge bg-gray-100 text-gray-600 border border-gray-200 rounded-pill px-2 py-1">
+                                                    <i class="bi bi-arrow-right-short"></i> Estable
+                                                </span>
+                                            @endif
+                                            <div class="text-xs text-gray-400 mt-1">σ={{ $item['desviacion'] }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ $item['clase_badge'] }} rounded-pill px-2 py-1">
+                                                {{ $item['estado'] === 'Sin consumo' ? 'Sin consumo' : $item['dias_restantes'] . ' días' }}
+                                            </span>
+                                            @if($item['fecha_agotamiento'] && $item['estado'] !== 'Sin consumo')
+                                                <div class="text-xs text-gray-400 mt-1">
+                                                    {{ \Carbon\Carbon::parse($item['fecha_agotamiento'])->format('d/m/Y') }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">
+                                            @if($item['cantidad_sugerida'] > 0)
+                                                <span class="badge bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-pill px-2 py-1">
+                                                    +{{ $item['cantidad_sugerida'] }}
+                                                </span>
+                                                <div class="text-xs text-gray-400 mt-1">en 30 días</div>
+                                            @else
+                                                <span class="text-gray-400 text-xs">No requerido</span>
                                             @endif
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
+                        <div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-xs text-gray-500 mb-1 font-medium">Algoritmo de proyección:</p>
+                            <p class="text-xs text-gray-400">
+                                <strong class="text-gray-500">Media móvil ponderada (EMWA)</strong> para consumo diario + 
+                                <strong class="text-gray-500">regresión lineal</strong> para detección de tendencia (creciente/decreciente/estable). 
+                                <strong class="text-gray-500">σ</strong> = desviación estándar (variabilidad). 
+                                Pedido sugerido = cobertura de 30 días proyectada.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -400,7 +439,7 @@
                     previous: '<i class="bi bi-chevron-left"></i>'
                 }
             },
-            order: [[3, 'asc']], // Orden por estado (columna 3 ahora)
+            order: [[4, 'asc']],
             pageLength: 5,
             drawCallback: function() {
                 $('.dataTables_paginate .paginate_button').addClass('px-3 py-1 border rounded-md mx-1 text-sm hover:bg-gray-50 transition-colors');
