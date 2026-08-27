@@ -131,36 +131,79 @@ class StockController extends Controller
     }
     public function edit(Stock $stock, Request $request)
     {
-        $modo = $request->query('modo'); // puede ser 'agregar' o 'extraer'
+        // Por defecto será 'editar' si no se envía el parámetro ?modo=
+        $modo = $request->query('modo', 'editar'); 
+        
         $pacientes = Paciente::all();
         $empleados = Empleado::all();
+        $medicamentos = Medicamento::all(); 
+        $servicios = Servicio::all(); 
 
-        return view('stocks.edit', compact('stock', 'pacientes', 'empleados', 'modo'));
+        return view('stocks.edit', compact('stock', 'pacientes', 'empleados', 'modo', 'medicamentos', 'servicios'));
     }
     
     public function update(Request $request, Stock $stock)
     {
+        $modo = $request->input('modo', 'editar');
+
+        // LÓGICA MODO: EDITAR TODO
+        if ($modo === 'editar') {
+            $request->validate([
+                'medicamento_id' => 'required|exists:medicamentos,id',
+                'lote' => 'required|string|max:50',
+                'fecha_vencimiento' => 'required|date',
+                'cantidad_act' => 'required|integer|min:0',
+                'servicio_id' => 'required|exists:servicios,id',
+                'umbral_aviso' => 'nullable|integer|min:0',
+                'umbral_critico' => 'nullable|integer|min:0|lte:umbral_aviso',
+            ], [
+                'umbral_critico.lte' => 'El umbral crítico tiene que ser menor o igual que el de aviso.',
+            ]);
+
+            $existe = Stock::where('medicamento_id', $request->input('medicamento_id'))
+                ->where('lote', $request->input('lote'))
+                ->where('servicio_id', $request->input('servicio_id'))
+                ->where('id', '!=', $stock->id)
+                ->exists();
+
+            if ($existe) {
+                return redirect()->back()
+                    ->withErrors(['lote' => 'Ya existe un stock para este medicamento con ese lote en este servicio.'])
+                    ->withInput();
+            }
+
+            $cantidadVieja = $stock->cantidad_act;
+
+            $stock->medicamento_id = $request->input('medicamento_id');
+            $stock->lote = $request->input('lote');
+            $stock->fecha_vencimiento = $request->input('fecha_vencimiento');
+            $stock->cantidad_act = $request->input('cantidad_act');
+            $stock->servicio_id = $request->input('servicio_id');
+            $stock->umbral_aviso = $request->input('umbral_aviso', $stock->umbral_aviso);
+            $stock->umbral_critico = $request->input('umbral_critico', $stock->umbral_critico);
+            $stock->save();
+
+            // Guardar historial si la cantidad fue modificada manualmente
+            $diferencia = $stock->cantidad_act - $cantidadVieja;
+            if ($diferencia != 0) {
+                Historial_stock::create([
+                    'stock_id' => $stock->id,
+                    'cantidad' => $diferencia,
+                    'fecha' => now()->toDateString(),
+                    'comentario' => 'Edición manual de registro',
+                    'creado_por' => auth()->id(),
+                ]);
+            }
+
+            return redirect()->route('stocks.index');
+        }
+
+        // LÓGICA MODO: AGREGAR / EXTRAER (Tu código original)
         $request->validate([
             'medicamento_id' => 'required|exists:medicamentos,id',
             'cantidad_agregar' => 'nullable|integer|min:0',
             'cantidad_extraer' => 'nullable|integer|min:0',
-            'umbral_aviso' => 'nullable|integer|min:0',
-            'umbral_critico' => 'nullable|integer|min:0|lte:umbral_aviso',
-        ], [
-            'umbral_critico.lte' => 'El umbral crítico tiene que ser menor o igual que el de aviso.',
         ]);
-
-        $existe = Stock::where('medicamento_id', $request->input('medicamento_id'))
-            ->where('lote', $stock->lote)
-            ->where('servicio_id', $stock->servicio_id)
-            ->where('id', '!=', $stock->id)
-            ->exists();
-
-        if ($existe) {
-            return redirect()->back()
-                ->withErrors(['lote' => 'Ya existe un stock para este medicamento con ese lote.'])
-                ->withInput();
-        }
 
         $oldCantidad = $stock->cantidad_act;
         $agregar = $request->input('cantidad_agregar', 0);
@@ -172,7 +215,7 @@ class StockController extends Controller
                 ->withInput();
         }
 
-        if ($agregar === 0 && $extraer === 0 && !$request->filled('umbral_aviso') && !$request->filled('umbral_critico')) {
+        if ($agregar === 0 && $extraer === 0) {
             return redirect()->route('stocks.index');
         }
 
@@ -191,36 +234,25 @@ class StockController extends Controller
             ]);
         }
 
-        $stock->medicamento_id = $request->input('medicamento_id');
-        $stock->fecha_vencimiento = $request->filled('fecha_vencimiento')
-            ? $request->input('fecha_vencimiento')
-            : $stock->fecha_vencimiento;
         $stock->cantidad_act = $nuevaCantidad;
-        if ($request->filled('umbral_aviso')) {
-            $stock->umbral_aviso = $request->input('umbral_aviso');
-        }
-        if ($request->filled('umbral_critico')) {
-            $stock->umbral_critico = $request->input('umbral_critico');
-        }
         $stock->save();
 
         $cantidad_modificada = $agregar > 0 ? $agregar : -$extraer;
         $comentario = $request->input('comentario') ?? ($agregar > 0 ? 'Se aumentó el stock.' : 'Se descontó stock.');
 
-        if ($cantidad_modificada !== 0) {
-            Historial_stock::create([
-                'stock_id' => $stock->id,
-                'cantidad' => $cantidad_modificada,
-                'fecha' => now()->toDateString(),
-                'empleado_id' => $request->input('empleado_id'),
-                'paciente_id' => $request->input('paciente_id'),
-                'comentario' => $comentario,
-                'creado_por' => auth()->id(),
-            ]);
-        }
+        Historial_stock::create([
+            'stock_id' => $stock->id,
+            'cantidad' => $cantidad_modificada,
+            'fecha' => now()->toDateString(),
+            'empleado_id' => $request->input('empleado_id'),
+            'paciente_id' => $request->input('paciente_id'),
+            'comentario' => $comentario,
+            'creado_por' => auth()->id(),
+        ]);
+        
         return redirect()->route('stocks.index');
     }
-
+    
     public function estadisticas(Request $request)
     {
         $validated = $request->validate([

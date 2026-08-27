@@ -10,38 +10,62 @@
         class="bg-white shadow rounded-lg border border-gray-200 p-6 space-y-6">
         @csrf
         @method('PUT')
+        
+        <!-- Campo para informar al controlador en qué modo estamos -->
+        <input type="hidden" name="modo" value="{{ $modo }}">
 
-        <!-- Datos fijos del medicamento -->
+        <!-- Datos del medicamento -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medicamento</label>
-                <input type="text" value="{{ $stock->get_medicamento->nombre }}" readonly
-                    class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                <!-- Siempre de solo lectura, sin importar el modo -->
+                <input type="text" value="{{ $stock->get_medicamento->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
                 <input type="hidden" name="medicamento_id" value="{{ $stock->medicamento_id }}">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Lote</label>
-                <input type="text" value="{{ $stock->lote }}" readonly
-                    class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @if($modo === 'editar')
+                    <input type="text" name="lote" value="{{ old('lote', $stock->lote) }}" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('lote')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="text" value="{{ $stock->lote }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento</label>
-                <input type="text" value="{{ $stock->fecha_vencimiento }}" readonly
-                    class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @if($modo === 'editar')
+                    <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento', $stock->fecha_vencimiento) }}" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('fecha_vencimiento')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="text" value="{{ $stock->fecha_vencimiento }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
             </div>
 
             <div>
-                <label for="cantidad_actual" class="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
-                <input type="number" value="{{ $stock->cantidad_act }}" readonly
-                    class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
+                @if($modo === 'editar')
+                    <input type="number" name="cantidad_act" value="{{ old('cantidad_act', $stock->cantidad_act) }}" min="0" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('cantidad_act')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="number" value="{{ $stock->cantidad_act }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
-                <input type="text" value="{{ $stock->get_servicio->nombre }}" readonly
-                    class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @if($modo === 'editar')
+                    <select name="servicio_id" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700 select2">
+                        @foreach($servicios as $serv)
+                            <option value="{{ $serv->id }}" {{ $stock->servicio_id == $serv->id ? 'selected' : '' }}>
+                                {{ $serv->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="text" value="{{ $stock->get_servicio->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
             </div>
         </div>
 
