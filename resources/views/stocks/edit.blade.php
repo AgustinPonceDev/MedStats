@@ -33,7 +33,7 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
+                <label for="cantidad_actual" class="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
                 <input type="number" value="{{ $stock->cantidad_act }}" readonly
                     class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
             </div>
@@ -54,7 +54,8 @@
                     <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
                     <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
                         class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400"
-                        value="{{ old('umbral_aviso', $stock->umbral_aviso) }}">
+                        value="{{ old('umbral_aviso', $stock->umbral_aviso) }}"
+                        {{ in_array($modo, ['agregar', 'extraer']) ? 'disabled' : '' }}>
                     @error('umbral_aviso')
                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -63,7 +64,8 @@
                     <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
                     <input type="number" name="umbral_critico" id="umbral_critico" min="0"
                         class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400"
-                        value="{{ old('umbral_critico', $stock->umbral_critico) }}">
+                        value="{{ old('umbral_critico', $stock->umbral_critico) }}"
+                        {{ in_array($modo, ['agregar', 'extraer']) ? 'disabled' : '' }}>
                     @error('umbral_critico')
                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                     @enderror
@@ -157,7 +159,7 @@
                 Guardar
             </button>
         </div>
-    </form>     
+    </form>
     </div>
 @push('scripts')
 

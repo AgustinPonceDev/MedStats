@@ -83,27 +83,23 @@
                 <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Umbrales de Stock Bajo</h3>
                 <p class="text-xs text-gray-500 mb-4">
                     Definen cuándo este insumo se muestra en amarillo (aviso) o en rojo (crítico) en el listado.
-                    Si los dejás vacíos, se usan 50 y 30 por defecto.
+                    Los valores por defecto son 50 (aviso) y 30 (crítico).
                 </p>
+                <input type="hidden" name="umbral_aviso" value="50">
+                <input type="hidden" name="umbral_critico" value="30">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
                         <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
-                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-500"
-                            placeholder="Ej: 50" value="{{ old('umbral_aviso') }}">
-                        @error('umbral_aviso')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
+                            placeholder="Ej: 50" value="50" disabled>
                     </div>
 
                     <div>
                         <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
                         <input type="number" name="umbral_critico" id="umbral_critico" min="0"
-                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400 focus:border-red-500"
-                            placeholder="Ej: 30" value="{{ old('umbral_critico') }}">
-                        @error('umbral_critico')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
+                            placeholder="Ej: 30" value="30" disabled>
                     </div>
                 </div>
             </div>

@@ -134,7 +134,7 @@ class StockController extends Controller
         $modo = $request->query('modo'); // puede ser 'agregar' o 'extraer'
         $pacientes = Paciente::all();
         $empleados = Empleado::all();
-    
+
         return view('stocks.edit', compact('stock', 'pacientes', 'empleados', 'modo'));
     }
     
@@ -149,40 +149,40 @@ class StockController extends Controller
         ], [
             'umbral_critico.lte' => 'El umbral crítico tiene que ser menor o igual que el de aviso.',
         ]);
-    
+
         $existe = Stock::where('medicamento_id', $request->input('medicamento_id'))
             ->where('lote', $stock->lote)
             ->where('servicio_id', $stock->servicio_id)
             ->where('id', '!=', $stock->id)
             ->exists();
-    
+
         if ($existe) {
             return redirect()->back()
                 ->withErrors(['lote' => 'Ya existe un stock para este medicamento con ese lote.'])
                 ->withInput();
         }
-    
+
         $oldCantidad = $stock->cantidad_act;
         $agregar = $request->input('cantidad_agregar', 0);
         $extraer = $request->input('cantidad_extraer', 0);
-    
+
         if ($agregar > 0 && $extraer > 0) {
             return redirect()->back()
                 ->withErrors(['cantidad_agregar' => 'Solo se puede agregar o extraer, no ambas acciones a la vez.'])
                 ->withInput();
         }
-    
+
         if ($agregar === 0 && $extraer === 0 && !$request->filled('umbral_aviso') && !$request->filled('umbral_critico')) {
             return redirect()->route('stocks.index');
         }
-    
+
         $nuevaCantidad = $oldCantidad + $agregar - $extraer;
         if ($nuevaCantidad < 0) {
             return redirect()->back()
                 ->withErrors(['cantidad_extraer' => 'No se puede descontar más de lo que hay en stock.'])
                 ->withInput();
         }
-    
+
         if ($extraer > 0) {
             $request->validate([
                 'paciente_id' => 'required|exists:pacientes,id',
@@ -190,7 +190,7 @@ class StockController extends Controller
                 'comentario' => 'nullable|string|max:255',
             ]);
         }
-    
+
         $stock->medicamento_id = $request->input('medicamento_id');
         $stock->fecha_vencimiento = $request->filled('fecha_vencimiento')
             ? $request->input('fecha_vencimiento')
@@ -203,7 +203,7 @@ class StockController extends Controller
             $stock->umbral_critico = $request->input('umbral_critico');
         }
         $stock->save();
-    
+
         $cantidad_modificada = $agregar > 0 ? $agregar : -$extraer;
         $comentario = $request->input('comentario') ?? ($agregar > 0 ? 'Se aumentó el stock.' : 'Se descontó stock.');
 

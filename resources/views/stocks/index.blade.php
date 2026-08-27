@@ -106,17 +106,20 @@
                                 </span>
                             </td>
                             <td class="px-4 py-2 border text-center space-x-2">
-                                <a href="{{ route('stocks.show', $item) }}" class="btn btn-outline-primary btn-sm me-1">
-                                    Historial
-                                </a>
-                                <a href="{{ route('stocks.edit', ['stock' => $item->id, 'modo' => 'agregar']) }}" class="btn btn-outline-success btn-sm">
-                                    Agregar
-                                </a>
+                                 <a href="{{ route('stocks.show', $item) }}" class="btn btn-outline-primary btn-sm me-1">
+                                     Historial
+                                 </a>
+                                 <a href="{{ route('stocks.edit', $item->id) }}" class="btn btn-outline-warning btn-sm me-1">
+                                     Editar
+                                 </a>
+                                 <a href="{{ route('stocks.edit', ['stock' => $item->id, 'modo' => 'agregar']) }}" class="btn btn-outline-success btn-sm me-1">
+                                     Agregar
+                                 </a>
 
-                                <a href="{{ route('stocks.edit', ['stock' => $item->id, 'modo' => 'extraer']) }}" class="btn btn-outline-danger btn-sm">
-                                    Extraer
-                                </a>
-                            </td>
+                                 <a href="{{ route('stocks.edit', ['stock' => $item->id, 'modo' => 'extraer']) }}" class="btn btn-outline-danger btn-sm">
+                                     Extraer
+                                 </a>
+                             </td>
 
                         </tr>
                     @empty
