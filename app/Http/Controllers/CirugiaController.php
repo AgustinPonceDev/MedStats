@@ -47,7 +47,7 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
         $procedimientos = Procedimiento::orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -205,7 +205,7 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::with('get_profesion')->orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
         $procedimientos = Procedimiento::with('get_especialidad')->orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -349,7 +349,7 @@ class CirugiaController extends Controller
         $desde = $validated['desde'] ?? null;
         $hasta = $validated['hasta'] ?? null;
         $especialidadId = $request->input('especialidad_id');
-        $especialidades = \App\Models\Especialidad::orderBy('nombre')->get();
+        $especialidades = \App\Models\Especialidad::quirurgicas()->orderBy('nombre')->get();
         $aniosDisponibles = \App\Models\Cirugia::select(DB::raw('YEAR(created_at) as anio'))
             ->distinct()
             ->orderBy('anio', 'desc')

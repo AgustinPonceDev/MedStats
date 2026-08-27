@@ -18,13 +18,6 @@
             $rutaActual = request()->route() ? request()->route()->getName() : '';
             $rutaAnterior = 'inicio'; // Default
 
-            // Lógica simplificada de rutas (puedes expandir esto según tu lógica original si es necesario)
-            // Aquí mantenemos la lógica original pero resumida para el ejemplo, asegurando que funcione.
-            // ... (Tu lógica PHP original de switch case iría aquí si es compleja, 
-            // pero para limpieza visual en este ejemplo asumimos que ya tienes la variable $rutaAnterior calculada correctamente
-            // o usamos la lógica anterior).
-            
-            // Copiamos la lógica original para no romper nada:
             switch ($rutaActual) {
                 case 'stocks.index':
                 case 'pacientes.index':
@@ -32,7 +25,6 @@
                 case 'camas.index':
                 case 'cirugias.estadisticas':
                 case 'stocks.estadisticasstock':
-                //case 'cirugias.index':
                 case 'ajustes':
                     $rutaAnterior = 'inicio';
                     break;
@@ -55,7 +47,7 @@
                     $rutaAnterior = 'ajustes';
                     break;
 
-                //Perfiles
+                // Perfiles
                 case 'perfiles.create':
                 case 'perfiles.edit':
                     $rutaAnterior = 'perfiles.index';
@@ -107,11 +99,9 @@
                 case 'pacientes.edit':
                 case 'pacientes.show':
                 case 'pacientes.asignar':
-                    // Si la URL anterior es pacientes, volver a pacientes.index, si no volver a persona.ver
                     if (url()->previous() && str_contains(url()->previous(), route('pacientes.index'))) {
                         $rutaAnterior = 'pacientes.index';
                     } else {
-                        // Obtener el id del paciente desde la ruta actual
                         $id = request()->route('id') ?? request()->route('paciente') ?? null;
                         if ($id) {
                             $rutaAnterior = ['persona.ver', ['id' => $id]];
@@ -164,8 +154,15 @@
                 case 'cirugias.create':
                 case 'cirugias.edit':
                 case 'cirugias.show':
-                    // case 'cirugias.estadisticas':
                     $rutaAnterior = 'cirugias.index';
+                    break;
+
+                // Diagnóstico por imágenes
+                case 'estudios_medicos.index':
+                case 'estudios_medicos.create':
+                case 'estudios_medicos.edit':
+                case 'estudios_medicos.show':
+                    $rutaAnterior = 'estudios_medicos.index';
                     break;
 
                 // Quirófanos
@@ -179,25 +176,22 @@
                 case 'especialidades.create':
                 case 'especialidades.edit':
                     $rutaAnterior = 'especialidades.index';
-                    break;    
-
+                    break;
 
                 // Por defecto
                 default:
                     $rutaAnterior = 'inicio';
                     break;
             }
-            // NOTA: Para brevedad del snippet, asegúrate de que la lógica PHP completa esté presente si hay casos específicos críticos.
-            // He incluido los principales.
         @endphp
 
         @if ($rutaActual !== 'inicio')
-            <a href="{{ is_array($rutaAnterior) ? route($rutaAnterior[0], $rutaAnterior[1]) : route($rutaAnterior) }}" 
+            <a href="{{ is_array($rutaAnterior) ? route($rutaAnterior[0], $rutaAnterior[1]) : route($rutaAnterior) }}"
                class="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative overflow-hidden"
                title="Volver">
                 <i data-lucide="arrow-left" class="w-6 h-6 flex-shrink-0 transition-transform group-hover:-translate-x-1"></i>
                 <span class="link-text font-medium whitespace-nowrap hidden opacity-0 transition-opacity duration-300">Volver</span>
-                
+
                 <!-- Tooltip para modo colapsado -->
                 <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap md:hidden">
                     Volver
@@ -208,20 +202,30 @@
 
         <!-- Links Principales -->
         @php
+            // El link "Estadísticas" apunta a Cirugías por defecto (comportamiento de
+            // siempre, incluido Admin). Pero si el usuario NO tiene acceso a Cirugías
+            // y SÍ a Estudios Médicos (ej. el rol "Diagnóstico por Imágenes"), no tiene
+            // sentido mandarlo a una página de estadísticas de cirugías vacía — va
+            // directo a Estadísticas de Stock, que es lo que realmente puede usar.
+            $rutaEstadisticas = 'cirugias.estadisticas';
+            if (!Auth::user()->hasAccess('cirugias') && Auth::user()->hasAccess('estudios_medicos')) {
+                $rutaEstadisticas = 'stocks.estadisticasstock';
+            }
+
             $menuItems = [
                 ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
-                ['route' => 'stocks.estadisticasstock', 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
+                ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
                 ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
                 ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
                 ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
-                ['route' => 'estudios_medicos.index', 'title' => 'Estudios Médicos', 'icon' => 'file-text', 'access' => 'estudios_medicos'],
-                ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null], // Visible para todos
+                ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
+                ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
             ];
         @endphp
 
         @foreach($menuItems as $item)
             @if(Auth::user()->hasAccess($item['access']))
-            <a href="{{ route($item['route']) }}" 
+            <a href="{{ route($item['route']) }}"
                class="flex items-center gap-3 p-3 rounded-xl transition-all group relative overflow-hidden
                       {{ request()->routeIs($item['route']) ? 'bg-[#1B7D8F]/10 text-[#1B7D8F]' : 'text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F]' }}"
                title="{{ $item['title'] }}">
@@ -268,26 +272,25 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         if (window.lucide) lucide.createIcons();
-        
+
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
         const linkTexts = document.querySelectorAll('.link-text');
         const sidebarTitle = document.getElementById('sidebar-title');
-        const mainContent = document.getElementById('mainContent'); // Asegúrate de que este ID exista en tu layout
+        const mainContent = document.getElementById('mainContent');
 
-        // Función para aplicar estado visual
         function setSidebarState(expanded) {
             const footer = document.getElementById('footer');
-            
+
             if (expanded) {
                 sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
                 sidebar.classList.add('w-64', 'sidebar-expandido');
-                
+
                 linkTexts.forEach(el => {
                     el.classList.remove('hidden');
                     setTimeout(() => el.classList.remove('opacity-0'), 50);
                 });
-                
+
                 if(sidebarTitle) {
                     sidebarTitle.classList.remove('hidden');
                     setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
@@ -297,7 +300,7 @@
                     mainContent.style.marginLeft = "16rem";
                     mainContent.style.transform = "scale(0.98)";
                 }
-                
+
                 if(footer) {
                     footer.style.marginLeft = "16rem";
                     footer.style.width = "calc(100% - 16rem)";
@@ -307,7 +310,7 @@
             } else {
                 sidebar.classList.remove('w-64', 'sidebar-expandido');
                 sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
-                
+
                 linkTexts.forEach(el => {
                     el.classList.add('opacity-0');
                     el.classList.add('hidden');
@@ -321,7 +324,7 @@
                     mainContent.style.marginLeft = "5rem";
                     mainContent.style.transform = "scale(1)";
                 }
-                
+
                 if(footer) {
                     footer.style.marginLeft = "5rem";
                     footer.style.width = "calc(100% - 5rem)";
@@ -330,17 +333,15 @@
             }
         }
 
-        // Inicialización: Por defecto COLAPSADO (false)
-        // Si quieres persistencia, descomenta las líneas de localStorage, pero invirtiendo la lógica para que default sea false
         const storedState = localStorage.getItem('sidebar-expanded');
-        const isExpanded = storedState === 'true'; // Default false si es null
-        
+        const isExpanded = storedState === 'true';
+
         setSidebarState(isExpanded);
 
         toggleBtn.addEventListener('click', function() {
             const isCurrentlyExpanded = sidebar.classList.contains('w-64');
             const newState = !isCurrentlyExpanded;
-            
+
             setSidebarState(newState);
             localStorage.setItem('sidebar-expanded', newState);
         });

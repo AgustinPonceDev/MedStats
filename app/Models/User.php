@@ -73,10 +73,6 @@ class User extends Authenticatable
             $modules = [$modules];
         }
 
-        // If user is admin, they usually have access to everything, 
-        // but let's stick to the explicit permission check from the profile
-        // or if the profile itself is 'admin' (common convention, but relying on columns is safer as per CheckRole)
-        
         $perfil = $this->perfil;
 
         if (!$perfil) {
@@ -84,13 +80,24 @@ class User extends Authenticatable
         }
 
         foreach ($modules as $module) {
-            // Check if the column exists and is true
-            // We assume the column name in UsuarioPerfil matches the module name
             if ($perfil->$module) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Devuelve el servicio al que este usuario está restringido, o null si tiene
+     * acceso global. Prioridad: si el usuario tiene su propio servicio_id asignado
+     * (caso puntual, ej. un admin que además cubre un servicio), ese gana. Si no,
+     * hereda el servicio asignado al PERFIL/rol (ej. "Diagnóstico de Imagen" con
+     * servicio "Diagnóstico por imágenes" — así no hay que asignarlo usuario por
+     * usuario, alcanza con asignarlo una vez en el perfil).
+     */
+    public function servicioRestringido(): ?int
+    {
+        return $this->servicio_id ?: optional($this->perfil)->servicio_id;
     }
 }

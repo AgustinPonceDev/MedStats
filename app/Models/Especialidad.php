@@ -39,4 +39,12 @@ class Especialidad extends Model
     {
         return $query->where('es_modalidad_imagen', true);
     }
+
+    // Solo las especialidades quirúrgicas (todas menos Rayos/Tomografía). Para usar en
+    // cirugías: creación/edición y el filtro de Estadísticas de Cirugías, donde
+    // Rayos/Tomografía no tienen nada que hacer (son de Diagnóstico por Imágenes).
+    public function scopeQuirurgicas($query)
+    {
+        return $query->where('es_modalidad_imagen', false);
+    }
 }

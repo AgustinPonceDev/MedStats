@@ -27,18 +27,18 @@
                             class="form-select"
                             style="border: 2px solid #1B7D8F; border-radius: 8px; min-width: 200px; font-weight: 500;"
                             onchange="this.form.submit()"
-                            {{ (count($servicios) == 1 && (auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id)) ? 'disabled' : '' }}
+                            {{ $servicioRestringido ? 'disabled' : '' }}
                         >
-                            @if(!auth()->user()->servicio_id && !auth()->user()->perfil?->servicio_id)
+                            @if(!$servicioRestringido)
                                 <option value="">Todos los Servicios</option>
                             @endif
                             @foreach($servicios as $s)
-                                <option value="{{ $s->id }}" {{ request('servicio_id', $servicioRestringido ?? $s->id) == $s->id ? 'selected' : '' }}>
+                                <option value="{{ $s->id }}" {{ request('servicio_id') == $s->id ? 'selected' : '' }}>
                                     {{ $s->nombre }}
                                 </option>
                             @endforeach
                         </select>
-                        @if(auth()->user()->servicio_id || auth()->user()->perfil?->servicio_id)
+                        @if($servicioRestringido)
                             <span class="badge" style="background-color: #1B7D8F; font-size: 0.75rem;">
                                 Restringido
                             </span>
@@ -63,19 +63,29 @@
                         <th class="px-4 py-2 border">Lote</th>
                         <th class="px-4 py-2 border">Fecha de vencimiento</th>
                         <th class="px-4 py-2 border text-center">Cantidad actual</th>
+                        <th class="px-4 py-2 border text-center">Proyección</th>
                         <th class="px-4 py-2 border text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($stock as $item)
                         @php
-                            // El estado (crítico/aviso/ok) ahora lo define el umbral propio de
+                            // El estado (crítico/aviso/ok) lo define el umbral propio de
                             // cada insumo (cargado por el médico/encargado), con fallback a 30/50.
                             $estado = $item->estadoStock();
                             $claseColor = match($estado) {
                                 'critico' => 'text-red-600 font-bold',
                                 'aviso' => 'text-yellow-600 font-medium',
                                 default => 'text-green-700 font-medium',
+                            };
+
+                            $proy = $item->proyeccion ?? null;
+                            $urgenciaProy = $proy['urgencia'] ?? 'sin_datos';
+                            [$badgeClase, $badgeTexto] = match($urgenciaProy) {
+                                'critico' => ['bg-red-100 text-red-700 border border-red-200', 'Se agota en ' . $proy['dias_restantes'] . ' días'],
+                                'aviso' => ['bg-yellow-100 text-yellow-700 border border-yellow-200', 'Se agota en ' . $proy['dias_restantes'] . ' días'],
+                                'ok' => ['bg-green-100 text-green-700 border border-green-200', $proy['dias_restantes'] ? ('Alcanza ' . $proy['dias_restantes'] . ' días') : 'Sin agotamiento próximo'],
+                                default => ['bg-gray-100 text-gray-500 border border-gray-200', 'Sin consumo reciente'],
                             };
                         @endphp
 
@@ -89,11 +99,16 @@
                                     {{ $item->cantidad_act }}
                                 </span>
                             </td>
+                            <td class="px-4 py-2 border text-center">
+                                <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold {{ $badgeClase }}"
+                                    title="Promedio ponderado: {{ $proy['consumo_diario_ponderado'] ?? 0 }}/día · Tendencia: {{ $proy['tendencia'] ?? '-' }}">
+                                    {{ $badgeTexto }}
+                                </span>
+                            </td>
                             <td class="px-4 py-2 border text-center space-x-2">
                                 <a href="{{ route('stocks.show', $item) }}" class="btn btn-outline-primary btn-sm me-1">
                                     Historial
                                 </a>
-
                                 <a href="{{ route('stocks.edit', ['stock' => $item->id, 'modo' => 'agregar']) }}" class="btn btn-outline-success btn-sm">
                                     Agregar
                                 </a>
@@ -106,7 +121,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-2 text-center text-gray-500">No hay medicamentos en stock.
+                            <td colspan="7" class="px-4 py-2 text-center text-gray-500">No hay medicamentos en stock.
                             </td>
                         </tr>
                     @endforelse
@@ -132,7 +147,7 @@ $(document).ready(function () {
         },
         order: [[2, 'asc']],
         columnDefs: [
-            { orderable: false, targets: 4 }
+            { orderable: false, targets: [4, 5, 6] }
         ]
     });
 });

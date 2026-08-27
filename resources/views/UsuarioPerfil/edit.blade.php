@@ -42,7 +42,7 @@
                         'estadisticas' => 'Estadísticas',
                         'camas' => 'Camas',
                         'cirugias' => 'Cirugías',
-                        'estudios_medicos' => 'Estudios Médicos',
+                        'estudios_medicos' => 'Estudios Médicos (Diagnóstico por Imágenes)',
                     ];
                 @endphp
 
@@ -57,21 +57,27 @@
                     </div>
                 @endforeach
 
-                <!-- Servicio -->
-                <div>
-                    <label for="servicio_id" class="form-label fw-semibold text-secondary">
-                        Servicio Asociado
+                {{-- Servicio asignado al perfil: cualquier usuario con este rol queda
+                     restringido a este servicio automáticamente (salvo que el usuario
+                     tenga su propio servicio asignado en /usuarios, que tiene prioridad). --}}
+                <div class="border rounded-lg p-4 mt-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-color: #1B7D8F !important;">
+                    <label for="servicio_id" class="form-label fw-semibold" style="color: #1B7D8F;">
+                        Servicio Asignado al Rol
                     </label>
-                    <select name="servicio_id" id="servicio_id" class="form-control border shadow-sm">
-                        <option value="">Sin servicio asociado</option>
-                        @foreach($servicios as $s)
-                            <option value="{{ $s->id }}" {{ old('servicio_id', $perfil->servicio_id) == $s->id ? 'selected' : '' }}>
-                                {{ $s->nombre }}
+                    <select name="servicio_id" id="servicio_id" class="form-select border shadow-sm">
+                        <option value="">🌐 Sin restricción (acceso a todos los servicios)</option>
+                        @foreach ($servicios as $servicio)
+                            <option value="{{ $servicio->id }}" {{ old('servicio_id', $perfil->servicio_id) == $servicio->id ? 'selected' : '' }}>
+                                🏥 {{ $servicio->nombre }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-secondary mt-2 mb-0">
+                        Cualquier usuario con este perfil va a ver y gestionar solo los insumos y
+                        estadísticas de este servicio, sin tener que asignárselo individualmente.
+                    </p>
                     @error('servicio_id')
-                        <small class="text-danger">{{ $message }}</small>
+                        <small class="text-danger d-block mt-1">{{ $message }}</small>
                     @enderror
                 </div>
 
@@ -95,7 +101,6 @@
 
 {{-- Estilos personalizados --}}
 <style>
-    /* Grupo general */
     .switches-group-compact {
         display: flex;
         align-items: center;

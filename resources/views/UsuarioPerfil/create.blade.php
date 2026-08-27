@@ -33,105 +33,50 @@
                     @enderror
                 </div>
 
-                <!-- Admin -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Administrador</span>
-                    <label class="switch">
-                        <input type="checkbox" name="admin" id="admin" {{ old('admin') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('admin')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
-                
-                <!-- Insumos -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Insumos</span>
-                    <label class="switch">
-                        <input type="checkbox" name="insumos" id="insumos" {{ old('insumos') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('insumos')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
+                @php
+                    $opciones = [
+                        'admin' => 'Administrador',
+                        'insumos' => 'Insumos',
+                        'pacientes' => 'Pacientes',
+                        'estadisticas' => 'Estadísticas',
+                        'camas' => 'Camas',
+                        'cirugias' => 'Cirugías',
+                        'estudios_medicos' => 'Estudios Médicos (Diagnóstico por Imágenes)',
+                    ];
+                @endphp
 
-                <!-- Pacientes -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Pacientes</span>
-                    <label class="switch">
-                        <input type="checkbox" name="pacientes" id="pacientes" {{ old('pacientes') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('pacientes')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
+                @foreach ($opciones as $campo => $etiqueta)
+                    <div class="switches-group-compact">
+                        <span class="switch-label">{{ $etiqueta }}</span>
+                        <label class="switch">
+                            <input type="checkbox" name="{{ $campo }}" id="{{ $campo }}" {{ old($campo) ? 'checked' : '' }}>
+                            <span class="slider round"></span>
+                        </label>
+                        @error($campo)
+                            <div><small class="text-danger">{{ $message }}</small></div>
+                        @enderror
+                    </div>
+                @endforeach
 
-                <!-- Estadísticas -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Estadísticas</span>
-                    <label class="switch">
-                        <input type="checkbox" name="estadisticas" id="estadisticas" {{ old('estadisticas') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
+                {{-- Servicio asignado al perfil --}}
+                <div class="border rounded-lg p-4 mt-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-color: #1B7D8F !important;">
+                    <label for="servicio_id" class="form-label fw-semibold" style="color: #1B7D8F;">
+                        Servicio Asignado al Rol
                     </label>
-                    @error('estadisticas')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
-
-                <!-- Camas -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Camas</span>
-                    <label class="switch">
-                        <input type="checkbox" name="camas" id="camas" {{ old('camas') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('camas')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
-
-                 <!-- Cirugías -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Cirugías</span>
-                    <label class="switch">
-                        <input type="checkbox" name="cirugias" id="cirugias" {{ old('cirugias') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('cirugias')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
-
-                <!-- Estudios Médicos -->
-                <div class="switches-group-compact">
-                    <span class="switch-label">Estudios Médicos</span>
-                    <label class="switch">
-                        <input type="checkbox" name="estudios_medicos" id="estudios_medicos" {{ old('estudios_medicos') ? 'checked' : '' }}>
-                        <span class="slider round"></span>
-                    </label>
-                    @error('estudios_medicos')
-                        <div><small class="text-danger">{{ $message }}</small></div>
-                    @enderror
-                </div>
-
-                <!-- Servicio -->
-                <div>
-                    <label for="servicio_id" class="form-label fw-semibold text-secondary">
-                        Servicio Asociado
-                    </label>
-                    <select name="servicio_id" id="servicio_id" class="form-control border shadow-sm">
-                        <option value="">Sin servicio asociado</option>
-                        @foreach($servicios as $s)
-                            <option value="{{ $s->id }}" {{ old('servicio_id') == $s->id ? 'selected' : '' }}>
-                                {{ $s->nombre }}
+                    <select name="servicio_id" id="servicio_id" class="form-select border shadow-sm">
+                        <option value="">🌐 Sin restricción (acceso a todos los servicios)</option>
+                        @foreach ($servicios as $servicio)
+                            <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>
+                                🏥 {{ $servicio->nombre }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-secondary mt-2 mb-0">
+                        Cualquier usuario con este perfil va a ver y gestionar solo los insumos y
+                        estadísticas de este servicio, sin tener que asignárselo individualmente.
+                    </p>
                     @error('servicio_id')
-                        <small class="text-danger">{{ $message }}</small>
+                        <small class="text-danger d-block mt-1">{{ $message }}</small>
                     @enderror
                 </div>
 
@@ -157,7 +102,7 @@
     .switches-group-compact {
         display: flex;
         align-items: center;
-        justify-content: space-between; /* <-- mantiene el switch al final */
+        justify-content: space-between;
         background-color: #f8fafc;
         border: 1px solid #d1d5db;
         border-radius: 0.75rem;
@@ -174,7 +119,7 @@
     .switch-label {
         font-weight: 600;
         color: #334155;
-        flex-grow: 1; /* asegura que el texto use todo el espacio */
+        flex-grow: 1;
     }
 
     .switch {
@@ -182,7 +127,7 @@
         display: inline-block;
         width: 48px;
         height: 26px;
-        flex-shrink: 0; /* mantiene tamaño fijo */
+        flex-shrink: 0;
     }
 
     .switch input {

@@ -18,11 +18,11 @@ class UsuarioPerfil extends Model
         'camas',
         'cirugias',
         'estudios_medicos',
-        'servicio_id'
+        'servicio_id',
     ];
 
     public function servicio()
     {
-        return $this->belongsTo(Servicio::class);
+        return $this->belongsTo(Servicio::class, 'servicio_id');
     }
 }
