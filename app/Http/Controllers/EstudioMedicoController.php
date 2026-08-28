@@ -57,12 +57,15 @@ class EstudioMedicoController extends Controller
     public function store(StoreEstudioMedicoRequest $request)
     {
         $data = $request->validated();
+$estudioReal = Estudio::findOrFail($data['estudio_id']);
 
-        $estudioReal = Estudio::findOrFail($data['estudio_id']);
+// Inyectamos el nombre del estudio real en la columna obligatoria
+$data['tipo_estudio'] = $estudioReal->nombre;
 
-        DB::beginTransaction();
-        try {
-            $estudioMedico = EstudioMedico::create($data);
+DB::beginTransaction();
+try {
+    $estudioMedico = EstudioMedico::create($data);
+// ...
 
             $this->descontarInsumoFijo($estudioMedico, self::INSUMO_CONTRASTE_50, (int) $data['cont_50ml']);
             $this->descontarInsumoFijo($estudioMedico, self::INSUMO_CONTRASTE_100, (int) $data['cont_100ml']);

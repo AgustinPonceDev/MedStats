@@ -16,6 +16,7 @@ class EstudioMedico extends Model
         'ia',
         'especialidad_id',
         'estudio_id',
+        'tipo_estudio',
         'regiones',
         'fecha',
         'hora_estudio',
