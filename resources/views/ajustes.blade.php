@@ -17,160 +17,185 @@
 
 
         {{-- Tarjetas --}}
-        <div class="row g-4">
-
+        <div>
             @php
                 $cardHeight = 'min-height: 190px;';
                 $cardBodyClass = 'card-body d-flex flex-column justify-content-between';
                 $borderColor = '#A3D9A5'; // verde pastel, igual que Medicamentos
-                $cards = [
-                    [
-                        'title' => 'Usuarios',
-                        'text' => 'Dar de alta nuevos usuarios del sistema.',
-                        'route' => route('usuarios.index'),
-                        'btn' => 'Dar de Alta Usuarios',
-                        'access' => 'admin',
+                
+                $grupos = [
+                    'Personal y Accesos' => [
+                        [
+                            'title' => 'Empleados',
+                            'text' => 'Agregar empleados y definir su profesión.',
+                            'route' => route('empleados.index'),
+                            'btn' => 'Ir a Empleados',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Profesiones',
+                            'text' => 'Definir nuevas profesiones del personal.',
+                            'route' => route('profesion.index'),
+                            'btn' => 'Ver Profesiones',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Roles de Usuario',
+                            'text' => 'Gestionar los perfiles y permisos del sistema.',
+                            'route' => route('UsuarioPerfil.index'),
+                            'btn' => 'Ver Roles',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Usuarios',
+                            'text' => 'Dar de alta nuevos usuarios del sistema.',
+                            'route' => route('usuarios.index'),
+                            'btn' => 'Dar de Alta Usuarios',
+                            'access' => 'admin',
+                        ],
                     ],
-                    [
-                        'title' => 'Medicamentos',
-                        'text' => 'Agregar o editar medicamentos disponibles.',
-                        'route' => route('medicamentos.index'),
-                        'btn' => 'Ir a Medicamentos',
-                        'access' => ['admin', 'insumos'],
+                    'Infraestructura del Hospital' => [
+                        [
+                            'title' => 'Camas',
+                            'text' => 'Agregar Nueva Cama.',
+                            'route' => route('camas.listar'),
+                            'btn' => 'Gestionar Camas',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Habitaciones',
+                            'text' => 'Agregar habitaciones nuevas para asignación de camas.',
+                            'route' => route('habitaciones.index'),
+                            'btn' => 'Gestionar Habitación',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Quirófanos',
+                            'text' => 'Gestionar quirófanos habilitados para cirugías.',
+                            'route' => route('quirofanos.index'),
+                            'btn' => 'Gestionar Quirófanos',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Salas',
+                            'text' => 'Definir salas del establecimiento y su capacidad.',
+                            'route' => route('salas.index'),
+                            'btn' => 'Gestionar Salas',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Servicios',
+                            'text' => 'Administrar Servicios del Hospital.',
+                            'route' => route('servicios.index'),
+                            'btn' => 'Ir a Servicios',
+                            'access' => 'admin',
+                        ],
                     ],
-                    [
-                        'title' => 'Habitaciones',
-                        'text' => 'Agregar habitaciones nuevas para asignación de camas.',
-                        'route' => route('habitaciones.index'),
-                        'btn' => 'Gestionar Habitación',
-                        'access' => 'admin',
+                    'Catálogos Médicos' => [
+                        [
+                            'title' => 'Especialidades',
+                            'text' => 'Administrar Especialidades.',
+                            'route' => route('especialidades.index'),
+                            'btn' => 'Ir a Especialidades',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Estudios',
+                            'text' => 'Administrar estudios de rayos y tomografías.',
+                            'route' => route('estudios.index'), 
+                            'btn' => 'Ir a Estudios',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Procedimientos',
+                            'text' => 'Administrar tipos de procedimientos quirúrgicos.',
+                            'route' => route('procedimientos.index'),
+                            'btn' => 'Ir a Procedimientos',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Tipos de Anestesia',
+                            'text' => 'Agregar tipos de anestesia.',
+                            'route' => route('tipoAnestesias.index'),
+                            'btn' => 'Ir a Anestesias',
+                            'access' => 'admin',
+                        ],
                     ],
-                    [
-                        'title' => 'Camas',
-                        'text' => 'Agregar Nueva Cama.',
-                        'route' => route('camas.listar'),
-                        'btn' => 'Gestionar Camas',
-                        'access' => 'admin',
+                    'Localidades y Geografía' => [
+                        [
+                            'title' => 'Códigos Postales',
+                            'text' => 'Administrar códigos postales y localidades.',
+                            'route' => route('codigos_postales.index'),
+                            'btn' => 'Ir a C.P.',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Países',
+                            'text' => 'Administrar países del sistema.',
+                            'route' => route('paises.index'),
+                            'btn' => 'Ir a Países',
+                            'access' => 'admin',
+                        ],
+                        [
+                            'title' => 'Provincias',
+                            'text' => 'Administrar provincias.',
+                            'route' => route('provincias.index'),
+                            'btn' => 'Ir a Provincias',
+                            'access' => 'admin',
+                        ],
                     ],
-                    [
-                        'title' => 'Salas',
-                        'text' => 'Definir salas del establecimiento y su capacidad.',
-                        'route' => route('salas.index'),
-                        'btn' => 'Gestionar Salas',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Empleados',
-                        'text' => 'Agregar empleados y definir su profesión.',
-                        'route' => route('empleados.index'),
-                        'btn' => 'Ir a Empleados',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Roles de Usuario',
-                        'text' => 'Gestionar los perfiles y permisos del sistema.',
-                        'route' => route('UsuarioPerfil.index'),
-                        'btn' => 'Ver Roles',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Tipos de Anestesia',
-                        'text' => 'Agregar tipos de anestesia.',
-                        'route' => route('tipoAnestesias.index'),
-                        'btn' => 'Ir a Anestesias',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Quirófanos',
-                        'text' => 'Gestionar quirófanos habilitados para cirugías.',
-                        'route' => route('quirofanos.index'),
-                        'btn' => 'Gestionar Quirófanos',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Profesiones',
-                        'text' => 'Definir nuevas profesiones del personal.',
-                        'route' => route('profesion.index'),
-                        'btn' => 'Ver Profesiones',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Procedimientos',
-                        'text' => 'Administrar tipos de procedimientos quirúrgicos.',
-                        'route' => route('procedimientos.index'),
-                        'btn' => 'Ir a Procedimientos',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Especialidades',
-                        'text' => 'Administrar Especialidades.',
-                        'route' => route('especialidades.index'),
-                        'btn' => 'Ir a Especialidades',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Servicios',
-                        'text' => 'Administrar Servicios del Hospital.',
-                        'route' => route('servicios.index'),
-                        'btn' => 'Ir a Servicios',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Países',
-                        'text' => 'Administrar países del sistema.',
-                        'route' => route('paises.index'),
-                        'btn' => 'Ir a Países',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Provincias',
-                        'text' => 'Administrar provincias.',
-                        'route' => route('provincias.index'),
-                        'btn' => 'Ir a Provincias',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Códigos Postales',
-                        'text' => 'Administrar códigos postales y localidades.',
-                        'route' => route('codigos_postales.index'),
-                        'btn' => 'Ir a C.P.',
-                        'access' => 'admin',
-                    ],
-                    [
-                        'title' => 'Estudios',
-                        'text' => 'Administrar estudios de rayos y tomografías.',
-                        'route' => route('estudios.index'), 
-                        'btn' => 'Ir a Estudios',
-                        'access' => 'admin',
+                    'Inventario' => [
+                        [
+                            'title' => 'Medicamentos',
+                            'text' => 'Agregar o editar medicamentos disponibles.',
+                            'route' => route('medicamentos.index'),
+                            'btn' => 'Ir a Medicamentos',
+                            'access' => ['admin', 'insumos'],
+                        ],
                     ],
                 ];
-
-                // Ordenar alfabéticamente por título
-                usort($cards, function ($a, $b) {
-                    return strcmp($a['title'], $b['title']);
-                });
             @endphp
 
-            @foreach ($cards as $card)
-                @if (Auth::user()->hasAccess($card['access']))
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card soft-card mb-4" style="border: 2px solid {{ $borderColor }};">
-                            <div class="{{ $cardBodyClass }}" style="{{ $cardHeight }}">
-                                <div>
-                                    <h5 class="card-title fw-semibold">{{ $card['title'] }}</h5>
-                                    <p class="card-text text-muted">{{ $card['text'] }}</p>
-                                </div>
-                                <a href="{{ $card['route'] }}"
-                                    class="btn soft-btn mt-3 {{ $card['disabled'] ?? false ? 'disabled' : '' }}">
-                                    {{ $card['btn'] }}
-                                </a>
-                            </div>
+            @foreach ($grupos as $nombreGrupo => $cards)
+                @php
+                    // Verificar si el usuario tiene acceso a al menos una tarjeta del grupo
+                    $hasAccessToGroup = false;
+                    foreach ($cards as $card) {
+                        if (Auth::user()->hasAccess($card['access'])) {
+                            $hasAccessToGroup = true;
+                            break;
+                        }
+                    }
+                @endphp
+
+                @if($hasAccessToGroup)
+                    <div class="mb-5">
+                        <h3 class="h4 mb-4 fw-bold text-secondary" style="border-bottom: 2px solid {{ $borderColor }}; padding-bottom: 8px;">
+                            {{ $nombreGrupo }}
+                        </h3>
+                        <div class="row g-4">
+                            @foreach ($cards as $card)
+                                @if (Auth::user()->hasAccess($card['access']))
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="card soft-card h-100" style="border: 2px solid {{ $borderColor }};">
+                                            <div class="{{ $cardBodyClass }}" style="{{ $cardHeight }}">
+                                                <div>
+                                                    <h5 class="card-title fw-semibold">{{ $card['title'] }}</h5>
+                                                    <p class="card-text text-muted">{{ $card['text'] }}</p>
+                                                </div>
+                                                <a href="{{ $card['route'] }}"
+                                                    class="btn soft-btn mt-3 {{ $card['disabled'] ?? false ? 'disabled' : '' }}">
+                                                    {{ $card['btn'] }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
                 @endif
             @endforeach
-
-
 
         </div>
     </div>
