@@ -344,12 +344,14 @@
                                     <label for="duracion_horas" class="form-label mb-1 small">Horas</label>
                                     <input type="number" name="duracion_horas" id="duracion_horas"
                                         class="form-control form-control-sm py-0" min="0"
-                                        value="{{ old('duracion_horas', 0) }}">
+                                        placeholder="0"
+                                        value="{{ old('duracion_horas') }}">
                                 </div>
                                 <div class="col-6">
                                     <label for="duracion_minutos" class="form-label mb-1 small">Minutos</label>
                                     <input type="number" name="duracion_minutos" id="duracion_minutos"
                                         class="form-control form-control-sm py-0" min="0" max="59"
+                                        placeholder="0"
                                         value="{{ old('duracion_minutos', 0) }}">
                                 </div>
                             </div>
