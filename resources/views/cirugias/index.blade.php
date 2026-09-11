@@ -2,7 +2,7 @@
 @section('title', 'Gestión de Cirugías')
 @section('contenido')
     <div class="w-100" style="padding-left: 0; margin-left: 0;">
-        
+
         <!-- Header con Título y Botón de Crear -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
@@ -21,7 +21,7 @@
         <!-- Tarjeta de Filtros y Controles -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
             <div class="flex flex-col lg:flex-row gap-5 justify-between items-end lg:items-center">
-                
+
                 <!-- Filtros de Fecha -->
                 <div class="flex flex-wrap items-end gap-4 w-full lg:w-auto">
                     <div class="w-full sm:w-auto">
@@ -30,23 +30,23 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i data-lucide="calendar" class="w-4 h-4"></i>
                             </div>
-                            <input type="date" id="fechaDesde" 
+                            <input type="date" id="fechaDesde"
                                    class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] block w-full transition-colors">
                         </div>
                     </div>
-                    
+
                     <div class="w-full sm:w-auto">
                         <label for="fechaHasta" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Hasta</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i data-lucide="calendar" class="w-4 h-4"></i>
                             </div>
-                            <input type="date" id="fechaHasta" 
+                            <input type="date" id="fechaHasta"
                                    class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] block w-full transition-colors">
                         </div>
                     </div>
 
-                    <button id="limpiarFechas" 
+                    <button id="limpiarFechas"
                             class="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 hover:text-[#1B7D8F] hover:border-[#1B7D8F] transition-all flex items-center gap-2 h-[38px]">
                         <i data-lucide="x" class="w-4 h-4"></i>
                         Limpiar
@@ -60,7 +60,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>
-                        <input type="text" id="customSearch" placeholder="Paciente, DNI, Cirujano..." 
+                        <input type="text" id="customSearch" placeholder="Paciente, DNI, Cirujano..."
                                class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] block w-full transition-colors">
                     </div>
                 </div>
@@ -84,9 +84,9 @@
                             <th class="px-6 py-3 font-semibold no-print">Ayudante 1</th>
                             <th class="px-6 py-3 font-semibold no-print">Ayudante 2</th>
                             <th class="px-6 py-3 font-semibold">Anestesiologo</th>
-                            <th class="px-6 py-3 font-semibold">Instrumentador</th>                            
+                            <th class="px-6 py-3 font-semibold">Instrumentador</th>
                             <th class="px-6 py-3 font-semibold">Enfermero</th>
-                            <th class="px-6 py-3 font-semibold">Anestesia</th>                                  
+                            <th class="px-6 py-3 font-semibold">Anestesia</th>
                             <th class="px-6 py-3 font-semibold no-print">Urgencia</th>
                             <th class="px-6 py-3 font-semibold no-print">Óbito</th>
                             <th class="px-6 py-3 font-semibold text-center no-print">Acciones</th>
@@ -94,8 +94,8 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($cirugias as $cirugia)
-                            <tr class="{{ $cirugia->suspendida ? 'bg-gray-200 text-gray-500 hover:bg-gray-250 opacity-75' : 'hover:bg-gray-50 transition-colors' }}">
-                                <td class="px-6 py-4 font-medium {{ $cirugia->suspendida ? 'text-gray-600' : 'text-gray-900' }} whitespace-nowrap" data-fecha="{{ $cirugia->fecha_cirugia }}">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" data-fecha="{{ $cirugia->fecha_cirugia }}">
                                     {{ \Carbon\Carbon::parse($cirugia->fecha_cirugia)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4">{{ $cirugia->hora_cirugia ?? '' }}</td>
@@ -106,24 +106,24 @@
                                         : '—' }}
                                 </td>
                                 <td class="px-6 py-4 font-mono text-xs">{{ $cirugia->get_paciente->dni }}</td>
-                                <td class="px-6 py-4 font-medium {{ $cirugia->suspendida ? 'text-gray-700' : 'text-[#1B7D8F]' }}">{{ $cirugia->get_paciente->nombre }} {{ $cirugia->get_paciente->apellido }}</td>
+                                <td class="px-6 py-4 font-medium text-[#1B7D8F]">{{ $cirugia->get_paciente->nombre }} {{ $cirugia->get_paciente->apellido }}</td>
                                 <td class="px-6 py-4">{{ $cirugia->get_procedimiento->nombre_procedimiento }}</td>
                                 <td class="px-6 py-4">{{ $cirugia->get_cirujano->nombre }} {{ $cirugia->get_cirujano->apellido }}</td>
                                 <td class="px-6 py-4 no-print">{{ $cirugia->get_ayudante1->nombre ?? '-' }} {{ $cirugia->get_ayudante1->apellido ?? '' }}</td>
                                 <td class="px-6 py-4 no-print">{{ optional($cirugia->get_ayudante2)->nombre ?? '-' }} {{ optional($cirugia->get_ayudante2)->apellido ?? '' }}</td>
                                 <td class="px-6 py-4">{{ optional($cirugia->get_anestesista)->nombre }} {{ optional($cirugia->get_anestesista)->apellido }}</td>
-                                <td class="px-6 py-4">{{ optional($cirugia->get_instrumentador)->nombre }} {{ optional($cirugia->get_instrumentador)->apellido }}</td>                                          
-                                <td class="px-6 py-4">{{ optional($cirugia->get_enfermero)->nombre }} {{ optional($cirugia->get_enfermero)->apellido }}</td> 
+                                <td class="px-6 py-4">{{ optional($cirugia->get_instrumentador)->nombre }} {{ optional($cirugia->get_instrumentador)->apellido }}</td>
+                                <td class="px-6 py-4">{{ optional($cirugia->get_enfermero)->nombre }} {{ optional($cirugia->get_enfermero)->apellido }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 text-xs font-medium {{ $cirugia->suspendida ? 'bg-gray-300 text-gray-700' : 'bg-blue-50 text-blue-600' }} rounded-full">
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-600 rounded-full">
                                         {{ optional($cirugia->get_tipo_anestesia)->nombre ?? '-' }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 no-print">
                                     @if($cirugia->urgencia)
-                                        <span class="px-2 py-1 text-xs font-medium {{ $cirugia->suspendida ? 'bg-gray-300 text-gray-700' : 'bg-red-50 text-red-600' }} rounded-full">Sí</span>
+                                        <span class="px-2 py-1 text-xs font-medium bg-red-50 text-red-600 rounded-full">Sí</span>
                                     @else
-                                        <span class="px-2 py-1 text-xs font-medium {{ $cirugia->suspendida ? 'bg-gray-300 text-gray-700' : 'bg-green-50 text-green-600' }} rounded-full">No</span>
+                                        <span class="px-2 py-1 text-xs font-medium bg-green-50 text-green-600 rounded-full">No</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 no-print">
@@ -163,12 +163,9 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Footer de la Tabla (Paginación custom si fuera necesario, o info) -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-                <div class="text-xs text-gray-500" id="tableInfo"></div>
-                <div id="tablePagination"></div>
-            </div>
+            <div id="mis-controles-tabla"></div>
         </div>
 
         <!-- Botones de Acción -->
@@ -196,12 +193,12 @@
             .card, .shadow-sm { box-shadow: none !important; border: none !important; }
         }
         /* DataTables Custom Styling Override */
-        .dataTables_wrapper .dataTables_length, 
+        .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter { display: none !important; } /* Ocultar controles default */
-        
+
         table.dataTable.no-footer { border-bottom: none !important; }
         .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background: #1B7D8F !important;
+            background: #32989D !important;
             color: white !important;
             border: none !important;
             border-radius: 0.5rem !important;
@@ -224,35 +221,47 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <!-- SheetJS para generar archivos Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <script>
         $(document).ready(function() {
-            // Inicializar Lucide
-            if(window.lucide) lucide.createIcons();
+        // Inicializar Lucide
+        if(window.lucide) lucide.createIcons();
 
-            // Inicializar DataTables
-            const tabla = $('#miTabla').DataTable({
-                dom: 'rt<"bottom-controls"ip>', // Solo tabla, info y paginación
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-                },
-                pageLength: 10,
-                order: [], // Respetar el orden del backend (recientes al final)
-                drawCallback: function() {
-                    // Mover info y paginación a nuestros contenedores custom evitando clonaciones deshechas
-                    const infoElement = $('.dataTables_info');
-                    const paginateElement = $('.dataTables_paginate');
-                    
-                    if (infoElement.length && !$.contains($('#tableInfo')[0], infoElement[0])) {
-                        $('#tableInfo').append(infoElement);
-                    }
-                    if (paginateElement.length && !$.contains($('#tablePagination')[0], paginateElement[0])) {
-                        $('#tablePagination').append(paginateElement);
-                    }
-                    
-                    if(window.lucide) lucide.createIcons(); // Re-init iconos tras paginación
+        // Objeto de traducción local
+        const idiomaEspanol = {
+            processing:     "Procesando...",
+            search:         "Buscar:",
+            lengthMenu:    "Mostrar _MENU_ registros",
+            info:           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            infoEmpty:      "Mostrando registros del 0 al 0 de un total de 0 registros",
+            infoFiltered:   "(filtrado de un total de _MAX_ registros)",
+            loadingRecords: "Cargando...",
+            zeroRecords:    "No se encontraron resultados",
+            emptyTable:     "Ningún dato disponible en esta tabla",
+            paginate: {
+                first:      "Primero",
+                previous:   "Anterior",
+                next:       "Siguiente",
+                last:       "Último"
+            }
+        };
+
+        // Inicializar DataTables de forma limpia y nativa
+        const tabla = $('#miTabla').DataTable({
+            // EXPLICACIÓN: 'rt' pinta la tabla. Luego le decimos que use tu ID del footer
+            // y le aplique tus mismas clases de Tailwind para meter la info (i) y la paginación (p)
+            dom: 'rt<"#mis-controles-tabla.px-6.py-4.flex.justify-between.items-center"ip>',
+            language: idiomaEspanol, // El objeto local que ya guardamos antes
+            pageLength: 10,
+            order: [[0, 'desc']],
+            drawCallback: function() {
+                // ¡YA NO MOVER NADA CON JQUERY!
+                // DataTables mantiene sus botones vivos y nunca más van a desaparecer.
+
+                // Solo re-inicializamos los iconos de Lucide
+                if(window.lucide) lucide.createIcons();
                 }
-            });
+        });
 
             // --- BÚSQUEDA CUSTOM ---
             $('#customSearch').on('keyup', function() {
@@ -332,11 +341,11 @@
 
             const tablaDT = $('#miTabla').DataTable();
             const datosFiltrados = tablaDT.rows({ search: 'applied' }).data();
-            
+
             // Construcción de headers y body similar a tu lógica anterior...
-            // Simplificado para usar autoTable directamente con selectores si es posible, 
+            // Simplificado para usar autoTable directamente con selectores si es posible,
             // pero manteniendo tu lógica de arrays para mayor control:
-            
+
             const headers = [['Fecha', 'Hora', 'N°Q', 'Paciente', 'DNI', 'Procedimiento', 'Cirujano', 'Anestesiologo', 'Anestesia']];
             const body = [];
 
@@ -377,7 +386,7 @@
         document.getElementById('btnExportarExcel').addEventListener('click', function() {
             const tablaDT = $('#miTabla').DataTable();
             const datos = tablaDT.rows({ search: 'applied' }).data().toArray();
-            
+
             // Lógica simplificada para Excel
             const clean = (html) => {
                 const tmp = document.createElement("DIV");

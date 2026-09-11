@@ -10,9 +10,9 @@
                 </h2>
                 <p class="text-gray-500 mt-1">Control de inventario y consumo de insumos</p>
             </div>
-            <a href="{{ route('cirugias.estadisticas') }}" 
+            <a href="{{ route('cirugias.estadisticas') }}"
                class="btn bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200 d-flex align-items-center px-4 py-2 rounded-lg transition-all">
-                <i class="bi bi-activity me-2 text-[#1B7D8F]"></i> 
+                <i class="bi bi-activity me-2 text-[#1B7D8F]"></i>
                 <span class="font-medium">Estadísticas de Cirugías</span>
             </a>
         </div>
@@ -25,26 +25,46 @@
         @endif
 
         {{-- Filtros --}}
-        <form method="GET" action="{{ route('stocks.estadisticasstock') }}" 
+        <form method="GET" action="{{ route('stocks.estadisticasstock') }}"
               class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5 transition-all hover:shadow-md">
             <div class="row g-4 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="desde" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Desde
                     </label>
-                    <input type="date" name="desde" id="desde" value="{{ request('desde') }}" 
+                    <input type="date" name="desde" id="desde" value="{{ request('desde') }}"
                            class="form-control bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="hasta" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Hasta
                     </label>
-                    <input type="date" name="hasta" id="hasta" value="{{ request('hasta') }}" 
+                    <input type="date" name="hasta" id="hasta" value="{{ request('hasta') }}"
                            class="form-control bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700">
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" 
-                            class="btn w-100 rounded-lg d-flex align-items-center justify-content-center gap-2 text-white font-medium shadow-md hover:shadow-lg transition-all" 
+                <div class="col-md-3">
+                    <label for="servicio_id" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Servicio
+                    </label>
+                    <select name="servicio_id" id="servicio_id"
+                        class="form-select bg-gray-50 border-gray-200 rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] text-gray-700"
+                        {{ $servicioRestringido ? 'disabled' : '' }}>
+                        @if (!$servicioRestringido)
+                            <option value="">Todos los Servicios</option>
+                        @endif
+                        @foreach ($servicios as $s)
+                            <option value="{{ $s->id }}" {{ (string) $servicioId === (string) $s->id ? 'selected' : '' }}>
+                                {{ $s->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @if ($servicioRestringido)
+                        <input type="hidden" name="servicio_id" value="{{ $servicioRestringido }}">
+                    @endif
+                </div>
+                <div class="col-md-3">
+                    <button type="submit"
+                            class="btn w-100 rounded-lg d-flex align-items-center justify-content-center gap-2 text-white font-medium shadow-md hover:shadow-lg transition-all"
                             style="background: linear-gradient(135deg, #1B7D8F 0%, #245360 100%);">
                         <i class="bi bi-funnel-fill"></i> Filtrar
                     </button>
@@ -65,12 +85,23 @@
             </div>
         @endif
 
-        @if(request('desde') && request('hasta'))
-            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-5 d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center text-blue-800">
-                    <i class="bi bi-calendar-check me-2"></i>
-                    <span class="font-medium me-2">Filtro activo:</span>
-                    <span>{{ \Carbon\Carbon::parse(request('desde'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('hasta'))->format('d/m/Y') }}</span>
+        @if(request('desde') && request('hasta') || $servicioId)
+            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-5 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center text-blue-800 flex-wrap gap-3">
+                    @if(request('desde') && request('hasta'))
+                        <span>
+                            <i class="bi bi-calendar-check me-2"></i>
+                            <span class="font-medium me-2">Período:</span>
+                            {{ \Carbon\Carbon::parse(request('desde'))->format('d/m/Y') }} - {{ \Carbon\Carbon::parse(request('hasta'))->format('d/m/Y') }}
+                        </span>
+                    @endif
+                    @if($servicioId)
+                        <span>
+                            <i class="bi bi-building me-2"></i>
+                            <span class="font-medium me-2">Servicio:</span>
+                            {{ optional($servicios->firstWhere('id', $servicioId))->nombre }}
+                        </span>
+                    @endif
                 </div>
                 <a href="{{ route('stocks.estadisticasstock') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
                     Limpiar filtros
@@ -108,7 +139,7 @@
                         </div>
                     </div>
                     <div class="bg-emerald-50 px-4 py-2 border-t border-emerald-100">
-                        <small class="text-emerald-700 font-medium">Consumo del período</small>
+                        <small class="text-emerald-700 font-medium">Consumo neto del período</small>
                     </div>
                 </div>
             </div>
@@ -124,7 +155,7 @@
                         </div>
                     </div>
                     <div class="bg-cyan-50 px-4 py-2 border-t border-cyan-100">
-                        <small class="text-cyan-700 font-medium">Reposiciones del período</small>
+                        <small class="text-cyan-700 font-medium">Reposiciones netas del período</small>
                     </div>
                 </div>
             </div>
@@ -134,7 +165,7 @@
         <div class="card border-0 shadow-sm rounded-xl mb-5" data-aos="fade-up">
             <div class="card-header bg-white border-0 pt-4 px-4">
                 <h5 class="font-bold text-gray-800 mb-1">Insumos Más Utilizados</h5>
-                <p class="text-sm text-gray-500 mb-0">Top de consumo en el período seleccionado</p>
+                <p class="text-sm text-gray-500 mb-0">Top de consumo neto en el período seleccionado</p>
             </div>
             <div class="card-body px-4">
                 <div style="height: 300px;">
@@ -192,8 +223,11 @@
                             <p class="text-sm text-gray-500 mb-0">Stock inactivo por más de {{ $umbralDias }} días</p>
                         </div>
                         <form method="GET" action="{{ route('stocks.estadisticasstock') }}" class="d-flex gap-2 align-items-center">
-                            <input type="number" name="dias" id="dias" 
-                                   class="form-control form-control-sm w-20 border-gray-200 rounded-lg text-center" 
+                            <input type="hidden" name="desde" value="{{ request('desde') }}">
+                            <input type="hidden" name="hasta" value="{{ request('hasta') }}">
+                            <input type="hidden" name="servicio_id" value="{{ $servicioId }}">
+                            <input type="number" name="dias" id="dias"
+                                   class="form-control form-control-sm w-20 border-gray-200 rounded-lg text-center"
                                    value="{{ request('dias', 30) }}" min="1">
                             <button type="submit" class="btn btn-sm btn-light border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg">
                                 Aplicar
@@ -232,12 +266,14 @@
                 </div>
             </div>
 
-            {{-- Proyección de agotamiento --}}
+            {{-- Proyección de agotamiento (profesional: simple + ponderado + tendencia) --}}
             <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
                 <div class="card border-0 shadow-sm rounded-xl h-100">
                     <div class="card-header bg-white border-0 pt-4 px-4">
                         <h5 class="font-bold text-gray-800 mb-1">Proyección de Agotamiento</h5>
-                        <p class="text-sm text-gray-500 mb-0">Estimación basada en consumo de últimos 30 días</p>
+                        <p class="text-sm text-gray-500 mb-0">
+                            Simulación día a día combinando promedio ponderado (últimos 30 días) y tendencia de consumo
+                        </p>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="table-responsive">
@@ -247,6 +283,7 @@
                                     <th class="border-0 rounded-start">Medicamento</th>
                                     <th class="border-0">Stock</th>
                                     <th class="border-0">Consumo/Día</th>
+                                    <th class="border-0">Tendencia</th>
                                     <th class="border-0 rounded-end">Estado</th>
                                 </tr>
                             </thead>
@@ -255,17 +292,37 @@
                                     <tr>
                                         <td class="font-medium text-gray-800">{{ $item['medicamento'] }} <span class="text-xs text-gray-400 block">{{ $item['lote'] }}</span></td>
                                         <td class="text-gray-600">{{ $item['cantidad_act'] }}</td>
-                                        <td class="text-gray-600">{{ $item['consumo_diario'] }}</td>
+                                        <td class="text-gray-600" title="Promedio simple: {{ $item['consumo_diario_simple'] }}/día">
+                                            {{ $item['consumo_diario'] }}
+                                        </td>
                                         <td>
-                                            @if(!is_null($item['dias_restantes']) && $item['dias_restantes'] < 10)
-                                                <span class="badge bg-red-100 text-red-700 border border-red-200 rounded-pill px-2 py-1">Crítico: {{ $item['dias_restantes'] }} días</span>
-                                            @elseif(!is_null($item['dias_restantes']) && $item['dias_restantes'] < 20)
-                                                <span class="badge bg-amber-100 text-amber-700 border border-amber-200 rounded-pill px-2 py-1">Bajo: {{ $item['dias_restantes'] }} días</span>
-                                            @elseif(!is_null($item['dias_restantes']))
-                                                <span class="badge bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-pill px-2 py-1">Normal: {{ $item['dias_restantes'] }} días</span>
-                                            @else
-                                                <span class="badge bg-gray-100 text-gray-500 border border-gray-200 rounded-pill px-2 py-1">Sin consumo</span>
-                                            @endif
+                                            @switch($item['tendencia'])
+                                                @case('creciente')
+                                                    <span class="text-red-600" title="El consumo está aumentando"><i class="bi bi-graph-up-arrow"></i> Subiendo</span>
+                                                    @break
+                                                @case('decreciente')
+                                                    <span class="text-emerald-600" title="El consumo está disminuyendo"><i class="bi bi-graph-down-arrow"></i> Bajando</span>
+                                                    @break
+                                                @default
+                                                    <span class="text-gray-500" title="Consumo relativamente constante"><i class="bi bi-dash-lg"></i> Estable</span>
+                                            @endswitch
+                                        </td>
+                                        <td>
+                                            @switch($item['urgencia'])
+                                                @case('critico')
+                                                    <span class="badge bg-red-100 text-red-700 border border-red-200 rounded-pill px-2 py-1">Crítico: {{ $item['dias_restantes'] }} días</span>
+                                                    @break
+                                                @case('aviso')
+                                                    <span class="badge bg-amber-100 text-amber-700 border border-amber-200 rounded-pill px-2 py-1">Bajo: {{ $item['dias_restantes'] }} días</span>
+                                                    @break
+                                                @case('ok')
+                                                    <span class="badge bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-pill px-2 py-1">
+                                                        {{ $item['dias_restantes'] ? 'Normal: ' . $item['dias_restantes'] . ' días' : 'Sin agotamiento próximo' }}
+                                                    </span>
+                                                    @break
+                                                @default
+                                                    <span class="badge bg-gray-100 text-gray-500 border border-gray-200 rounded-pill px-2 py-1">Sin consumo reciente</span>
+                                            @endswitch
                                         </td>
                                     </tr>
                                 @endforeach
@@ -293,7 +350,7 @@
             data: {
                 labels: {!! json_encode($insumoLabels) !!},
                 datasets: [{
-                    label: 'Cantidad extraída',
+                    label: 'Cantidad extraída (neta)',
                     data: {!! json_encode($insumoValores) !!},
                     backgroundColor: '#1B7D8F',
                     borderRadius: 6,
@@ -365,7 +422,7 @@
                     previous: '<i class="bi bi-chevron-left"></i>'
                 }
             },
-            order: [[3, 'asc']], // Orden por estado (columna 3 ahora)
+            order: [[4, 'asc']], // Orden por estado
             pageLength: 5,
             drawCallback: function() {
                 $('.dataTables_paginate .paginate_button').addClass('px-3 py-1 border rounded-md mx-1 text-sm hover:bg-gray-50 transition-colors');
@@ -377,7 +434,6 @@
     AOS.init();
 </script>
 <style>
-    /* Custom DataTables Styling overrides */
     div.dt-buttons .btn {
         margin-right: 0.5rem;
         border-radius: 0.5rem;

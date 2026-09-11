@@ -22,6 +22,7 @@ use App\Http\Controllers\EspecialidadController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ServicioController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EstudioMedicoController;
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -31,6 +32,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Ruta dinámica para los selectores encadenados de estudios médicos
+    Route::get('/especialidades/{especialidad}/procedimientos', [EspecialidadController::class, 'getProcedimientos'])
+        ->name('especialidades.procedimientos');
 });
 
 
@@ -183,7 +188,7 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
 Route::middleware(['auth', 'roles:camas'])->group(function () {
     Route::get('/camas', [CamaController::class, 'index'])->name('camas.index');
 
-    // // Live search para el buscador del modal 
+    // // Live search para el buscador del modal
 
 });
 
@@ -210,7 +215,7 @@ Route::middleware(['auth', 'roles:admin,insumos'])->group(function () {
 });
 
 //Stock
-Route::middleware(['auth', 'roles:insumos'])->group(function () {
+Route::middleware(['auth', 'roles:insumos,estudios_medicos'])->group(function () {
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
     Route::get('/stocks/create', [StockController::class, 'create'])->name('stocks.create');
     Route::post('/stocks', [StockController::class, 'store'])->name('stocks.store');
@@ -228,7 +233,7 @@ Route::middleware(['auth', 'roles:cirugias'])->group(function () {
     Route::get('/cirugias/{cirugia}/edit', [CirugiaController::class, 'edit'])->name('cirugias.edit');
     Route::get('/cirugias/{cirugia}', [CirugiaController::class, 'show'])->name('cirugias.show');
     Route::put('/cirugias/{cirugia}', [CirugiaController::class, 'update'])->name('cirugias.update');
-    
+
     // Surgery medications
     Route::get('/cirugias/{cirugia}/medicamentos', [CirugiaController::class, 'medicamentos'])->name('cirugias.medicamentos');
     Route::post('/cirugias/{cirugia}/medicamentos', [CirugiaController::class, 'guardarMedicamentos'])->name('cirugias.medicamentos.store');
@@ -254,6 +259,10 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
     Route::get('/especialidades/{especialidad}/edit', [EspecialidadController::class, 'edit'])->name('especialidades.edit');
     Route::put('/especialidades/{especialidad}', [EspecialidadController::class, 'update'])->name('especialidades.update');
     Route::delete('/especialidades/{especialidad}', [EspecialidadController::class, 'destroy'])->name('especialidades.destroy');
+
+    // CRUD del catálogo de Estudios (Ajustes de Administración)
+    Route::resource('estudios', App\Http\Controllers\EstudioController::class)
+        ->except(['show']);
 });
 
 //Servicios
@@ -267,7 +276,7 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
 Route::middleware(['auth', 'roles:admin'])->group(function () {
     Route::post('/usuarios/{id}/actualizar-rol', [App\Http\Controllers\UsuarioPerfilController::class, 'actualizarRol'])->name('usuarios.actualizarRol');
     Route::put('/usuarios/{id}/actualizar-rol', [UsuarioPerfilController::class, 'actualizarRol'])->name('usuarios.actualizarRol');
-    
+
     // Rutas para gestión de usuarios
     Route::get('/usuarios', [App\Http\Controllers\UserController::class, 'index'])->name('usuarios.index');
     Route::get('/usuarios/create', [App\Http\Controllers\UserController::class, 'create'])->name('usuarios.create');
@@ -275,6 +284,17 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
     Route::get('/usuarios/{usuario}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('usuarios.edit');
     Route::put('/usuarios/{usuario}', [App\Http\Controllers\UserController::class, 'update'])->name('usuarios.update');
     Route::delete('/usuarios/{usuario}', [App\Http\Controllers\UserController::class, 'destroy'])->name('usuarios.destroy');
+});
+
+Route::middleware(['auth', 'roles:estudios_medicos'])->group(function () {
+    Route::resource('estudios-medicos', EstudioMedicoController::class)
+        ->names('estudios_medicos')
+        ->parameters(['estudios-medicos' => 'estudio_medico']);
+
+    // Nueva ruta para el select dinámico de estudios por especialidad
+    Route::get('/estudios-medicos/especialidad/{especialidad}/estudios',
+        [App\Http\Controllers\EstudioMedicoController::class, 'estudiosPorEspecialidad']
+    )->name('estudios_medicos.estudios_por_especialidad');
 });
 
 // 👇 Debe ir fuera de cualquier grupo con 'auth' o 'roles'

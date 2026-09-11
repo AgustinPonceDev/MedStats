@@ -35,7 +35,7 @@ class CirugiaController extends Controller
             'get_tipo_anestesia',
             'get_tipo_anestesia2',
             'modificador',
-        ])->orderBy('id', 'desc')->get();
+        ])->get();
         return view('cirugias.index', compact('cirugias')); //Llama a la vista y le pasa las Cirugias obtenidas
     }
 
@@ -47,7 +47,7 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
         $procedimientos = Procedimiento::orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -56,7 +56,7 @@ class CirugiaController extends Controller
 
 
     public function store(Request $request)
-    {   
+    {
         // try{
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
@@ -72,8 +72,6 @@ class CirugiaController extends Controller
             'hora_cirugia' => 'required',
             'duracion_horas' => 'nullable|integer|min:0',
             'duracion_minutos' => 'nullable|integer|min:0|max:59',
-            'suspendida' => 'nullable|boolean',
-            'observacion_suspension' => 'nullable|string',
         ], [
             'paciente_id.required' => 'Seleccioná un paciente antes de continuar.',
             'paciente_id.exists' => 'El paciente seleccionado no existe en el sistema.',
@@ -195,8 +193,6 @@ class CirugiaController extends Controller
         } else {
             $cirugia->obito = false;
         }
-        $cirugia->suspendida = $request->has('suspendida');
-        $cirugia->observacion_suspension = $cirugia->suspendida ? $request->input('observacion_suspension') : null;
         // dd($cirugia);
         $cirugia->save(); //Guarda en la BD, si existe lo actualiza, sino crea
         if ($request->input('action') === 'cargar_medicamentos') {
@@ -209,7 +205,7 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::with('get_profesion')->orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
         $procedimientos = Procedimiento::with('get_especialidad')->orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -232,8 +228,6 @@ class CirugiaController extends Controller
             'hora_cirugia' => 'required',
             'duracion_horas' => 'nullable|integer|min:0',
             'duracion_minutos' => 'nullable|integer|min:0|max:59',
-            'suspendida' => 'nullable|boolean',
-            'observacion_suspension' => 'nullable|string',
         ]);
 
         if ($request->input('ayudante_1_id') != null) {
@@ -306,7 +300,7 @@ class CirugiaController extends Controller
 
         $cirugia->fecha_cirugia = $request->input('fecha_cirugia');
         $cirugia->hora_cirugia = $request->input('hora_cirugia');
-        
+
         //Formatear duración
         $horas = $request->input('duracion_horas', 0);
         $minutos = $request->input('duracion_minutos', 0);
@@ -324,9 +318,6 @@ class CirugiaController extends Controller
         } else {
             $cirugia->obito = false;
         }
-
-        $cirugia->suspendida = $request->has('suspendida');
-        $cirugia->observacion_suspension = $cirugia->suspendida ? $request->input('observacion_suspension') : null;
 
         $cirugia->modificado_por = auth()->id();
 
@@ -358,125 +349,67 @@ class CirugiaController extends Controller
         $desde = $validated['desde'] ?? null;
         $hasta = $validated['hasta'] ?? null;
         $especialidadId = $request->input('especialidad_id');
-        $especialidades = \App\Models\Especialidad::orderBy('nombre')->get();
-        $aniosDisponibles = \App\Models\Cirugia::select(DB::raw('YEAR(fecha_cirugia) as anio'))
+        $especialidades = \App\Models\Especialidad::quirurgicas()->orderBy('nombre')->get();
+        $aniosDisponibles = \App\Models\Cirugia::select(DB::raw('YEAR(created_at) as anio'))
             ->distinct()
             ->orderBy('anio', 'desc')
             ->pluck('anio');
 
-        $anio = $request->input('anio');
         $cirujanoId = $request->input('cirujano_id');
 
-        // Base query reutilizable (excluye cirugías suspendidas)
+        // Base query reutilizable
         $baseQuery = \App\Models\Cirugia::query()
-        ->where('suspendida', false)
         ->when($desde && $hasta, function ($query) use ($desde, $hasta) {
-            return $query->whereBetween('fecha_cirugia', [$desde, $hasta]);
-        }, function ($query) use ($anio) {
-            if ($anio) {
-                return $query->whereYear('fecha_cirugia', $anio);
-            }
-            return $query;
+            return $query->whereBetween('created_at', [$desde, $hasta]);
         })
         ->when($especialidadId, function ($query, $especialidadId) {
             return $query->where('especialidad_id', $especialidadId);
         })
         ->when($cirujanoId, function ($query, $cirujanoId) {
-            return $query->where(function ($q) use ($cirujanoId) {
-                $q->where('cirujano_id', $cirujanoId)
-                  ->orWhere('ayudante_1_id', $cirujanoId)
-                  ->orWhere('ayudante_2_id', $cirujanoId)
-                  ->orWhere('ayudante_3_id', $cirujanoId);
-            });
+            return $query->where('cirujano_id', $cirujanoId);
         });
 
-        // Obtener cirujanos disponibles para el filtro (cirujano o ayudante, excluyendo suspendidas)
+        // Obtener cirujanos disponibles para el filtro
+        // Si hay especialidad seleccionada, mostramos solo los que han operado esa especialidad
+        // Si no, mostramos todos los que han operado alguna vez
         $cirujanosDisponibles = \App\Models\Empleado::whereIn('id', function($query) use ($especialidadId) {
             $query->select('cirujano_id')
                   ->from('cirugias')
-                  ->where('suspendida', false)
                   ->when($especialidadId, function($q, $especialidadId) {
                       return $q->where('especialidad_id', $especialidadId);
-                  })
-                  ->whereNotNull('cirujano_id')
-                  ->union(
-                      DB::table('cirugias')
-                        ->select('ayudante_1_id')
-                        ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
-                            return $q->where('especialidad_id', $especialidadId);
-                        })
-                        ->whereNotNull('ayudante_1_id')
-                  )
-                  ->union(
-                      DB::table('cirugias')
-                        ->select('ayudante_2_id')
-                        ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
-                            return $q->where('especialidad_id', $especialidadId);
-                        })
-                        ->whereNotNull('ayudante_2_id')
-                  )
-                  ->union(
-                      DB::table('cirugias')
-                        ->select('ayudante_3_id')
-                        ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
-                            return $q->where('especialidad_id', $especialidadId);
-                        })
-                        ->whereNotNull('ayudante_3_id')
-                  );
+                  });
         })
         ->orderBy('apellido')
         ->orderBy('nombre')
         ->get();
 
         $total = $baseQuery->count();
+        $meses = (clone $baseQuery)
+            ->select(DB::raw('MONTH(created_at) as mes'))
+            ->distinct()
+            ->count();
+        $semanas = (clone $baseQuery)
+            ->select(DB::raw('YEARWEEK(created_at, 1) as semana'))
+            ->distinct()
+            ->count();
+        $promedioMensual = $meses > 0 ? round($total / $meses, 2) : 0;
+        $promedioSemanal = $semanas > 0 ? round($total / $semanas, 2) : 0;
 
-        if ($desde && $hasta) {
-            $fechaInicio = \Carbon\Carbon::parse($desde)->startOfDay();
-            $fechaFin = \Carbon\Carbon::parse($hasta)->endOfDay();
-            $diasDiferencia = max(1, $fechaInicio->diffInDays($fechaFin) + 1);
-            $cantMeses = max(1, $diasDiferencia / 30.4375);
-            $cantSemanas = max(1, $diasDiferencia / 7);
-        } else {
-            $cantMeses = 12;
-            $cantSemanas = 52;
-        }
-
-        $promedioMensual = round($total / $cantMeses, 1);
-        $promedioSemanal = round($total / $cantSemanas, 1);
-
-        // Cirugías por cirujano (incluyendo participación como ayudante 1, 2 o 3)
-        $subQueryCirujano = (clone $baseQuery)->select('cirujano_id as cirujano_id')->whereNotNull('cirujano_id')
-            ->unionAll((clone $baseQuery)->select('ayudante_1_id as cirujano_id')->whereNotNull('ayudante_1_id'))
-            ->unionAll((clone $baseQuery)->select('ayudante_2_id as cirujano_id')->whereNotNull('ayudante_2_id'))
-            ->unionAll((clone $baseQuery)->select('ayudante_3_id as cirujano_id')->whereNotNull('ayudante_3_id'));
-
-        $porCirujanoCounts = DB::table(DB::raw("({$subQueryCirujano->toSql()}) as participaciones"))
-            ->mergeBindings($subQueryCirujano->getQuery())
+        // Cirugías por cirujano
+        $porCirujano = (clone $baseQuery)
             ->select('cirujano_id', DB::raw('COUNT(*) as total'))
             ->groupBy('cirujano_id')
-            ->orderByDesc('total')
-            ->get();
+            ->with('get_cirujano')
+            ->get()
+            ->sortByDesc('total')
+            ->take(5);
 
-        $empleadosMap = \App\Models\Empleado::whereIn('id', $porCirujanoCounts->pluck('cirujano_id'))->get()->keyBy('id');
-
-        $porCirujano = $porCirujanoCounts->map(function ($item) use ($empleadosMap) {
-            $emp = $empleadosMap->get($item->cirujano_id);
-            return (object) [
-                'cirujano_id' => $item->cirujano_id,
-                'total' => $item->total,
-                'get_cirujano' => $emp
-            ];
-        });
-
-        $cirujanoLabels = $porCirujano->take(5)->map(function ($item) {
+        $cirujanoLabels = $porCirujano->map(function ($item) {
             $c = $item->get_cirujano;
             return $c ? $c->nombre . ' ' . $c->apellido : 'Sin asignar';
         })->values();
 
-        $cirujanoValores = $porCirujano->take(5)->pluck('total')->values();
+        $cirujanoValores = $porCirujano->pluck('total')->values();
 
         // Top enfermeros/as
         $topEnfermeros = (clone $baseQuery)
@@ -510,9 +443,9 @@ class CirugiaController extends Controller
 
         // Distribución por mes
         $porMes = (clone $baseQuery)
-            ->select(DB::raw('MONTH(fecha_cirugia) as mes'), DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw('MONTH(fecha_cirugia)'))
-            ->orderBy(DB::raw('MONTH(fecha_cirugia)'))
+            ->select(DB::raw('MONTH(created_at) as mes'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->orderBy(DB::raw('MONTH(created_at)'))
             ->get();
 
         $porMes->transform(function ($item) {
@@ -531,49 +464,17 @@ class CirugiaController extends Controller
         $urgentes = (clone $baseQuery)->where('urgencia', '1')->count();
         $programadas = (clone $baseQuery)->where('urgencia', '0')->count();
 
-        // Top procedimientos / cirugías más realizadas
-        $subQueryProcedimientos = (clone $baseQuery)->select('procedimiento_id as procedimiento_id')->whereNotNull('procedimiento_id')
-            ->unionAll((clone $baseQuery)->select('procedimiento_2_id as procedimiento_id')->whereNotNull('procedimiento_2_id'));
-
-        $procedimientosCounts = DB::table(DB::raw("({$subQueryProcedimientos->toSql()}) as participaciones"))
-            ->mergeBindings($subQueryProcedimientos->getQuery())
-            ->select('procedimiento_id', DB::raw('COUNT(*) as total'))
-            ->groupBy('procedimiento_id')
-            ->orderByDesc('total')
-            ->get();
-
-        $procedimientosMap = \App\Models\Procedimiento::whereIn('id', $procedimientosCounts->pluck('procedimiento_id'))->get()->keyBy('id');
-
-        $topProcedimientos = $procedimientosCounts->map(function ($item) use ($procedimientosMap) {
-            $proc = $procedimientosMap->get($item->procedimiento_id);
-            return (object) [
-                'procedimiento_id' => $item->procedimiento_id,
-                'total' => $item->total,
-                'get_procedimiento' => $proc
-            ];
-        });
-
-        $procedimientoLabels = $topProcedimientos->take(5)->map(function ($item) {
-            return optional($item->get_procedimiento)->nombre_procedimiento ?? 'Sin especificar';
-        })->values();
-
-        $procedimientoValores = $topProcedimientos->take(5)->pluck('total')->values();
-
         // Por tipo de anestesia
         $porAnestesia = (clone $baseQuery)
             ->select('tipo_anestesia_id', DB::raw('COUNT(*) as total'))
             ->groupBy('tipo_anestesia_id')
             ->with('get_tipo_anestesia')
             ->get();
-
         $anioSeleccionado = request('anio') ?? \Carbon\Carbon::parse($desde)->year;
         return view('cirugias.estadisticas', compact(
             'porCirujano',
             'topEnfermeros',
             'topInstrumentadors',
-            'topProcedimientos',
-            'procedimientoLabels',
-            'procedimientoValores',
             'instrumentadorLabels',
             'instrumentadorValores',
             'enfermeroLabels',

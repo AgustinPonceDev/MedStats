@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\UsuarioPerfil;
-use App\Models\User; // Agregar este import
+use App\Models\User;
+use App\Models\Servicio;
 use Illuminate\Http\Request;
 
 class UsuarioPerfilController extends Controller
@@ -13,7 +14,8 @@ class UsuarioPerfilController extends Controller
      */
     public function create()
     {
-        return view('UsuarioPerfil.create');
+        $servicios = Servicio::all();
+        return view('UsuarioPerfil.create', compact('servicios'));
     }
 
     /**
@@ -23,45 +25,15 @@ class UsuarioPerfilController extends Controller
     {
         $request->validate([
             'perfil' => 'required',
+            'servicio_id' => 'nullable|exists:servicios,id',
         ]);
 
         $perfil = new UsuarioPerfil();
         $perfil->perfil = $request->input('perfil');
-        //admin
-        if ($request->input('admin') != null) {
-            $perfil->admin = true;
-        } else {
-            $perfil->admin = false;
-        }
-        //insumos
-        if ($request->input('insumos') != null) {
-            $perfil->insumos = true;
-        } else {
-            $perfil->insumos = false;
-        }
-        //estadisticas
-        if ($request->input('estadisticas') != null) {
-            $perfil->estadisticas = true;
-        } else {
-            $perfil->estadisticas = false;
-        }
-        //pacientes
-        if ($request->input('pacientes') != null) {
-            $perfil->pacientes = true;
-        } else {
-            $perfil->pacientes = false;
-        }
-        //camas
-        if ($request->input('camas') != null) {
-            $perfil->camas = true;
-        } else {
-            $perfil->camas = false;
-        }
-        //cirugias
-        if ($request->input('cirugias') != null) {
-            $perfil->cirugias = true;
-        } else {
-            $perfil->cirugias = false;
+        $perfil->servicio_id = $request->input('servicio_id');
+
+        foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos'] as $modulo) {
+            $perfil->$modulo = $request->input($modulo) != null;
         }
 
         $perfil->save();
@@ -74,7 +46,8 @@ class UsuarioPerfilController extends Controller
      */
     public function edit(UsuarioPerfil $perfil)
     {
-        return view('UsuarioPerfil.edit', compact('perfil'));
+        $servicios = Servicio::all();
+        return view('UsuarioPerfil.edit', compact('perfil', 'servicios'));
     }
 
     /**
@@ -84,46 +57,16 @@ class UsuarioPerfilController extends Controller
     {
         $request->validate([
             'perfil' => 'required',
+            'servicio_id' => 'nullable|exists:servicios,id',
         ]);
 
         $perfil->perfil = $request->input('perfil');
-        //admin
-        if ($request->input('admin') != null) {
-            $perfil->admin = true;
-        } else {
-            $perfil->admin = false;
+        $perfil->servicio_id = $request->input('servicio_id');
+
+        foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos'] as $modulo) {
+            $perfil->$modulo = $request->input($modulo) != null;
         }
-        //insumos
-        if ($request->input('insumos') != null) {
-            $perfil->insumos = true;
-        } else {
-            $perfil->insumos = false;
-        }
-        //estadisticas
-        if ($request->input('estadisticas') != null) {
-            $perfil->estadisticas = true;
-        } else {
-            $perfil->estadisticas = false;
-        }
-        //pacientes
-        if ($request->input('pacientes') != null) {
-            $perfil->pacientes = true;
-        } else {
-            $perfil->pacientes = false;
-        }
-        //camas
-        if ($request->input('camas') != null) {
-            $perfil->camas = true;
-        } else {
-            $perfil->camas = false;
-        }
-        //cirugias
-        if ($request->input('cirugias') != null) {
-            $perfil->cirugias = true;
-        } else {
-            $perfil->cirugias = false;
-        }
-        
+
         $perfil->save();
 
         return redirect()->route('UsuarioPerfil.index')->with('success', 'Perfil actualizado correctamente.');
@@ -137,13 +80,15 @@ class UsuarioPerfilController extends Controller
         $perfil->delete();
         return redirect()->route('UsuarioPerfil.index')->with('success', 'Perfil eliminado correctamente.');
     }
+
     public function index()
     {
         $perfiles = UsuarioPerfil::all();
-        $usuarios = User::all(); 
+        $usuarios = User::all();
 
         return view('UsuarioPerfil.index', compact('perfiles', 'usuarios'));
     }
+
     public function actualizarRol(Request $request, $id)
     {
         $request->validate([

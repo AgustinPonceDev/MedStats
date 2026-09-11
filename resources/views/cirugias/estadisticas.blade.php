@@ -19,7 +19,6 @@
         {{-- Filtros --}}
         <form method="GET" action="{{ route('cirugias.estadisticas') }}" 
               class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-5 transition-all hover:shadow-md">
-            @if(request('anio')) <input type="hidden" name="anio" value="{{ request('anio') }}"> @endif
             <div class="row g-4 align-items-end">
                 <div class="col-md-3">
                     <label for="desde" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -113,11 +112,7 @@
                             <h5 class="font-bold text-gray-800 mb-1">Resumen General</h5>
                             <p class="text-sm text-gray-500 mb-0">Métricas de rendimiento anual</p>
                         </div>
-                        <form method="GET" action="{{ route('cirugias.estadisticas') }}">
-                            @if(request('desde')) <input type="hidden" name="desde" value="{{ request('desde') }}"> @endif
-                            @if(request('hasta')) <input type="hidden" name="hasta" value="{{ request('hasta') }}"> @endif
-                            @if(request('especialidad_id')) <input type="hidden" name="especialidad_id" value="{{ request('especialidad_id') }}"> @endif
-                            @if(request('cirujano_id')) <input type="hidden" name="cirujano_id" value="{{ request('cirujano_id') }}"> @endif
+                        <form method="GET" action="/estadisticas">
                             <select name="anio" id="anio"
                                 class="form-select form-select-sm bg-gray-50 border-gray-200 text-gray-600 font-medium rounded-lg"
                                 onchange="this.form.submit()">
@@ -202,52 +197,6 @@
                             <div class="col-md-5 d-flex justify-content-center">
                                 <div style="width: 200px; height: 200px;">
                                     <canvas id="graficoCirujanos"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-4 mb-5">
-            {{-- Cirugías Más Realizadas --}}
-            <div class="col-md-12" data-aos="fade-up" data-aos-duration="800">
-                <div class="card border-0 shadow-sm rounded-xl h-100">
-                    <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="font-bold text-gray-800 mb-1">Top 5 Cirugías / Procedimientos Más Realizados</h5>
-                            <p class="text-sm text-gray-500 mb-0">Procedimientos con mayor frecuencia registrados</p>
-                        </div>
-                    </div>
-                    <div class="card-body px-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-7">
-                                <div class="d-flex flex-column gap-3">
-                                    @foreach ($topProcedimientos->take(5) as $index => $item)
-                                        <div class="d-flex align-items-center justify-content-between p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <span class="d-flex align-items-center justify-content-center w-6 h-6 rounded-full bg-teal-100 text-xs font-bold text-teal-700">
-                                                    {{ $index + 1 }}
-                                                </span>
-                                                <span class="text-sm font-medium text-gray-700">
-                                                    {{ optional($item->get_procedimiento)->nombre_procedimiento ?? 'Sin especificar' }}
-                                                </span>
-                                            </div>
-                                            <span class="badge bg-teal-50 text-teal-700 rounded-pill px-3 py-1 font-bold">
-                                                {{ $item->total }}
-                                            </span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <button type="button" class="btn btn-link text-decoration-none text-[#1B7D8F] font-medium text-sm mt-3 ps-0"
-                                        data-bs-toggle="modal" data-bs-target="#modalProcedimientos">
-                                    Ver todos los procedimientos <i class="bi bi-arrow-right ms-1"></i>
-                                </button>
-                            </div>
-                            <div class="col-md-5 d-flex justify-content-center">
-                                <div style="width: 220px; height: 220px;">
-                                    <canvas id="graficoProcedimientos"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -373,41 +322,6 @@
     {{-- Modales (Reutilizando estilos limpios) --}}
     
 @push('modales')
-    {{-- Modal Procedimientos --}}
-    <div class="modal fade" id="modalProcedimientos" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content border-0 shadow-lg rounded-xl">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title font-bold text-gray-800">Listado de Procedimientos / Cirugías</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="text-xs text-gray-500 uppercase bg-gray-50">
-                                <tr>
-                                    <th class="border-0 rounded-start py-3">Procedimiento</th>
-                                    <th class="border-0 text-end rounded-end py-3">Cantidad Realizada</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($topProcedimientos as $item)
-                                    <tr>
-                                        <td class="border-gray-100 py-3 font-medium text-gray-800">
-                                            {{ optional($item->get_procedimiento)->nombre_procedimiento ?? 'Sin especificar' }}
-                                        </td>
-                                        <td class="border-gray-100 text-end py-3">
-                                            <span class="badge bg-teal-50 text-teal-700 rounded-pill px-3 py-2 font-bold">{{ $item->total }}</span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     {{-- Modal Cirugías Mes --}}
     <div class="modal fade" id="modalCirugias" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -603,20 +517,6 @@
                     labels: @json($cirujanoLabels),
                     datasets: [{
                         data: @json($cirujanoValores),
-                        backgroundColor: donutColors,
-                        borderWidth: 0
-                    }]
-                },
-                options: donutOptions
-            });
-
-            // Procedimientos / Cirugías más realizadas
-            new Chart(document.getElementById('graficoProcedimientos'), {
-                type: 'doughnut',
-                data: {
-                    labels: @json($procedimientoLabels),
-                    datasets: [{
-                        data: @json($procedimientoValores),
                         backgroundColor: donutColors,
                         borderWidth: 0
                     }]

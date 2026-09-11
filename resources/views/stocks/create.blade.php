@@ -50,13 +50,17 @@
                 <div>
                     <label for="servicio_id" class="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
                     <select name="servicio_id" id="servicio_id"
-                        class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-700">
+                        class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-gray-500 focus:border-gray-700"
+                        {{ isset($servicioRestringido) && $servicioRestringido ? 'disabled' : '' }}>
                         @foreach ($servicios as $servicio)
-                            <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>
+                            <option value="{{ $servicio->id }}" {{ old('servicio_id', $servicioRestringido ?? $servicio->id) == $servicio->id ? 'selected' : '' }}>
                                 {{ $servicio->nombre }}
                             </option>
                         @endforeach
                     </select>
+                    @if(isset($servicioRestringido) && $servicioRestringido)
+                        <input type="hidden" name="servicio_id" value="{{ $servicioRestringido }}">
+                    @endif
                     @error('servicio_id')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -72,6 +76,32 @@
                 @error('fecha_vencimiento')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
+            </div>
+
+            <!-- Umbrales de aviso / crítico, definidos por quien carga el insumo -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Umbrales de Stock Bajo</h3>
+                <p class="text-xs text-gray-500 mb-4">
+                    Definen cuándo este insumo se muestra en amarillo (aviso) o en rojo (crítico) en el listado.
+                    Los valores por defecto son 50 (aviso) y 30 (crítico).
+                </p>
+                <input type="hidden" name="umbral_aviso" value="50">
+                <input type="hidden" name="umbral_critico" value="30">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
+                        <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
+                            placeholder="Ej: 50" value="50" disabled>
+                    </div>
+
+                    <div>
+                        <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
+                        <input type="number" name="umbral_critico" id="umbral_critico" min="0"
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
+                            placeholder="Ej: 30" value="30" disabled>
+                    </div>
+                </div>
             </div>
 
 
