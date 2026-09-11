@@ -53,22 +53,15 @@
                             @enderror
                         </div>
 
-{{-- Procedimiento --}}
-<div class="col-md-4">
-    <label for="procedimiento" class="form-label">Procedimiento</label>
-    <select name="procedimiento_id" id="procedimiento" class="form-control select2">
-        <option value="">Seleccione el procedimiento</option>
-        @foreach ($procedimientos as $procedimiento)
-            <option value="{{ $procedimiento->id }}"
-                {{ old('procedimiento_id') == $procedimiento->id ? 'selected' : '' }}>
-                {{ $procedimiento->nombre_procedimiento }}
-            </option>
-        @endforeach
-    </select>
-    @error('procedimiento_id')
-        <small class="text-danger">{{ $message }}</small>
-    @enderror
-</div>
+                        {{-- Procedimiento --}}
+                        <div class="col-md-4">
+                            <label for="procedimiento" class="form-label">Procedimiento</label>
+                            <select name="procedimiento_id" id="procedimiento" class="form-control select2">
+                            </select>
+                            @error('procedimiento_id')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
 
 
                         {{-- Procedimiento 2 --}}
@@ -343,15 +336,13 @@
                                 <div class="col-6">
                                     <label for="duracion_horas" class="form-label mb-1 small">Horas</label>
                                     <input type="number" name="duracion_horas" id="duracion_horas"
-                                        class="form-control form-control-sm py-0" min="0"
-                                        placeholder="0"
+                                        class="form-control form-control-sm py-0" min="0" placeholder="0"
                                         value="{{ old('duracion_horas') }}">
                                 </div>
                                 <div class="col-6">
                                     <label for="duracion_minutos" class="form-label mb-1 small">Minutos</label>
                                     <input type="number" name="duracion_minutos" id="duracion_minutos"
-                                        class="form-control form-control-sm py-0" min="0" max="59"
-                                        placeholder="0"
+                                        class="form-control form-control-sm py-0" min="0" max="59" placeholder="0"
                                         value="{{ old('duracion_minutos') }}">
                                 </div>
                             </div>
