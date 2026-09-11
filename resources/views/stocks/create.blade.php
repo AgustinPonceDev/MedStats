@@ -91,15 +91,15 @@
                     <div>
                         <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
                         <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
-                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
-                            placeholder="Ej: 50" value="50" disabled>
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100"
+                            placeholder="Ej: 50" value="50">
                     </div>
 
                     <div>
                         <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
                         <input type="number" name="umbral_critico" id="umbral_critico" min="0"
-                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100 cursor-not-allowed"
-                            placeholder="Ej: 30" value="30" disabled>
+                            class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 bg-gray-100"
+                            placeholder="Ej: 30" value="30">
                     </div>
                 </div>
             </div>

@@ -214,8 +214,8 @@
         </div>
 
         <div class="row g-4">
-            {{-- Insumos sin movimiento --}}
-            <div class="col-lg-6" data-aos="fade-up">
+            {{-- Insumos sin movimiento (Más chica: col-lg-4) --}}
+            <div class="col-lg-4" data-aos="fade-up">
                 <div class="card border-0 shadow-sm rounded-xl h-100">
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
@@ -266,8 +266,8 @@
                 </div>
             </div>
 
-            {{-- Proyección de agotamiento (profesional: simple + ponderado + tendencia) --}}
-            <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+            {{-- Proyección de agotamiento (Más grande: col-lg-8) --}}
+            <div class="col-lg-8" data-aos="fade-up" data-aos-delay="100">
                 <div class="card border-0 shadow-sm rounded-xl h-100">
                     <div class="card-header bg-white border-0 pt-4 px-4">
                         <h5 class="font-bold text-gray-800 mb-1">Proyección de Agotamiento</h5>
@@ -338,109 +338,246 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#64748b';
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-        const ctx = document.getElementById('graficoInsumos').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($insumoLabels) !!},
-                datasets: [{
-                    label: 'Cantidad extraída (neta)',
-                    data: {!! json_encode($insumoValores) !!},
-                    backgroundColor: '#1B7D8F',
-                    borderRadius: 6,
-                    barThickness: 30,
-                    hoverBackgroundColor: '#245360'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#1e293b',
-                        bodyColor: '#475569',
-                        borderColor: '#e2e8f0',
-                        borderWidth: 1,
-                        padding: 12,
-                        displayColors: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#f1f5f9', drawBorder: false },
-                        ticks: { padding: 10 }
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+            const canvas = document.getElementById('graficoInsumos');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($insumoLabels) !!},
+                        datasets: [{
+                            label: 'Cantidad extraída (neta)',
+                            data: {!! json_encode($insumoValores) !!},
+                            backgroundColor: '#1B7D8F',
+                            borderRadius: 6,
+                            barThickness: 30,
+                            hoverBackgroundColor: '#245360'
+                        }]
                     },
-                    x: {
-                        grid: { display: false, drawBorder: false }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                titleColor: '#1e293b',
+                                bodyColor: '#475569',
+                                borderColor: '#e2e8f0',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f1f5f9',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    padding: 10
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                }
+                            }
+                        }
                     }
-                }
+                });
             }
-        });
-    });
-
-    $(document).ready(function () {
-        $('#tablaProyeccion').DataTable({
-            dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
-            buttons: [
-                {
-                    extend: 'excelHtml5',
-                    text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel',
-                    className: 'btn btn-sm btn-outline-success border-success text-success hover:bg-success hover:text-white transition-all'
-                },
-                {
-                    extend: 'pdfHtml5',
-                    text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
-                    className: 'btn btn-sm btn-outline-danger border-danger text-danger hover:bg-danger hover:text-white transition-all',
-                    orientation: 'landscape',
-                    pageSize: 'A4',
-                    customize: function (doc) {
-                        doc.defaultStyle.fontSize = 8;
-                    }
-                }
-            ],
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
-                search: "",
-                searchPlaceholder: "Buscar...",
-                lengthMenu: "_MENU_",
-                info: "<span class='text-gray-500 text-sm'>_START_ - _END_ de _TOTAL_</span>",
-                infoEmpty: "<span class='text-gray-500 text-sm'>0 registros</span>",
-                infoFiltered: "",
+            const idiomaEspanol = {
+                processing: "Procesando...",
+                search: "Buscar:",
+                lengthMenu: "Mostrar _MENU_ registros",
+                info: "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                infoEmpty: "Mostrando registros del 0 al 0 de un total de 0 registros",
+                infoFiltered: "(filtrado de un total de _MAX_ registros)",
+                loadingRecords: "Cargando...",
+                zeroRecords: "No se encontraron resultados",
+                emptyTable: "Ningún dato disponible en esta tabla",
                 paginate: {
-                    first: '<i class="bi bi-chevron-double-left"></i>',
-                    last: '<i class="bi bi-chevron-double-right"></i>',
-                    next: '<i class="bi bi-chevron-right"></i>',
-                    previous: '<i class="bi bi-chevron-left"></i>'
+                    first: "Primero",
+                    previous: "Anterior",
+                    next: "Siguiente",
+                    last: "Último"
                 }
-            },
-            order: [[4, 'asc']], // Orden por estado
-            pageLength: 5,
-            drawCallback: function() {
-                $('.dataTables_paginate .paginate_button').addClass('px-3 py-1 border rounded-md mx-1 text-sm hover:bg-gray-50 transition-colors');
-                $('.dataTables_paginate .paginate_button.current').addClass('bg-blue-50 text-blue-600 border-blue-100 font-bold');
-                $('div.dataTables_wrapper div.dataTables_filter input').addClass('form-control form-control-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 ps-3');
+            };
+            const tablaProyeccion = $('#tablaProyeccion').DataTable({
+                dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
+                language: idiomaEspanol,
+                pageLength: 5,
+                order: [
+                    [4, 'asc']
+                ],
+                columnDefs: [
+                    {
+                        orderable: true,
+                        targets: [0, 1, 2, 3, 4]
+                    }
+                ],
+                drawCallback: function () {
+                    if (window.lucide) {
+                        lucide.createIcons();
+                    }
+                }
+            });
+            if (typeof AOS !== 'undefined') {
+                AOS.init();
             }
         });
-    });
-    AOS.init();
-</script>
-<style>
-    div.dt-buttons .btn {
-        margin-right: 0.5rem;
-        border-radius: 0.5rem;
-    }
-    .dataTables_wrapper .dataTables_filter {
-        float: none;
-        text-align: right;
-    }
-</style>
+    </script>
+    <style>
+        #tablaProyeccion_wrapper {
+
+            width: 100% !important;
+
+            margin: 0 !important;
+
+            padding: 0 !important;
+
+        }
+        #tablaProyeccion {
+
+            width: 100% !important;
+
+            margin: 0 !important;
+
+        }
+        #tablaProyeccion_wrapper table.dataTable.no-footer {
+
+            border-top: none !important;
+
+            border-bottom: none !important;
+
+        }
+        #tablaProyeccion_wrapper .dataTables_length,
+        #tablaProyeccion_wrapper .dataTables_filter {
+
+            display: none !important;
+        }
+        #tablaProyeccion_wrapper .dataTables_info {
+
+            color: #6b7280 !important;
+
+            font-size: 0.875rem !important;
+
+            padding-top: 0 !important;
+        }
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button.current,
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button.current:hover,
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button.current:active {
+
+            background: #32989D !important;
+
+            color: #ffffff !important;
+
+            border: none !important;
+
+            border-radius: 0.5rem !important;
+
+        }
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button {
+
+            background: #f9fafb !important;
+
+            color: #374151 !important;
+
+            border: none !important;
+
+            border-radius: 0.5rem !important;
+
+            padding: 0.35rem 0.75rem !important;
+
+            margin-left: 0.2rem !important;
+
+            margin-right: 0.2rem !important;
+
+            cursor: pointer;
+
+        }
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button:hover {
+
+            background: #e5e7eb !important;
+
+            color: #111827 !important;
+
+            border: none !important;
+
+            border-radius: 0.5rem !important;
+
+        }
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button:active {
+
+            background: #25636d !important;
+
+            color: #ffffff !important;
+
+            border: none !important;
+
+            border-radius: 0.5rem !important;
+
+        }
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button.disabled,
+        #tablaProyeccion_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+
+            background: #f9fafb !important;
+
+            color: #9ca3af !important;
+
+            border: none !important;
+
+            cursor: default !important;
+
+        }
+        div.dt-buttons {
+
+            display: flex;
+
+            gap: 0.5rem;
+
+            margin-bottom: 1rem;
+
+        }
+        div.dt-buttons .btn {
+
+            border-radius: 0.5rem;
+
+            margin-right: 0.5rem;
+
+        }
+        @media (max-width: 768px) {
+
+            #tablaProyeccion_wrapper .dataTables_info {
+
+                font-size: 0.75rem !important;
+
+            }
+
+            #tablaProyeccion_wrapper .dataTables_paginate .paginate_button {
+
+                padding: 0.3rem 0.55rem !important;
+
+                margin-left: 0.1rem !important;
+
+                margin-right: 0.1rem !important;
+
+            }
+        }
+    </style>
 @endpush

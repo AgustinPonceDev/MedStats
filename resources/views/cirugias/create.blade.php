@@ -53,15 +53,22 @@
                             @enderror
                         </div>
 
-                        {{-- Procedimiento --}}
-                        <div class="col-md-4">
-                            <label for="procedimiento" class="form-label">Procedimiento</label>
-                            <select name="procedimiento_id" id="procedimiento" class="form-control select2">
-                            </select>
-                            @error('procedimiento_id')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
+{{-- Procedimiento --}}
+<div class="col-md-4">
+    <label for="procedimiento" class="form-label">Procedimiento</label>
+    <select name="procedimiento_id" id="procedimiento" class="form-control select2">
+        <option value="">Seleccione el procedimiento</option>
+        @foreach ($procedimientos as $procedimiento)
+            <option value="{{ $procedimiento->id }}"
+                {{ old('procedimiento_id') == $procedimiento->id ? 'selected' : '' }}>
+                {{ $procedimiento->nombre_procedimiento }}
+            </option>
+        @endforeach
+    </select>
+    @error('procedimiento_id')
+        <small class="text-danger">{{ $message }}</small>
+    @enderror
+</div>
 
 
                         {{-- Procedimiento 2 --}}
@@ -355,21 +362,20 @@
                         </div>
 
 
-                        {{-- Urgencia y Óbito juntos (alineados) --}}
-                        <div class="col-md-4 d-flex align-items-center">
+                        {{-- Urgencia, Óbito y Suspendida juntos --}}
+                        <div class="col-md-6 d-flex align-items-center">
                             <div class="me-4 text-center">
                                 <label class="form-label d-block mb-2">Urgencia</label>
                                 <label class="switch switch-urgencia">
                                     <input type="checkbox" name="urgencia" id="urgencia"
                                         {{ old('urgencia') ? 'checked' : '' }}>
                                     <span class="slider round"></span>
-                                
                                 </label>
                                 @error('urgencia')
                                     <div><small class="text-danger">{{ $message }}</small></div>
                                 @enderror
                             </div>
-                            <div class="text-center">
+                            <div class="me-4 text-center">
                                 <label class="form-label d-block mb-2">Óbito</label>
                                 <label class="switch switch-obito">
                                     <input type="checkbox" name="obito" id="obito"
@@ -380,6 +386,26 @@
                                     <div><small class="text-danger">{{ $message }}</small></div>
                                 @enderror
                             </div>
+                            <div class="text-center me-4">
+                                <label class="form-label d-block mb-2">Suspendida</label>
+                                <label class="switch switch-suspendida">
+                                    <input type="checkbox" name="suspendida" id="suspendida" value="1"
+                                        {{ old('suspendida') ? 'checked' : '' }}>
+                                    <span class="slider round"></span>
+                                </label>
+                                @error('suspendida')
+                                    <div><small class="text-danger">{{ $message }}</small></div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- Observación por suspensión --}}
+                        <div class="col-md-6" id="contenedor_observacion_suspension" style="{{ old('suspendida') ? '' : 'display: none;' }}">
+                            <label for="observacion_suspension" class="form-label fw-semibold text-danger">Motivo / Observación de suspensión</label>
+                            <textarea name="observacion_suspension" id="observacion_suspension" class="form-control" rows="2" placeholder="Ingrese el motivo por el cual se suspendió la cirugía">{{ old('observacion_suspension') }}</textarea>
+                            @error('observacion_suspension')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
                         </div>
                     </div> {{-- end row --}}
 
@@ -488,6 +514,19 @@
             transform: translateX(26px);
         }
 
+        /* Suspendida: checked color red */
+        .switch-suspendida input:checked+.slider {
+            background-color: #dc3545;
+        }
+
+        .switch-suspendida input:focus+.slider {
+            box-shadow: 0 0 1px #dc3545;
+        }
+
+        .switch-suspendida input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
         .slider.round {
             border-radius: 34px;
         }
@@ -508,6 +547,16 @@
     </style>
     <script>
 $(document).ready(function () {
+    // Toggle observacion_suspension
+    $('#suspendida').on('change', function () {
+        if ($(this).is(':checked')) {
+            $('#contenedor_observacion_suspension').slideDown();
+        } else {
+            $('#contenedor_observacion_suspension').slideUp();
+            $('#observacion_suspension').val('');
+        }
+    });
+
     // Inicializar Select2
     $('.select2').select2({
         placeholder: "Seleccione una opción",
@@ -614,6 +663,39 @@ $(document).ready(function () {
                 break;
             }
         }
+    });
+
+    // Función para cambiar color de fondo si está completado
+    function actualizarColorFondo() {
+        const bgColor = '#e6f4f3';
+        const whiteColor = '#ffffff';
+
+        // Para inputs y selects normales
+        $('input, select, textarea').not('.select2-hidden-accessible, [type="checkbox"], [type="hidden"], [type="search"]').each(function() {
+            if ($(this).val() && $(this).val() !== '' && $(this).val() !== '0') {
+                $(this).css('background-color', bgColor);
+            } else {
+                $(this).css('background-color', whiteColor);
+            }
+        });
+
+        // Para select2
+        $('.select2-hidden-accessible').each(function() {
+            const select2Container = $(this).next('.select2-container').find('.select2-selection');
+            if ($(this).val() && $(this).val() !== '') {
+                select2Container.css('background-color', bgColor);
+            } else {
+                select2Container.css('background-color', whiteColor);
+            }
+        });
+    }
+
+    // Ejecutar al cargar la página (con un pequeño delay para select2 si es necesario, pero suele ser inmediato)
+    setTimeout(actualizarColorFondo, 100);
+
+    // Ejecutar al cambiar cualquier input/select/textarea
+    $(document).on('change input', 'input, select, textarea', function() {
+        actualizarColorFondo();
     });
 });
 </script>
