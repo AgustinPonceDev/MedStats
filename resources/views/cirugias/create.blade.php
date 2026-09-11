@@ -352,7 +352,7 @@
                                     <input type="number" name="duracion_minutos" id="duracion_minutos"
                                         class="form-control form-control-sm py-0" min="0" max="59"
                                         placeholder="0"
-                                        value="{{ old('duracion_minutos', 0) }}">
+                                        value="{{ old('duracion_minutos') }}">
                                 </div>
                             </div>
                             @error('duracion_horas')
