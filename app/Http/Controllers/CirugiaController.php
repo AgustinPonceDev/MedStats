@@ -56,7 +56,7 @@ class CirugiaController extends Controller
 
 
     public function store(Request $request)
-    {   
+    {
         // try{
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
@@ -197,6 +197,7 @@ class CirugiaController extends Controller
         }
         $cirugia->suspendida = $request->has('suspendida');
         $cirugia->observacion_suspension = $cirugia->suspendida ? $request->input('observacion_suspension') : null;
+
         // dd($cirugia);
         $cirugia->save(); //Guarda en la BD, si existe lo actualiza, sino crea
         if ($request->input('action') === 'cargar_medicamentos') {
@@ -234,6 +235,7 @@ class CirugiaController extends Controller
             'duracion_minutos' => 'nullable|integer|min:0|max:59',
             'suspendida' => 'nullable|boolean',
             'observacion_suspension' => 'nullable|string',
+
         ]);
 
         if ($request->input('ayudante_1_id') != null) {
@@ -306,7 +308,7 @@ class CirugiaController extends Controller
 
         $cirugia->fecha_cirugia = $request->input('fecha_cirugia');
         $cirugia->hora_cirugia = $request->input('hora_cirugia');
-        
+
         //Formatear duración
         $horas = $request->input('duracion_horas', 0);
         $minutos = $request->input('duracion_minutos', 0);
@@ -530,7 +532,7 @@ class CirugiaController extends Controller
         // Urgentes y programadas
         $urgentes = (clone $baseQuery)->where('urgencia', '1')->count();
         $programadas = (clone $baseQuery)->where('urgencia', '0')->count();
-
+        
         // Top procedimientos / cirugías más realizadas
         $subQueryProcedimientos = (clone $baseQuery)->select('procedimiento_id as procedimiento_id')->whereNotNull('procedimiento_id')
             ->unionAll((clone $baseQuery)->select('procedimiento_2_id as procedimiento_id')->whereNotNull('procedimiento_2_id'));
@@ -559,13 +561,14 @@ class CirugiaController extends Controller
 
         $procedimientoValores = $topProcedimientos->take(5)->pluck('total')->values();
 
+
+
         // Por tipo de anestesia
         $porAnestesia = (clone $baseQuery)
             ->select('tipo_anestesia_id', DB::raw('COUNT(*) as total'))
             ->groupBy('tipo_anestesia_id')
             ->with('get_tipo_anestesia')
             ->get();
-
         $anioSeleccionado = request('anio') ?? \Carbon\Carbon::parse($desde)->year;
         return view('cirugias.estadisticas', compact(
             'porCirujano',
@@ -639,6 +642,11 @@ class CirugiaController extends Controller
         $quirofanoServicio = \App\Models\Servicio::where('nombre', 'like', '%quirofano%')->first()
             ?? \App\Models\Servicio::find(3);
 
+
+        if (!$quirofanoServicio) {
+            abort(500, 'No se encontró ningún servicio con "quirófano" o "cirugía" en el nombre (tabla servicios). Entrá a /servicios, fijate el nombre exacto y avisame para ajustar la búsqueda.');
+        }
+
         if ($stock->servicio_id != $quirofanoServicio->id) {
             return redirect()->back()->withErrors(['stock_id' => 'El stock seleccionado no pertenece al servicio de Quirófano.'])->withInput();
         }
@@ -653,6 +661,7 @@ class CirugiaController extends Controller
 
         \App\Models\Historial_stock::create([
             'stock_id' => $stock->id,
+            'cirugia_id' => $cirugia->id,
             'cantidad' => -$cantidad,
             'fecha' => now()->toDateString(),
             'empleado_id' => $cirugia->cirujano_id,
@@ -678,5 +687,27 @@ class CirugiaController extends Controller
         $historial->delete();
 
         return redirect()->route('cirugias.medicamentos', $cirugia)->with('success', 'Carga de medicamento eliminada y stock restaurado.');
+    }
+
+    /**
+     * Busca el servicio de Quirófano por nombre (parcial, sin importar mayúsculas
+     * o acentos exactos). Ya no cae en un ID hardcodeado si no lo encuentra —
+     * antes, si el orden de los servicios cambiaba, podía terminar apuntando a
+     * un servicio completamente distinto sin ningún aviso.
+     */
+    private function resolverServicioQuirofano(): ?\App\Models\Servicio
+    {
+        // Probamos varios patrones posibles, del más específico al más amplio,
+        // porque no sabemos con certeza cómo se llama el servicio en cada instalación.
+        $patrones = ['%quir%fano%', '%cirug%'];
+
+        foreach ($patrones as $patron) {
+            $servicio = \App\Models\Servicio::where('nombre', 'like', $patron)->first();
+            if ($servicio) {
+                return $servicio;
+            }
+        }
+
+        return null;
     }
 }

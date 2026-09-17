@@ -7,16 +7,14 @@ use App\Models\Historial_stock;
 use App\Models\Paciente;
 use App\Models\Empleado;
 use App\Models\Medicamento;
+use App\Models\InsumoBarcode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Servicio;
 
 class StockController extends Controller
 {
-    // Ventana de análisis para la proyección de consumo (en días)
     private const VENTANA_PROYECCION = 30;
-
-    // Umbrales de días restantes para clasificar la urgencia de reposición
     private const DIAS_CRITICO = 7;
     private const DIAS_AVISO = 15;
 
@@ -38,8 +36,6 @@ class StockController extends Controller
 
         $stock = $query->get();
 
-        // Adjuntamos la proyección de consumo a cada insumo para mostrar el badge
-        // en el listado (no es una columna de la BD, se calcula al vuelo).
         $stock->each(function ($item) {
             $item->proyeccion = $this->calcularProyeccion($item);
         });
@@ -63,11 +59,64 @@ class StockController extends Controller
         return view('stocks.create', compact('medicamentos', 'servicios'));
     }
 
+    /**
+     * Endpoint para el lector de código de barras (USB, funciona como teclado).
+     * Devuelve:
+     *  - tipo=lote_existente: ya hay un Stock con ese barcode -> ofrecer ir a Agregar/Extraer
+     *  - tipo=producto_conocido: el barcode está en el catálogo -> autocompletar medicamento
+     *  - tipo=desconocido: primera vez que se ve -> se guarda tal cual al crear el stock
+     */
+    public function buscarPorBarcode(Request $request)
+    {
+        $request->validate(['barcode' => 'required|string|max:100']);
+        $barcode = $request->input('barcode');
+        $user = auth()->user();
+        $servicioRestringido = $user->servicioRestringido();
+
+        $stockExistente = Stock::where('barcode', $barcode)
+            ->when($servicioRestringido, fn ($q) => $q->where('servicio_id', $servicioRestringido))
+            ->with('get_medicamento', 'get_servicio')
+            ->first();
+
+        if ($stockExistente) {
+            return response()->json([
+                'tipo' => 'lote_existente',
+                'stock' => [
+                    'id' => $stockExistente->id,
+                    'medicamento' => optional($stockExistente->get_medicamento)->nombre,
+                    'servicio' => optional($stockExistente->get_servicio)->nombre,
+                    'lote' => $stockExistente->lote,
+                    'cantidad_act' => $stockExistente->cantidad_act,
+                    'url_agregar' => route('stocks.edit', ['stock' => $stockExistente->id, 'modo' => 'agregar']),
+                    'url_extraer' => route('stocks.edit', ['stock' => $stockExistente->id, 'modo' => 'extraer']),
+                ],
+            ]);
+        }
+
+        $catalogo = InsumoBarcode::where('barcode', $barcode)->with('medicamento')->first();
+
+        if ($catalogo) {
+            return response()->json([
+                'tipo' => 'producto_conocido',
+                'producto' => [
+                    'medicamento_id' => $catalogo->medicamento_id,
+                    'medicamento_nombre' => optional($catalogo->medicamento)->nombre,
+                    'lote_sugerido' => $catalogo->lote,
+                    'fecha_vencimiento_sugerida' => optional($catalogo->fecha_vencimiento)->toDateString(),
+                    'cantidad_sugerida' => $catalogo->cantidad_referencia,
+                ],
+            ]);
+        }
+
+        return response()->json(['tipo' => 'desconocido']);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
             'medicamento_id' => 'required|integer|exists:medicamentos,id',
             'lote' => 'required|string|max:50',
+            'barcode' => 'nullable|string|max:100|unique:stocks,barcode',
             'fecha_vencimiento' => 'required|date',
             'cantidad_act' => 'required|integer|min:0',
             'umbral_aviso' => 'nullable|integer|min:0',
@@ -75,6 +124,7 @@ class StockController extends Controller
         ], [
             'medicamento_id.required' => 'Tenés que elegir un medicamento del listado (no escribirlo libre).',
             'medicamento_id.exists' => 'Ese medicamento no existe. Elegilo del listado desplegable.',
+            'barcode.unique' => 'Ese código de barras ya está asignado a otro lote.',
             'umbral_critico.lte' => 'El umbral crítico tiene que ser menor o igual que el de aviso.',
         ]);
 
@@ -82,7 +132,6 @@ class StockController extends Controller
         $servicioRestringido = $user->servicioRestringido();
         $inputServicio = $request->input('servicio_id');
 
-        // Si el usuario (o su perfil) está restringido a un servicio, se lo forzamos
         if ($servicioRestringido) {
             $inputServicio = $servicioRestringido;
         } else {
@@ -104,12 +153,26 @@ class StockController extends Controller
         $stock->medicamento_id = $request->input('medicamento_id');
         $stock->fecha_vencimiento = $request->input('fecha_vencimiento');
         $stock->lote = $request->input('lote');
+        $stock->barcode = $request->filled('barcode') ? $request->input('barcode') : null;
         $stock->cantidad_act = $request->input('cantidad_act');
         $stock->servicio_id = $inputServicio;
-        // Umbrales de aviso/crítico definidos por quien carga el insumo (con default 50/30 si no se cargan)
         $stock->umbral_aviso = $request->filled('umbral_aviso') ? $request->input('umbral_aviso') : 50;
         $stock->umbral_critico = $request->filled('umbral_critico') ? $request->input('umbral_critico') : 30;
         $stock->save();
+
+        // Si escaneaste un código y tildaste "guardar en catálogo", queda registrado
+        // para autocompletar el medicamento la próxima vez que llegue ese producto.
+        if ($request->filled('barcode') && $request->boolean('guardar_en_catalogo')) {
+            InsumoBarcode::updateOrCreate(
+                ['barcode' => $request->input('barcode')],
+                [
+                    'medicamento_id' => $request->input('medicamento_id'),
+                    'lote' => $request->input('lote'),
+                    'fecha_vencimiento' => $request->input('fecha_vencimiento'),
+                    'cantidad_referencia' => $request->input('cantidad_act'),
+                ]
+            );
+        }
 
         Historial_stock::create([
             'stock_id' => $stock->id,
@@ -129,6 +192,7 @@ class StockController extends Controller
             ->paginate(15);
         return view('stocks.show', compact('hist_item', 'stock'));
     }
+
     public function edit(Stock $stock, Request $request)
     {
         // Por defecto será 'editar' si no se envía el parámetro ?modo=
@@ -252,7 +316,8 @@ class StockController extends Controller
         
         return redirect()->route('stocks.index');
     }
-    
+
+
     public function estadisticas(Request $request)
     {
         $validated = $request->validate([
@@ -286,7 +351,6 @@ class StockController extends Controller
         $stocksQuery = Stock::query()->when($servicioId, fn ($q) => $q->where('servicio_id', $servicioId));
         $stockIdsFiltrados = (clone $stocksQuery)->pluck('id');
 
-        // ---------- CÁLCULO DEL TOTAL DE INSUMOS AL CIERRE DE 'HASTA' ----------
         $movimientosPosteriores = Historial_stock::select('stock_id', DB::raw('SUM(cantidad) as suma_posterior'))
             ->whereIn('stock_id', $stockIdsFiltrados)
             ->where('fecha', '>', $hasta)
@@ -302,7 +366,6 @@ class StockController extends Controller
             $totalStockAlCierre += max(0, $stockAlCierre);
         }
         $totalStock = $totalStockAlCierre;
-        // -----------------------------------------------------------------------
 
         $movimientosNetosPeriodo = Historial_stock::select('stock_id', DB::raw('SUM(cantidad) as neto'))
             ->whereIn('stock_id', $stockIdsFiltrados)
@@ -344,7 +407,6 @@ class StockController extends Controller
                 $query->where('fecha', '>', $fechaLimite);
             })->with('get_medicamento')->get();
 
-        // ---------- PROYECCIÓN PROFESIONAL DE CONSUMO ----------
         $proyecciones = (clone $stocksQuery)->with('get_medicamento')->get()->map(function ($stock) {
             $p = $this->calcularProyeccion($stock);
 
@@ -378,15 +440,6 @@ class StockController extends Controller
         ));
     }
 
-    /**
-     * Proyección profesional de consumo para un lote puntual, combinando:
-     *  - Promedio simple: consumo total / días de la ventana (línea base, estable)
-     *  - Promedio ponderado: los días más recientes pesan más
-     *  - Tendencia: pendiente de una regresión lineal sobre el consumo diario
-     *
-     * Simula día a día el agotamiento del lote partiendo del consumo ponderado
-     * y ajustándolo según la tendencia detectada.
-     */
     private function calcularProyeccion(Stock $stock, int $ventanaDias = self::VENTANA_PROYECCION): array
     {
         $hoy = now()->startOfDay();

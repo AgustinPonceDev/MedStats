@@ -32,7 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // Ruta dinámica para los selectores encadenados de estudios médicos
     Route::get('/especialidades/{especialidad}/procedimientos', [EspecialidadController::class, 'getProcedimientos'])
         ->name('especialidades.procedimientos');
@@ -219,6 +219,7 @@ Route::middleware(['auth', 'roles:insumos,estudios_medicos'])->group(function ()
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
     Route::get('/stocks/create', [StockController::class, 'create'])->name('stocks.create');
     Route::post('/stocks', [StockController::class, 'store'])->name('stocks.store');
+    Route::get('/stocks/buscar-por-barcode', [StockController::class, 'buscarPorBarcode'])->name('stocks.buscarPorBarcode');
     Route::get('/stocks/{stock}/edit', [StockController::class, 'edit'])->name('stocks.edit');
     Route::get('/stocks/{stock}', [StockController::class, 'show'])->name('stocks.show');
     Route::put('/stocks/{stock}', [StockController::class, 'update'])->name('stocks.update');

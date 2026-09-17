@@ -9,19 +9,15 @@
     @endif
 
     <div class="flex min-h-screen transition-all duration-300 ease-in-out">
-
-        <!-- Main -->
         <main class="flex-1 p-5 max-w-full">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
             <h1
                 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent  bg-clip-text drop-shadow-md  flex items-center gap-2 px-2">
                 Medicamentos en Stock</h1>
 
             <div class="flex gap-4 items-center">
-                <!-- Filtros por servicio -->
                 <form method="GET" action="{{ route('stocks.index') }}" class="flex items-center gap-3">
                     <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-lg" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #1B7D8F;">
-
                         <label for="servicio_id" class="font-semibold mb-0" style="color: #1B7D8F;">Filtrar por Servicio:</label>
                         <select name="servicio_id" id="servicio_id"
                             class="form-select"
@@ -39,9 +35,7 @@
                             @endforeach
                         </select>
                         @if($servicioRestringido)
-                            <span class="badge" style="background-color: #1B7D8F; font-size: 0.75rem;">
-                                Restringido
-                            </span>
+                            <span class="badge" style="background-color: #1B7D8F; font-size: 0.75rem;">Restringido</span>
                         @endif
                     </div>
                 </form>
@@ -52,6 +46,15 @@
                     Ingresar Nuevo Medicamento
                 </a>
             </div>
+        </div>
+
+        <!-- Escaneo rápido: escaneá un lote ya cargado y te lleva directo a Agregar/Extraer -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-3 mb-4 flex items-center gap-3">
+            <i data-lucide="scan-line" class="w-5 h-5 text-[#1B7D8F] flex-shrink-0"></i>
+            <input type="text" id="scan_rapido" autocomplete="off"
+                class="flex-1 border-0 focus:ring-0 text-sm"
+                placeholder="Escaneá el código de barras de un insumo ya cargado para ir directo a Agregar/Extraer...">
+            <span id="scan_rapido_msg" class="text-xs text-gray-400"></span>
         </div>
 
         <div class="bg-white shadow rounded-lg border border-gray-200 overflow-auto">
@@ -70,8 +73,6 @@
                 <tbody>
                     @forelse($stock as $item)
                         @php
-                            // El estado (crítico/aviso/ok) lo define el umbral propio de
-                            // cada insumo (cargado por el médico/encargado), con fallback a 30/50.
                             $estado = $item->estadoStock();
                             $claseColor = match($estado) {
                                 'critico' => 'text-red-600 font-bold',
@@ -120,16 +121,13 @@
                                      Extraer
                                  </a>
                              </td>
-
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-2 text-center text-gray-500">No hay medicamentos en stock.
-                            </td>
+                            <td colspan="7" class="px-4 py-2 text-center text-gray-500">No hay medicamentos en stock.</td>
                         </tr>
                     @endforelse
                 </tbody>
-
             </table>
         </div>
     </div>
@@ -152,6 +150,38 @@ $(document).ready(function () {
         columnDefs: [
             { orderable: false, targets: [4, 5, 6] }
         ]
+    });
+
+    if (window.lucide) lucide.createIcons();
+
+    // Escaneo rápido: el lector USB "escribe" el código y manda Enter solo.
+    const inputScan = document.getElementById('scan_rapido');
+    const msg = document.getElementById('scan_rapido_msg');
+    inputScan.focus();
+
+    inputScan.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const barcode = inputScan.value.trim();
+        inputScan.value = '';
+        if (!barcode) return;
+
+        msg.textContent = 'Buscando...';
+        fetch(`{{ route('stocks.buscarPorBarcode') }}?barcode=${encodeURIComponent(barcode)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.tipo === 'lote_existente') {
+                    msg.innerHTML = `<strong>${data.stock.medicamento}</strong> (lote ${data.stock.lote}, ${data.stock.cantidad_act} u.) — ` +
+                        `<a href="${data.stock.url_agregar}" class="text-green-600 underline font-semibold">Agregar</a> ` +
+                        `&nbsp;|&nbsp; <a href="${data.stock.url_extraer}" class="text-red-600 underline font-semibold">Extraer</a>`;
+                } else {
+                    msg.textContent = 'Código no encontrado en ningún lote cargado.';
+                    setTimeout(() => { msg.textContent = ''; }, 4000);
+                }
+            })
+            .catch(() => {
+                msg.textContent = 'Error al buscar el código.';
+            });
     });
 });
 </script>

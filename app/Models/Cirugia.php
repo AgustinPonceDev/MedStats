@@ -101,4 +101,10 @@ class Cirugia extends Model
     }
     public function creador() { return $this->belongsTo(User::class, 'creado_por'); }
     public function modificador() { return $this->belongsTo(User::class, 'modificado_por'); }
+
+    // Movimientos de stock (insumos) generados automáticamente al cargar medicamentos de esta cirugía
+    public function movimientos_stock()
+    {
+        return $this->hasMany(Historial_stock::class, 'cirugia_id');
+    }
 }

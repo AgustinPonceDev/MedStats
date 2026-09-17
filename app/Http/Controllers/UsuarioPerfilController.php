@@ -4,33 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\UsuarioPerfil;
 use App\Models\User;
-use App\Models\Servicio;
 use Illuminate\Http\Request;
 
 class UsuarioPerfilController extends Controller
 {
-    /**
-     * Muestra el formulario para crear un nuevo perfil
-     */
     public function create()
     {
-        $servicios = Servicio::all();
-        return view('UsuarioPerfil.create', compact('servicios'));
+        return view('UsuarioPerfil.create');
     }
 
-    /**
-     * Almacena un nuevo perfil en la base de datos
-     */
     public function store(Request $request)
     {
         $request->validate([
             'perfil' => 'required',
-            'servicio_id' => 'nullable|exists:servicios,id',
         ]);
 
         $perfil = new UsuarioPerfil();
         $perfil->perfil = $request->input('perfil');
-        $perfil->servicio_id = $request->input('servicio_id');
 
         foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos'] as $modulo) {
             $perfil->$modulo = $request->input($modulo) != null;
@@ -41,27 +31,18 @@ class UsuarioPerfilController extends Controller
         return redirect()->route('UsuarioPerfil.index')->with('success', 'Perfil creado correctamente.');
     }
 
-    /**
-     * Muestra el formulario para editar un perfil
-     */
     public function edit(UsuarioPerfil $perfil)
     {
-        $servicios = Servicio::all();
-        return view('UsuarioPerfil.edit', compact('perfil', 'servicios'));
+        return view('UsuarioPerfil.edit', compact('perfil'));
     }
 
-    /**
-     * Actualiza un perfil en la base de datos
-     */
     public function update(Request $request, UsuarioPerfil $perfil)
     {
         $request->validate([
             'perfil' => 'required',
-            'servicio_id' => 'nullable|exists:servicios,id',
         ]);
 
         $perfil->perfil = $request->input('perfil');
-        $perfil->servicio_id = $request->input('servicio_id');
 
         foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos'] as $modulo) {
             $perfil->$modulo = $request->input($modulo) != null;
@@ -72,9 +53,6 @@ class UsuarioPerfilController extends Controller
         return redirect()->route('UsuarioPerfil.index')->with('success', 'Perfil actualizado correctamente.');
     }
 
-    /**
-     * Elimina un perfil de la base de datos
-     */
     public function destroy(UsuarioPerfil $perfil)
     {
         $perfil->delete();

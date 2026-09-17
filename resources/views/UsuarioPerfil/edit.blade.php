@@ -12,7 +12,6 @@
         </h1>
     </div>
 
-    {{-- Contenedor con borde gris institucional --}}
     <div class="card border shadow-sm">
         <div class="card-body">
 
@@ -20,7 +19,6 @@
                 @csrf
                 @method('PUT')
 
-                {{-- Campo Perfil --}}
                 <div>
                     <label for="perfil" class="form-label fw-semibold text-secondary">
                         Perfil
@@ -33,7 +31,6 @@
                     @enderror
                 </div>
 
-                {{-- Checkboxes estilizados --}}
                 @php
                     $opciones = [
                         'admin' => 'Administrador',
@@ -57,31 +54,6 @@
                     </div>
                 @endforeach
 
-                {{-- Servicio asignado al perfil: cualquier usuario con este rol queda
-                     restringido a este servicio automáticamente (salvo que el usuario
-                     tenga su propio servicio asignado en /usuarios, que tiene prioridad). --}}
-                <div class="border rounded-lg p-4 mt-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-color: #1B7D8F !important;">
-                    <label for="servicio_id" class="form-label fw-semibold" style="color: #1B7D8F;">
-                        Servicio Asignado al Rol
-                    </label>
-                    <select name="servicio_id" id="servicio_id" class="form-select border shadow-sm">
-                        <option value="">🌐 Sin restricción (acceso a todos los servicios)</option>
-                        @foreach ($servicios as $servicio)
-                            <option value="{{ $servicio->id }}" {{ old('servicio_id', $perfil->servicio_id) == $servicio->id ? 'selected' : '' }}>
-                                🏥 {{ $servicio->nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="text-xs text-secondary mt-2 mb-0">
-                        Cualquier usuario con este perfil va a ver y gestionar solo los insumos y
-                        estadísticas de este servicio, sin tener que asignárselo individualmente.
-                    </p>
-                    @error('servicio_id')
-                        <small class="text-danger d-block mt-1">{{ $message }}</small>
-                    @enderror
-                </div>
-
-                {{-- Botones --}}
                 <div class="flex justify-between pt-4">
                     <a href="{{ route('UsuarioPerfil.index') }}"
                         class="btn btn-outline-danger px-5 py-2 rounded shadow-sm">
@@ -99,7 +71,6 @@
     </div>
 </div>
 
-{{-- Estilos personalizados --}}
 <style>
     .switches-group-compact {
         display: flex;

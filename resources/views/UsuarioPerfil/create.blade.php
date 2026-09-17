@@ -4,8 +4,7 @@
 
 @section('contenido')
 <div class="max-w-xl mx-auto px-4 py-4">
-    
-    {{-- Título --}}
+
     <div class="flex justify-between items-center mb-6">
         <h1
             class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2 px-2">
@@ -13,14 +12,12 @@
         </h1>
     </div>
 
-    {{-- Contenedor --}}
     <div class="card border shadow-sm">
         <div class="card-body">
 
             <form action="{{ route('UsuarioPerfil.store') }}" method="POST" class="space-y-4">
                 @csrf
 
-                {{-- Campo perfil --}}
                 <div>
                     <label for="perfil" class="form-label fw-semibold text-secondary">
                         Perfil
@@ -58,29 +55,6 @@
                     </div>
                 @endforeach
 
-                {{-- Servicio asignado al perfil --}}
-                <div class="border rounded-lg p-4 mt-2" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-color: #1B7D8F !important;">
-                    <label for="servicio_id" class="form-label fw-semibold" style="color: #1B7D8F;">
-                        Servicio Asignado al Rol
-                    </label>
-                    <select name="servicio_id" id="servicio_id" class="form-select border shadow-sm">
-                        <option value="">🌐 Sin restricción (acceso a todos los servicios)</option>
-                        @foreach ($servicios as $servicio)
-                            <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>
-                                🏥 {{ $servicio->nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="text-xs text-secondary mt-2 mb-0">
-                        Cualquier usuario con este perfil va a ver y gestionar solo los insumos y
-                        estadísticas de este servicio, sin tener que asignárselo individualmente.
-                    </p>
-                    @error('servicio_id')
-                        <small class="text-danger d-block mt-1">{{ $message }}</small>
-                    @enderror
-                </div>
-
-                {{-- Botones --}}
                 <div class="flex justify-between pt-4">
                     <a href="{{ route('UsuarioPerfil.index') }}"
                        class="btn btn-outline-danger px-5 py-2 rounded shadow-sm">
@@ -97,7 +71,6 @@
     </div>
 </div>
 
-{{-- Estilos personalizados --}}
 <style>
     .switches-group-compact {
         display: flex;
@@ -110,66 +83,23 @@
         margin-bottom: 0.75rem;
         transition: all 0.2s ease-in-out;
     }
-
     .switches-group-compact:hover {
         background-color: #f1f5f9;
         box-shadow: 0 0 8px rgba(27, 125, 143, 0.15);
     }
-
-    .switch-label {
-        font-weight: 600;
-        color: #334155;
-        flex-grow: 1;
-    }
-
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 48px;
-        height: 26px;
-        flex-shrink: 0;
-    }
-
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
+    .switch-label { font-weight: 600; color: #334155; flex-grow: 1; }
+    .switch { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #cbd5e1;
-        transition: 0.4s;
-        border-radius: 34px;
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #cbd5e1; transition: 0.4s; border-radius: 34px;
     }
-
     .slider:before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: 0.4s;
-        border-radius: 50%;
+        position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
+        background-color: white; transition: 0.4s; border-radius: 50%;
     }
-
-    input:checked + .slider {
-        background: linear-gradient(90deg, #1B7D8F, #2BA8A0);
-    }
-
-    input:checked + .slider:before {
-        transform: translateX(22px);
-    }
-
-    .slider.round {
-        border-radius: 34px;
-    }
+    input:checked + .slider { background: linear-gradient(90deg, #1B7D8F, #2BA8A0); }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .slider.round { border-radius: 34px; }
 </style>
 @endsection

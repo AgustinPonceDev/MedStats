@@ -11,6 +11,7 @@ class Stock extends Model
 
     protected $fillable = [
         'lote',
+        'barcode',
         'fecha_vencimiento',
         'cantidad_act',
         'servicio_id',
