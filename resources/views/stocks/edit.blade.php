@@ -18,9 +18,22 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Medicamento</label>
-                <!-- Siempre de solo lectura, sin importar el modo -->
-                <input type="text" value="{{ $stock->get_medicamento->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
-                <input type="hidden" name="medicamento_id" value="{{ $stock->medicamento_id }}">
+                @if($modo === 'editar')
+                    <select name="medicamento_id" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700 select2">
+                        @foreach($medicamentos as $medicamento)
+                            <option value="{{ $medicamento->id }}" {{ old('medicamento_id', $stock->medicamento_id) == $medicamento->id ? 'selected' : '' }}>
+                                {{ $medicamento->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('medicamento_id')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                @else
+                    <!-- Solo lectura para el modo Agregar/Extraer -->
+                    <input type="text" value="{{ $stock->get_medicamento->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    <input type="hidden" name="medicamento_id" value="{{ $stock->medicamento_id }}">
+                @endif
             </div>
 
             <div>
