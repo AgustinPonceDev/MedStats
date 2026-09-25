@@ -22,9 +22,9 @@ class UsuarioPerfilController extends Controller
         $perfil = new UsuarioPerfil();
         $perfil->perfil = $request->input('perfil');
 
-        foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos'] as $modulo) {
-            $perfil->$modulo = $request->input($modulo) != null;
-        }
+        foreach (['admin', 'insumos', 'estadisticas', 'pacientes', 'camas', 'cirugias', 'estudios_medicos', 'trazabilidad'] as $modulo) {
+    $perfil->$modulo = $request->input($modulo) != null;
+}
 
         $perfil->save();
 

@@ -190,14 +190,15 @@
             }
 
             $menuItems = [
-                ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
-                ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
-                ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
-                ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
-                ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
-                ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
-                ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
-            ];
+    ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
+    ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
+    ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
+    ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
+    ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
+    ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
+    ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad'],
+    ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
+];
         @endphp
 
         @foreach($menuItems as $item)

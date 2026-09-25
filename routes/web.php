@@ -23,6 +23,8 @@ use App\Http\Controllers\InicioController;
 use App\Http\Controllers\ServicioController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EstudioMedicoController;
+use App\Http\Controllers\TrazabilidadController;
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -224,6 +226,19 @@ Route::middleware(['auth', 'roles:insumos,estudios_medicos'])->group(function ()
     Route::get('/stocks/{stock}', [StockController::class, 'show'])->name('stocks.show');
     Route::put('/stocks/{stock}', [StockController::class, 'update'])->name('stocks.update');
     //Route::delete('/stocks/{}', [StockController::class, 'destroy'])->name('stocks.destroy');
+});
+
+//Trazabilidad
+Route::middleware(['auth', 'roles:admin,trazabilidad'])->group(function () {
+    Route::get('/trazabilidad', [TrazabilidadController::class, 'index'])->name('trazabilidad.index');
+    Route::get('/trazabilidad/estadisticas', [TrazabilidadController::class, 'estadisticas'])->name('trazabilidad.estadisticas');
+    Route::get('/trazabilidad/create', [TrazabilidadController::class, 'create'])->name('trazabilidad.create');
+    Route::post('/trazabilidad', [TrazabilidadController::class, 'store'])->name('trazabilidad.store');
+    Route::get('/trazabilidad/{id}', [TrazabilidadController::class, 'show'])->name('trazabilidad.show');
+    Route::get('/trazabilidad/{id}/edit', [TrazabilidadController::class, 'edit'])->name('trazabilidad.edit');
+    Route::put('/trazabilidad/{id}', [TrazabilidadController::class, 'update'])->name('trazabilidad.update');
+    Route::delete('/trazabilidad/{id}', [TrazabilidadController::class, 'destroy'])->name('trazabilidad.destroy');
+    Route::post('/trazabilidad/{id}/estado', [TrazabilidadController::class, 'actualizarEstado'])->name('trazabilidad.estado');
 });
 
 //Cirugias

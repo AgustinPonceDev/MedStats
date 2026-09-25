@@ -9,17 +9,18 @@ class UsuarioPerfil extends Model
 {
     use HasFactory;
 
-    protected $fillable =  [
-        'perfil',
-        'admin',
-        'insumos',
-        'estadisticas',
-        'pacientes',
-        'camas',
-        'cirugias',
-        'estudios_medicos',
-        'servicio_id',
-    ];
+    protected $fillable = [
+    'perfil',
+    'admin',
+    'insumos',
+    'estadisticas',
+    'pacientes',
+    'camas',
+    'cirugias',
+    'estudios_medicos',
+    'trazabilidad',
+    'servicio_id',
+];
 
     public function servicio()
     {

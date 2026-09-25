@@ -33,14 +33,15 @@
 
                 @php
                     $opciones = [
-                        'admin' => 'Administrador',
-                        'insumos' => 'Insumos',
-                        'pacientes' => 'Pacientes',
-                        'estadisticas' => 'Estadísticas',
-                        'camas' => 'Camas',
-                        'cirugias' => 'Cirugías',
-                        'estudios_medicos' => 'Estudios Médicos (Diagnóstico por Imágenes)',
-                    ];
+    'admin' => 'Administrador',
+    'insumos' => 'Insumos',
+    'pacientes' => 'Pacientes',
+    'estadisticas' => 'Estadísticas',
+    'camas' => 'Camas',
+    'cirugias' => 'Cirugías',
+    'estudios_medicos' => 'Estudios Médicos (Diagnóstico por Imágenes)',
+    'trazabilidad' => 'Trazabilidad de Cajas Quirúrgicas',
+];
                 @endphp
 
                 @foreach ($opciones as $campo => $etiqueta)
