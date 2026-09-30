@@ -1,0 +1,300 @@
+@extends('layouts.app')
+@section('titulo', 'Modificar Stock')
+@section('contenido')
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <h1
+            class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md px-2 mb-6">
+            Modificar Stock
+        </h1>
+        <form action="{{ route('stocks.update', $stock) }}" method="POST"
+        class="bg-white shadow rounded-lg border border-gray-200 p-6 space-y-6">
+        @csrf
+        @method('PUT')
+
+        <!-- Campo para informar al controlador en qué modo estamos -->
+        <input type="hidden" name="modo" value="{{ $modo }}">
+
+        <!-- Datos del medicamento -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Medicamento</label>
+                @if($modo === 'editar')
+                    <select name="medicamento_id" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700 select2">
+                        @foreach($medicamentos as $medicamento)
+                            <option value="{{ $medicamento->id }}" {{ old('medicamento_id', $stock->medicamento_id) == $medicamento->id ? 'selected' : '' }}>
+                                {{ $medicamento->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('medicamento_id')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                @else
+                    <!-- Solo lectura para el modo Agregar/Extraer -->
+                    <input type="text" value="{{ $stock->get_medicamento->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    <input type="hidden" name="medicamento_id" value="{{ $stock->medicamento_id }}">
+                @endif
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Lote</label>
+                @if($modo === 'editar')
+                    <input type="text" name="lote" value="{{ old('lote', $stock->lote) }}" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('lote')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="text" value="{{ $stock->lote }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Código de barras</label>
+                @if($modo === 'editar')
+                    <div class="relative flex items-center">
+                        <input type="text" name="barcode" id="barcode_edit" autocomplete="off"
+                            value="{{ old('barcode', $stock->barcode) }}"
+                            placeholder="Escaneá o escribí el código..."
+                            class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 pr-10 text-gray-700">
+                        <button type="button" id="barcode_edit_clear"
+                            class="absolute right-2 text-gray-400 hover:text-red-600 font-bold leading-none"
+                            title="Quitar código"
+                            style="border:none;background:none;cursor:pointer; {{ old('barcode', $stock->barcode) ? '' : 'display:none;' }}">
+                            &times;
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Apuntá el lector acá y escaneá para reemplazarlo por otro.</p>
+                    @error('barcode')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                @else
+                    <input type="text" value="{{ $stock->barcode ?? 'Sin código asignado' }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento</label>
+                @if($modo === 'editar')
+                    <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento', $stock->fecha_vencimiento) }}" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('fecha_vencimiento')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="text" value="{{ $stock->fecha_vencimiento }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad Actual</label>
+                @if($modo === 'editar')
+                    <input type="number" name="cantidad_act" value="{{ old('cantidad_act', $stock->cantidad_act) }}" min="0" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                    @error('cantidad_act')<p class="text-red-600 text-sm mt-1">{{ $message }}</p>@enderror
+                @else
+                    <input type="number" value="{{ $stock->cantidad_act }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
+                @if($modo === 'editar')
+                    <select name="servicio_id" class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 text-gray-700 select2">
+                        @foreach($servicios as $serv)
+                            <option value="{{ $serv->id }}" {{ $stock->servicio_id == $serv->id ? 'selected' : '' }}>
+                                {{ $serv->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="text" value="{{ $stock->get_servicio->nombre }}" readonly class="w-full bg-gray-100 border border-gray-300 rounded-md px-4 py-2 text-gray-700">
+                @endif
+            </div>
+        </div>
+
+        <!-- Umbrales de aviso / crítico -->
+        <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Umbrales de Stock Bajo</h3>
+            <p class="text-xs text-gray-500 mb-4">Definen cuándo este insumo se marca en amarillo (aviso) o rojo (crítico).</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
+                    <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400"
+                        value="{{ old('umbral_aviso', $stock->umbral_aviso) }}"
+                        {{ in_array($modo, ['agregar', 'extraer']) ? 'disabled' : '' }}>
+                    @error('umbral_aviso')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
+                    <input type="number" name="umbral_critico" id="umbral_critico" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400"
+                        value="{{ old('umbral_critico', $stock->umbral_critico) }}"
+                        {{ in_array($modo, ['agregar', 'extraer']) ? 'disabled' : '' }}>
+                    @error('umbral_critico')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
+        <!-- Modificación de stock -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            @if ($modo === 'agregar')
+                <div>
+                    <label for="cantidad_agregar" class="block text-sm font-medium text-gray-700 mb-1">Agregar Cantidad</label>
+                    <input type="number" name="cantidad_agregar" id="cantidad_agregar" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-green-500"
+                        value="{{ old('cantidad_agregar') }}">
+                    @error('cantidad_agregar')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            @elseif ($modo === 'extraer')
+                <div>
+                    <label for="cantidad_extraer" class="block text-sm font-medium text-gray-700 mb-1">Extraer Cantidad</label>
+                    <input type="number" name="cantidad_extraer" id="cantidad_extraer" min="0"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-500"
+                        value="{{ old('cantidad_extraer') }}">
+                    @error('cantidad_extraer')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
+        </div>
+
+        @if ($modo === 'extraer')
+            <!-- Asociación con paciente y médico -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">El medicamento es para</label>
+                    <select name="paciente_id" id="paciente_id" class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500 select2">
+                        <option value="">Seleccione un paciente</option>
+                        @foreach ($pacientes as $paciente)
+                            <option value="{{ $paciente->id }}"
+                                {{ old('paciente_id') == $paciente->id ? 'selected' : '' }}>
+                                {{ $paciente->apellido }}, {{ $paciente->nombre }} – DNI {{ $paciente->dni }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('paciente_id')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="empleado_id" class="block text-sm font-medium text-gray-700 mb-1">Recetado por</label>
+                    <select name="empleado_id" id="empleado_id" class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500 select2">
+                        <option value="">Seleccione un médico</option>
+                        @php $profesionesPermitidas = [1, 2]; @endphp
+                        @foreach ($empleados as $empleado)
+                        @if (in_array($empleado->get_profesion->rol_id, $profesionesPermitidas))
+                            <option value="{{ $empleado->id }}"
+                                {{ old('empleado_id') == $empleado->id ? 'selected' : '' }}>
+                                Dr/a {{ $empleado->apellido }} – Mat. {{ $empleado->matricula ?? 'S/M' }}
+                            </option>
+                        @endif
+                        @endforeach
+                    </select>
+                    @error('empleado_id')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+            </div>
+        @endif
+
+        <!-- Comentario -->
+        <div>
+            <label for="comentario" class="block text-sm font-medium text-gray-700 mb-1">Comentario</label>
+            <input type="text" name="comentario" id="comentario"
+                class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                value="{{ old('comentario') }}">
+            @error('comentario')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-between pt-4">
+            <a href="{{ route('stocks.index') }}" class="btn btn-outline-danger px-5 py-2 rounded shadow-sm">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="inline-block bg-neutral-700 hover:bg-neutral-800 text-white font-medium py-2 px-6 rounded-full shadow-md cursor-pointer transition duration-300">
+                Guardar
+            </button>
+        </div>
+    </form>
+    </div>
+@push('scripts')
+
+<style>
+    /* Estilos personalizados para Select2 */
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        height: 42px !important;
+        padding: 0.5rem 1rem !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 26px !important;
+        padding-left: 0 !important;
+        color: #374151 !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px !important;
+        right: 8px !important;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #3b82f6 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #3b82f6 !important;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "Seleccione una opción",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // ---------- Código de barras (modo editar) ----------
+        const barcodeEdit = document.getElementById('barcode_edit');
+        const barcodeEditClear = document.getElementById('barcode_edit_clear');
+
+        if (barcodeEdit && barcodeEditClear) {
+            const toggleClearBtn = () => {
+                barcodeEditClear.style.display = barcodeEdit.value.trim() ? 'inline' : 'none';
+            };
+
+            // El lector de código de barras funciona como un teclado: escribe y manda Enter.
+            // Alcanza con que el input tenga foco, no hace falta lógica especial de fetch acá.
+            barcodeEdit.addEventListener('input', toggleClearBtn);
+            barcodeEdit.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Evita que el Enter del lector envíe el formulario solo
+                }
+            });
+
+            barcodeEditClear.addEventListener('click', function() {
+                barcodeEdit.value = '';
+                toggleClearBtn();
+                barcodeEdit.focus();
+            });
+        }
+    });
+</script>
+@endpush
+@endsection
