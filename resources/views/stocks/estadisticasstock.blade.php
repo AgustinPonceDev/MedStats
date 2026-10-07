@@ -4,18 +4,25 @@
     <div class="container py-4">
         {{-- Header Section --}}
         <div class="d-flex justify-content-between align-items-center mb-5">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-800 tracking-tight">
-                    Estadísticas de Stock
-                </h2>
-                <p class="text-gray-500 mt-1">Control de inventario y consumo de insumos</p>
-            </div>
-            <a href="{{ route('cirugias.estadisticas') }}"
-               class="btn bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200 d-flex align-items-center px-4 py-2 rounded-lg transition-all">
-                <i class="bi bi-activity me-2 text-[#1B7D8F]"></i>
-                <span class="font-medium">Estadísticas de Cirugías</span>
-            </a>
-        </div>
+    <div>
+        <h2 class="text-3xl font-bold text-gray-800 tracking-tight">
+            Estadísticas de Stock
+        </h2>
+        <p class="text-gray-500 mt-1">Control de inventario y consumo de insumos</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ route('cirugias.estadisticas') }}"
+           class="btn bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200 d-flex align-items-center px-4 py-2 rounded-lg transition-all">
+            <i class="bi bi-activity me-2 text-[#1B7D8F]"></i>
+            <span class="font-medium">Estadísticas de Cirugías</span>
+        </a>
+        <a href="{{ route('trazabilidad.estadisticas') }}"
+           class="btn bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200 d-flex align-items-center px-4 py-2 rounded-lg transition-all">
+            <i class="bi bi-box-seam me-2 text-[#1B7D8F]"></i>
+            <span class="font-medium">Estadísticas de Trazabilidad</span>
+        </a>
+    </div>
+</div>
 
         @if($vencimientos->isEmpty())
             <div class="alert alert-success bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg shadow-sm mb-4 d-flex align-items-center">
