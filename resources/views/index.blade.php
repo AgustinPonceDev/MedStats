@@ -97,29 +97,6 @@
                 </a>
                 @endif
 
-                <!-- CARD: Trazabilidad -->
-@if(Auth::user()->hasAccess('trazabilidad'))
-<a href="{{ route('trazabilidad.index') }}"
-    class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white text-decoration-none h-40">
-    <div class="w-1/2 p-6 flex flex-col justify-between">
-        <div>
-            <h2
-                class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
-                <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe"
-                    class="w-6 h-6">
-                Trazabilidad
-            </h2>
-            <p class="text-gray-500 mt-2 text-sm">Seguimiento de cajas quirúrgicas.</p>
-        </div>
-        <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
-    </div>
-    <div class="w-1/2 flex items-center justify-center">
-        <img src="{{ asset('assets/img/card-trazabilidad.jpg') }}" alt="Trazabilidad"
-            class="h-24 w-32 object-cover rounded-lg">
-    </div>
-</a>
-@endif
-
                 <!-- CARD 2: Estadísticas -->
                 @if(Auth::user()->hasAccess('estadisticas'))
                 <a href="{{ route('stocks.estadisticasstock') }}"
@@ -233,6 +210,29 @@
     </div>
 </a>
 @endif
+            </div>
+            
+            <!-- CARD 7: Trazabilidad -->
+            @if(Auth::user()->hasAccess('trazabilidad'))
+            <a href="{{ route('trazabilidad.index') }}"
+                class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none">
+                <div class="w-1/2 p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
+                            <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
+                            Trazabilidad
+                        </h2>
+                        <p class="text-gray-500 mt-2 text-sm">Control y seguimiento de cajas quirúrgicas e insumos</p>
+                    </div>
+                    <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
+                </div>
+                <div class="w-1/2 flex items-center justify-center">
+                    <img src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=300&q=80"
+                         alt="Trazabilidad"
+                         class="h-24 w-32 object-cover rounded-lg">
+                </div>
+            </a>
+            @endif
             </div>
         </main>
     </div>

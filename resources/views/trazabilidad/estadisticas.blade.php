@@ -125,7 +125,11 @@
                         
                         <!-- Empleado (preparado por si usan el campo name o nombre) -->
                         <td class="py-3 px-4 align-middle">
-                            {{ $movimiento->empleado->name ?? ($movimiento->empleado->nombre . ' ' . $movimiento->empleado->apellido) ?? 'Sistema' }}
+                            @if($movimiento->empleado)
+                                {{ $movimiento->empleado->name ?? trim(($movimiento->empleado->nombre ?? '') . ' ' . ($movimiento->empleado->apellido ?? '')) }}
+                            @else
+                                Sistema
+                            @endif
                         </td>
                         
                         <!-- Observaciones -->
