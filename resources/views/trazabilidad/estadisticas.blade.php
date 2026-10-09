@@ -6,7 +6,6 @@
 <div class="container mx-auto">
     <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-8">
- 
          <div>
                 <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md">
                     Estadísticas de Esterilización y Trazabilidad
@@ -94,14 +93,14 @@
                     @foreach($historial as $movimiento)
                     <tr class="border-b border-gray-50">
                         <!-- Fecha formateada (Día/Mes/Año Hora:Minutos) -->
-                        <td class="py-3 px-4 align-middle" data-order="{{ $movimiento->created_at->timestamp}}">
-                            {{ \Carbon\Carbon::parse($movimiento->created_at)->format('d/m/Y H:i') }}
+                        <td class="py-3 px-4 align-middle" data-order="{{ $movimiento->created_at?->timestamp }}">
+                            {{ $movimiento->created_at ? \Carbon\Carbon::parse($movimiento->created_at)->format('d/m/Y H:i') : '-' }}
                         </td>
                         
                         <!-- Datos de la caja -->
                         <td class="py-3 px-4 align-middle">
-                            <span class="font-bold text-gray-800">{{ $movimiento->cajaQuirurgica->codigo ?? 'N/A' }}</span><br>
-                            <span class="text-xs text-gray-500">{{ $movimiento->cajaQuirurgica->nombre ?? 'Caja eliminada' }}</span>
+                            <span class="font-bold text-gray-800">{{ $movimiento->cajaQuirurgica?->codigo ?? 'N/A' }}</span><br>
+                            <span class="text-xs text-gray-500">{{ $movimiento->cajaQuirurgica?->nombre ?? 'Caja eliminada' }}</span>
                         </td>
                         
                        <!-- Estado con colores y métodos dinámicos -->
@@ -118,14 +117,18 @@
                             @if($movimiento->estado_registrado == 'Esterilizada' && optional($movimiento->cajaQuirurgica)->tipo_esterilizacion)
                                 Esterilizada ({{ $movimiento->cajaQuirurgica->tipo_esterilizacion }})
                             @else
-                            {{ $movimiento->estado_registrado }}
+                                {{ $movimiento->estado_registrado }}
                             @endif
                         </span>
                         </td>
                         
-                        <!-- Empleado (preparado por si usan el campo name o nombre) -->
+                        <!-- Empleado protegida la relación -->
                         <td class="py-3 px-4 align-middle">
-                            {{ $movimiento->empleado->name ?? ($movimiento->empleado->nombre . ' ' . $movimiento->empleado->apellido) ?? 'Sistema' }}
+                            @if($movimiento->empleado)
+                                {{ $movimiento->empleado->name ?? trim(($movimiento->empleado->nombre ?? '') . ' ' . ($movimiento->empleado->apellido ?? '')) }}
+                            @else
+                                Sistema
+                            @endif
                         </td>
                         
                         <!-- Observaciones -->
@@ -137,12 +140,15 @@
                 </tbody>
             </table>
         </div>
-    </div>    <div id="contenedor-tabla-historial">
+    </div>
+
+    <div id="contenedor-tabla-historial">
         <!-- Próximo paso -->
     </div>
 
 </div>
 @endsection
+
 @push('scripts')
 <script>
     $(document).ready(function() {

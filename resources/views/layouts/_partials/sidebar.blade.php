@@ -186,7 +186,7 @@
         @endphp
 
         @if ($rutaActual !== 'inicio')
-            <a href="{{ is_array($rutaAnterior) ? route($rutaAnterior[0], $rutaAnterior[1]) : route($rutaAnterior) }}"
+            <a href="#" onclick="event.preventDefault(); history.back();"
                class="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative overflow-hidden"
                title="Volver">
                 <i data-lucide="arrow-left" class="w-6 h-6 flex-shrink-0 transition-transform group-hover:-translate-x-1"></i>

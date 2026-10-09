@@ -26,6 +26,7 @@
                 case 'cirugias.estadisticas':
                 case 'stocks.estadisticasstock':
                 case 'ajustes':
+                case 'trazabilidad.index':
                     $rutaAnterior = 'inicio';
                     break;
 
@@ -158,6 +159,13 @@
                 case 'especialidades.edit':
                     $rutaAnterior = 'especialidades.index';
                     break;
+                // Trazabilidad
+                case 'trazabilidad.create':
+                case 'trazabilidad.edit':
+                case 'trazabilidad.show':
+                case 'trazabilidad.estadisticas':
+                $rutaAnterior = 'trazabilidad.index';
+                break;
 
                 default:
                     $rutaAnterior = 'inicio';
@@ -166,7 +174,7 @@
         @endphp
 
         @if ($rutaActual !== 'inicio')
-            <a href="{{ is_array($rutaAnterior) ? route($rutaAnterior[0], $rutaAnterior[1]) : route($rutaAnterior) }}"
+            <a href="#" onclick="event.preventDefault(); history.back();"
                class="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative overflow-hidden"
                title="Volver">
                 <i data-lucide="arrow-left" class="w-6 h-6 flex-shrink-0 transition-transform group-hover:-translate-x-1"></i>
@@ -239,66 +247,77 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('toggleSidebar');
-        const linkTexts = document.querySelectorAll('.link-text');
-        const sidebarTitle = document.getElementById('sidebar-title');
-        const mainContent = document.getElementById('mainContent');
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const linkTexts = document.querySelectorAll('.link-text');
+    const sidebarTitle = document.getElementById('sidebar-title');
+    const mainContent = document.getElementById('mainContent');
 
-        function setSidebarState(expanded) {
-            const footer = document.getElementById('footer');
+    // Apaga la animación mientras aplicamos el estado guardado
+    sidebar.classList.add('no-transition');
+    if (mainContent) mainContent.classList.add('no-transition');
 
-            if (expanded) {
-                sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
-                sidebar.classList.add('w-64', 'sidebar-expandido');
-                linkTexts.forEach(el => {
-                    el.classList.remove('hidden');
-                    setTimeout(() => el.classList.remove('opacity-0'), 50);
-                });
-                if(sidebarTitle) {
-                    sidebarTitle.classList.remove('hidden');
-                    setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
-                }
-                if(mainContent) {
-                    mainContent.style.marginLeft = "16rem";
-                    mainContent.style.transform = "scale(0.98)";
-                }
-                if(footer) {
-                    footer.style.marginLeft = "16rem";
-                    footer.style.width = "calc(100% - 16rem)";
-                    footer.style.transition = "all 0.3s ease-in-out";
-                }
-            } else {
-                sidebar.classList.remove('w-64', 'sidebar-expandido');
-                sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
-                linkTexts.forEach(el => {
-                    el.classList.add('opacity-0');
-                    el.classList.add('hidden');
-                });
-                if(sidebarTitle) sidebarTitle.classList.add('hidden');
-                if(mainContent) {
-                    mainContent.style.marginLeft = "5rem";
-                    mainContent.style.transform = "scale(1)";
-                }
-                if(footer) {
-                    footer.style.marginLeft = "5rem";
-                    footer.style.width = "calc(100% - 5rem)";
-                    footer.style.transition = "all 0.3s ease-in-out";
-                }
+    function setSidebarState(expanded) {
+        const footer = document.getElementById('footer');
+
+        if (expanded) {
+            sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
+            sidebar.classList.add('w-64', 'sidebar-expandido');
+            linkTexts.forEach(el => {
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.remove('opacity-0'), 50);
+            });
+            if(sidebarTitle) {
+                sidebarTitle.classList.remove('hidden');
+                setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
+            }
+            if(mainContent) {
+                mainContent.style.marginLeft = "16rem";
+                mainContent.style.transform = "scale(0.98)";
+            }
+            if(footer) {
+                footer.style.marginLeft = "16rem";
+                footer.style.width = "calc(100% - 16rem)";
+            }
+        } else {
+            sidebar.classList.remove('w-64', 'sidebar-expandido');
+            sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
+            linkTexts.forEach(el => {
+                el.classList.add('opacity-0');
+                el.classList.add('hidden');
+            });
+            if(sidebarTitle) sidebarTitle.classList.add('hidden');
+            if(mainContent) {
+                mainContent.style.marginLeft = "5rem";
+                mainContent.style.transform = "scale(1)";
+            }
+            if(footer) {
+                footer.style.marginLeft = "5rem";
+                footer.style.width = "calc(100% - 5rem)";
             }
         }
+    }
 
-        const storedState = localStorage.getItem('sidebar-expanded');
-        const isExpanded = storedState === 'true';
-        setSidebarState(isExpanded);
+    const storedState = localStorage.getItem('sidebar-expanded');
+    const isExpanded = storedState === 'true';
+    setSidebarState(isExpanded);
 
-        toggleBtn.addEventListener('click', function() {
-            const isCurrentlyExpanded = sidebar.classList.contains('w-64');
-            const newState = !isCurrentlyExpanded;
-            setSidebarState(newState);
-            localStorage.setItem('sidebar-expanded', newState);
+    // Vuelve a encender la animación recién después de aplicar el estado inicial
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            sidebar.classList.remove('no-transition');
+            if (mainContent) mainContent.classList.remove('no-transition');
         });
     });
+
+    toggleBtn.addEventListener('click', function() {
+        const isCurrentlyExpanded = sidebar.classList.contains('w-64');
+        const newState = !isCurrentlyExpanded;
+        sidebar.style.transition = ''; // asegura que el toggle manual sí anime
+        setSidebarState(newState);
+        localStorage.setItem('sidebar-expanded', newState);
+    });
+});
 </script>
