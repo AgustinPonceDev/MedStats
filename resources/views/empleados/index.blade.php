@@ -91,7 +91,7 @@ $(document).ready(function () {
     $('#tablaEmpleados').DataTable({
         dom: '<"top-controls"<"col-sm-6"f>>rt<"bottom-controls"<"col-sm-6"i><"col-sm-6"p>>',
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+            url: '{{ asset('vendor/i18n/es-ES.json') }}',
             emptyTable: "No hay datos disponibles en la tabla",
             info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
             infoEmpty: "Mostrando 0 a 0 de 0 registros",

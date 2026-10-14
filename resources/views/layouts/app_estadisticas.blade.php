@@ -7,12 +7,12 @@
     <title>@yield('titulo', 'Estadísticas')</title>
 
     <!-- Bootstrap -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/css/bootstrap-4.5.2.min.css') }}" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ asset('vendor/css/bootstrap-icons-1.11.1.min.css') }}">
 
-    <!-- Tailwind (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind (CDN local) -->
+    <script src="{{ asset('vendor/js/tailwindcss.js') }}"></script>
 
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
@@ -20,16 +20,17 @@
     <link rel="stylesheet" href="{{ asset('assets/css/estadisticas.css') }}">
 
     <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="{{ asset('vendor/css/jquery-ui.min.css') }}">
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ asset('vendor/css/select2.min.css') }}" rel="stylesheet" />
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="{{ asset('vendor/css/dataTables.bootstrap5.min.css') }}">
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="{{ asset('vendor/js/lucide.min.js') }}"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Fonts (Poppins local) -->
+    <link href="{{ asset('vendor/css/fonts-local.css') }}" rel="stylesheet">
 
     <style>
 
@@ -96,18 +97,18 @@
     @include('layouts._partials.footer')
 
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ asset('vendor/js/jquery-3.6.0.min.js') }}"></script>
     <!-- jQuery UI -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="{{ asset('vendor/js/jquery-ui-1.13.2.min.js') }}"></script>
     <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('vendor/js/bootstrap.bundle.min.js') }}"></script>
     <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('vendor/js/select2.min.js') }}"></script>
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Chart.js y AOS los cargamos solo cuando la vista los necesita (pero pueden estar aquí) -->
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script src="{{ asset('vendor/js/dataTables.min.js') }}"></script>
+    <script src="{{ asset('vendor/js/dataTables.bootstrap5.min.js') }}"></script>
+    <!-- AOS -->
+    <script src="{{ asset('vendor/js/aos.min.js') }}"></script>
 
     <script>
         if (window.lucide) lucide.createIcons();

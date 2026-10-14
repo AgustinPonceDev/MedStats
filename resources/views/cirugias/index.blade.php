@@ -222,13 +222,13 @@
 
 @push('scripts')
     <!-- jsPDF y autoTable -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="{{ asset('vendor/js/jspdf.umd.min.js') }}"></script>
+    <script src="{{ asset('vendor/js/jspdf.plugin.autotable.min.js') }}"></script>
+    <script src="{{ asset('vendor/js/jquery-3.6.0.min.js') }}"></script>
+    <script src="{{ asset('vendor/js/dataTables.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('vendor/css/jquery.dataTables.min.css') }}">
     <!-- SheetJS para generar archivos Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="{{ asset('vendor/js/xlsx.full.min.js') }}"></script>
     
     <script>
         $(document).ready(function() {

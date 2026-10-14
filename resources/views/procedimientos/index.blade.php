@@ -102,7 +102,7 @@
             $('#tablaProcedimientos').DataTable({
                 dom: '<"top-controls"<"col-sm-6"f><"col-sm-6 text-end"B>>rt<"bottom-controls"<"col-sm-6"i><"col-sm-6"p>>',
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                    url: '{{ asset('vendor/i18n/es-ES.json') }}'
                 },
                 paging: true,
                 searching: true,
