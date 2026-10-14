@@ -172,9 +172,9 @@
 </div>
 
 {{-- Autocomplete --}}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="{{ asset('vendor/js/jquery-3.6.0.min.js') }}"></script>
+<script src="{{ asset('vendor/js/jquery-ui-1.13.2.min.js') }}"></script>
+<link rel="stylesheet" href="{{ asset('vendor/css/jquery-ui.min.css') }}">
 
 <script>
     $(function () {

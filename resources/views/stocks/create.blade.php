@@ -176,8 +176,8 @@
         </script>
 
         <!-- Tom Select CSS y JS -->
-        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+        <link href="{{ asset('vendor/css/tom-select.min.css') }}" rel="stylesheet" />
+        <script src="{{ asset('vendor/js/tom-select.complete.min.js') }}"></script>
 
         <!-- Inicialización de autocompletado -->
         <script>

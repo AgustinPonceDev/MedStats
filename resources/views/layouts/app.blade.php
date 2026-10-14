@@ -9,16 +9,17 @@
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="{{ asset('vendor/css/jquery-ui.min.css') }}">
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ asset('vendor/css/select2.min.css') }}" rel="stylesheet" />
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="{{ asset('vendor/js/lucide.min.js') }}"></script>
+    <!-- Fonts (Poppins local) -->
+    <link href="{{ asset('vendor/css/fonts-local.css') }}" rel="stylesheet">
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('vendor/css/dataTables.bootstrap5.min.css') }}">
+    <script src="{{ asset('vendor/js/tailwindcss.js') }}"></script>
+    <link href="{{ asset('vendor/css/bootstrap-4.5.2.min.css') }}" rel="stylesheet">
 
     <style>
         #mainContent {
@@ -79,20 +80,20 @@
         }
     </style>
     <!-- jQuery (solo una vez) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ asset('vendor/js/jquery-3.6.0.min.js') }}"></script>
     <!-- jQuery UI JS -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script src="{{ asset('vendor/js/jquery-ui-1.13.2.min.js') }}"></script>
     <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Tailwind (si lo usás con CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('vendor/js/bootstrap.bundle.min.js') }}"></script>
+    <!-- Tailwind (CDN local) -->
+    <script src="{{ asset('vendor/js/tailwindcss.js') }}"></script>
     <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('vendor/js/select2.min.js') }}"></script>
     <!-- AOS CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <link href="{{ asset('vendor/css/aos.min.css') }}" rel="stylesheet">
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{{ asset('vendor/js/dataTables.min.js') }}"></script>
+    <script src="{{ asset('vendor/js/dataTables.bootstrap5.min.js') }}"></script>
 
     <!-- Lucide Iconos -->
     <script>

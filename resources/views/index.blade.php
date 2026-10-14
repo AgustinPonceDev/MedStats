@@ -204,7 +204,7 @@
         <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
     </div>
     <div class="w-1/2 flex items-center justify-center">
-        <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=300&q=80"
+        <img src="{{ asset('vendor/img/unsplash-1.jpg') }}"
              alt="Estudios Médicos"
              class="h-24 w-32 object-cover rounded-lg">
     </div>
@@ -227,7 +227,7 @@
                     <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
                 </div>
                 <div class="w-1/2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=300&q=80"
+                    <img src="{{ asset('vendor/img/unsplash-2.jpg') }}"
                          alt="Trazabilidad"
                          class="h-24 w-32 object-cover rounded-lg">
                 </div>

@@ -139,7 +139,7 @@ $(document).ready(function () {
     const tabla = $('.table').DataTable({
         dom: '<"top-controls"lf>rt<"bottom-controls"ip>',
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+                    url: '{{ asset('vendor/i18n/es-ES.json') }}',
             search: "Buscar medicamento:",
             lengthMenu: "Mostrar _MENU_ medicamentos por página",
             info: "Mostrando _START_ a _END_ de _TOTAL_ medicamentos",
