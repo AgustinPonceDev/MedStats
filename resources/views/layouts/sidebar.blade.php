@@ -186,7 +186,7 @@
             // va directo a Estadísticas de Stock.
             $rutaEstadisticas = 'cirugias.estadisticas';
             if (!Auth::user()->hasAccess('cirugias') && Auth::user()->hasAccess('estudios_medicos')) {
-                $rutaEstadisticas = 'stocks.estadisticasstock';
+                $rutaEstadisticas = 'estudios_medicos.estadisticas';
             }
 
             $menuItems = [
@@ -231,10 +231,19 @@
 </aside>
 
 <style>
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 20px; }
-    .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #d1d5db; }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #e5e7eb;
+        border-radius: 20px;
+    }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+    }
 </style>
 
 <script>
@@ -253,35 +262,46 @@
             if (expanded) {
                 sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
                 sidebar.classList.add('w-64', 'sidebar-expandido');
+
                 linkTexts.forEach(el => {
                     el.classList.remove('hidden');
                     setTimeout(() => el.classList.remove('opacity-0'), 50);
                 });
+
                 if(sidebarTitle) {
                     sidebarTitle.classList.remove('hidden');
                     setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
                 }
+
                 if(mainContent) {
                     mainContent.style.marginLeft = "16rem";
                     mainContent.style.transform = "scale(0.98)";
                 }
+
                 if(footer) {
                     footer.style.marginLeft = "16rem";
                     footer.style.width = "calc(100% - 16rem)";
                     footer.style.transition = "all 0.3s ease-in-out";
                 }
+
             } else {
                 sidebar.classList.remove('w-64', 'sidebar-expandido');
                 sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
+
                 linkTexts.forEach(el => {
                     el.classList.add('opacity-0');
                     el.classList.add('hidden');
                 });
-                if(sidebarTitle) sidebarTitle.classList.add('hidden');
+
+                if(sidebarTitle) {
+                    sidebarTitle.classList.add('hidden');
+                }
+
                 if(mainContent) {
                     mainContent.style.marginLeft = "5rem";
                     mainContent.style.transform = "scale(1)";
                 }
+
                 if(footer) {
                     footer.style.marginLeft = "5rem";
                     footer.style.width = "calc(100% - 5rem)";
@@ -290,15 +310,26 @@
             }
         }
 
+        // Estado inicial al cargar la página (por defecto cerrado si no hay valor true previo)
         const storedState = localStorage.getItem('sidebar-expanded');
-        const isExpanded = storedState === 'true';
+        const isExpanded = storedState === 'true'; 
+
         setSidebarState(isExpanded);
 
+        // Botón toggle manual
         toggleBtn.addEventListener('click', function() {
             const isCurrentlyExpanded = sidebar.classList.contains('w-64');
             const newState = !isCurrentlyExpanded;
+
             setSidebarState(newState);
             localStorage.setItem('sidebar-expanded', newState);
+        });
+
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                localStorage.setItem('sidebar-expanded', 'false');
+            });
         });
     });
 </script>
