@@ -27,18 +27,21 @@ class EspecialidadController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([ //Si el titulo esta vacio no hace nada 
+        $request->validate([
             'nombre' => 'required|string|max:50',
+            'es_modalidad_imagen' => 'nullable|boolean', // Validamos el toggle
         ]);
 
         $especialidad = new Especialidad();
-        $especialidad->nombre = $request->input('nombre'); //Datos del POST se obtiene en request
+        $especialidad->nombre = $request->input('nombre');
 
-        //dd($especialidades);
-        $especialidad->save(); //Guarda en la BD, si existe lo actualiza, sino crea
+        // Asignamos el valor del switch (interpreta 1/0, true/false correctamente)
+        $especialidad->es_modalidad_imagen = $request->boolean('es_modalidad_imagen');
 
-    return redirect()->route('especialidades.index')
-        ->with('success', 'Especialidad creada correctamente.');
+        $especialidad->save(); //Guarda en la BD
+
+        return redirect()->route('especialidades.index')
+            ->with('success', 'Especialidad creada correctamente.');
     }
 
     public function edit(Especialidad $especialidad)
@@ -48,29 +51,37 @@ class EspecialidadController extends Controller
 
     public function update(Request $request, Especialidad $especialidad)
     {
-        $request->validate([ //Si esta vacio no hace nada 
-            'nombre' => 'required',
+        $request->validate([
+            'nombre' => 'required|string|max:50',
+            'es_modalidad_imagen' => 'nullable|boolean',
         ]);
+
         if ($request->input('nombre') != null) {
             $especialidad->nombre = $request->input('nombre');
         }
+
+        // Actualizamos el estado del toggle (indispensable para que se guarde si lo desmarcan)
+        $especialidad->es_modalidad_imagen = $request->boolean('es_modalidad_imagen');
+
         $especialidad->save();
-        return redirect()->route('especialidades.index');
-    }
 
-public function destroy(Especialidad $especialidad)
-{
-    $tienePrimarios = $especialidad->procedimientos()->exists();
-    $tieneSecundarios = $especialidad->procedimientos_secundarios()->exists();
-
-    if ($tienePrimarios || $tieneSecundarios) {
         return redirect()->route('especialidades.index')
-            ->with('error', 'No se puede eliminar: esta especialidad está asociada a procedimientos.');
+            ->with('success', 'Especialidad actualizada correctamente.');
     }
 
-    $especialidad->delete();
+    public function destroy(Especialidad $especialidad)
+    {
+        $tienePrimarios = $especialidad->procedimientos()->exists();
+        $tieneSecundarios = $especialidad->procedimientos_secundarios()->exists();
 
-    return redirect()->route('especialidades.index')
-        ->with('success', 'Especialidad eliminada correctamente.');
-}
+        if ($tienePrimarios || $tieneSecundarios) {
+            return redirect()->route('especialidades.index')
+                ->with('error', 'No se puede eliminar: esta especialidad está asociada a procedimientos.');
+        }
+
+        $especialidad->delete();
+
+        return redirect()->route('especialidades.index')
+            ->with('success', 'Especialidad eliminada correctamente.');
+    }
 }

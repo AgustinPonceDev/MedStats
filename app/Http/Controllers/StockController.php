@@ -59,7 +59,7 @@ class StockController extends Controller
         return view('stocks.create', compact('medicamentos', 'servicios'));
     }
 
-    /**
+        /**
      * Endpoint para el lector de código de barras (USB, funciona como teclado).
      * Devuelve:
      *  - tipo=lote_existente: ya hay un Stock con ese barcode -> ofrecer ir a Agregar/Extraer
@@ -139,14 +139,14 @@ class StockController extends Controller
         }
 
         $existe = Stock::where('medicamento_id', $request->input('medicamento_id'))
-        ->where('lote', $request->input('lote'))
-        ->where('servicio_id', $inputServicio)
-        ->exists();
+            ->where('lote', $request->input('lote'))
+            ->where('servicio_id', $inputServicio)
+            ->exists();
 
         if ($existe) {
             return redirect()->back()
-            ->withErrors(['lote' => 'Ya existe un stock para este medicamento con ese lote en este servicio.'])
-            ->withInput();
+                ->withErrors(['lote' => 'Ya existe un stock para este medicamento con ese lote en este servicio.'])
+                ->withInput();
         }
 
         $stock = new Stock();
@@ -196,16 +196,16 @@ class StockController extends Controller
     public function edit(Stock $stock, Request $request)
     {
         // Por defecto será 'editar' si no se envía el parámetro ?modo=
-        $modo = $request->query('modo', 'editar'); 
-        
+        $modo = $request->query('modo', 'editar');
+
         $pacientes = Paciente::all();
         $empleados = Empleado::all();
-        $medicamentos = Medicamento::all(); 
-        $servicios = Servicio::all(); 
+        $medicamentos = Medicamento::all();
+        $servicios = Servicio::all();
 
         return view('stocks.edit', compact('stock', 'pacientes', 'empleados', 'modo', 'medicamentos', 'servicios'));
     }
-    
+
     public function update(Request $request, Stock $stock)
     {
         $modo = $request->input('modo', 'editar');
@@ -215,6 +215,7 @@ class StockController extends Controller
             $request->validate([
                 'medicamento_id' => 'required|exists:medicamentos,id',
                 'lote' => 'required|string|max:50',
+                'barcode' => 'nullable|string|max:100|unique:stocks,barcode,' . $stock->id,
                 'fecha_vencimiento' => 'required|date',
                 'cantidad_act' => 'required|integer|min:0',
                 'servicio_id' => 'required|exists:servicios,id',
@@ -222,6 +223,7 @@ class StockController extends Controller
                 'umbral_critico' => 'nullable|integer|min:0|lte:umbral_aviso',
             ], [
                 'umbral_critico.lte' => 'El umbral crítico tiene que ser menor o igual que el de aviso.',
+                'barcode.unique' => 'Ese código de barras ya está asignado a otro lote.',
             ]);
 
             $existe = Stock::where('medicamento_id', $request->input('medicamento_id'))
@@ -240,6 +242,7 @@ class StockController extends Controller
 
             $stock->medicamento_id = $request->input('medicamento_id');
             $stock->lote = $request->input('lote');
+            $stock->barcode = $request->filled('barcode') ? $request->input('barcode') : null;
             $stock->fecha_vencimiento = $request->input('fecha_vencimiento');
             $stock->cantidad_act = $request->input('cantidad_act');
             $stock->servicio_id = $request->input('servicio_id');
@@ -270,8 +273,8 @@ class StockController extends Controller
         ]);
 
         $oldCantidad = $stock->cantidad_act;
-        $agregar = $request->input('cantidad_agregar', 0);
-        $extraer = $request->input('cantidad_extraer', 0);
+        $agregar = (int) $request->input('cantidad_agregar', 0);
+        $extraer = (int) $request->input('cantidad_extraer', 0);
 
         if ($agregar > 0 && $extraer > 0) {
             return redirect()->back()
@@ -313,7 +316,7 @@ class StockController extends Controller
             'comentario' => $comentario,
             'creado_por' => auth()->id(),
         ]);
-        
+
         return redirect()->route('stocks.index');
     }
 
@@ -348,7 +351,7 @@ class StockController extends Controller
             $servicios = Servicio::all();
         }
 
-        $stocksQuery = Stock::query()->when($servicioId, fn ($q) => $q->where('servicio_id', $servicioId));
+        $stocksQuery = Stock::query()->when($servicioId, fn($q) => $q->where('servicio_id', $servicioId));
         $stockIdsFiltrados = (clone $stocksQuery)->pluck('id');
 
         $movimientosPosteriores = Historial_stock::select('stock_id', DB::raw('SUM(cantidad) as suma_posterior'))
@@ -367,29 +370,26 @@ class StockController extends Controller
         }
         $totalStock = $totalStockAlCierre;
 
-        $movimientosNetosPeriodo = Historial_stock::select('stock_id', DB::raw('SUM(cantidad) as neto'))
-            ->whereIn('stock_id', $stockIdsFiltrados)
-            ->whereBetween('fecha', [$desde, $hasta])
+        // Movimientos del período (se suman por separado las entradas y las salidas;
+        // antes se neteaban por lote y una carga inicial/entrada tapaba las extracciones)
+        $movimientosPeriodo = Historial_stock::whereIn('stock_id', $stockIdsFiltrados)
+            ->whereBetween('fecha', [$desde, $hasta]);
+
+        $totalAgregados = (clone $movimientosPeriodo)->where('cantidad', '>', 0)->sum('cantidad');
+        $totalExtraidos = abs((clone $movimientosPeriodo)->where('cantidad', '<', 0)->sum('cantidad'));
+
+        // Top 5 de insumos más extraídos: solo cuenta las salidas de cada lote
+        $insumos = (clone $movimientosPeriodo)
+            ->select('stock_id', DB::raw('SUM(ABS(cantidad)) as total'))
+            ->where('cantidad', '<', 0)
             ->groupBy('stock_id')
             ->with('get_stock.get_medicamento')
+            ->orderByDesc('total')
+            ->take(5)
             ->get();
 
-        $totalAgregados = $movimientosNetosPeriodo->filter(fn ($m) => $m->neto > 0)->sum('neto');
-
-        $totalExtraidos = $movimientosNetosPeriodo->filter(fn ($m) => $m->neto < 0)
-            ->sum(fn ($m) => abs($m->neto));
-
-        $insumos = $movimientosNetosPeriodo
-            ->filter(fn ($m) => $m->neto < 0)
-            ->map(function ($m) {
-                $m->total = abs($m->neto);
-                return $m;
-            })
-            ->sortByDesc('total')
-            ->take(5)
-            ->values();
-
-        $insumoLabels = $insumos->map(fn($item) =>
+        $insumoLabels = $insumos->map(
+            fn($item) =>
             optional($item->get_stock->get_medicamento)->nombre ?? 'Sin nombre'
         );
 
@@ -446,16 +446,16 @@ class StockController extends Controller
         $fechaInicio = $hoy->copy()->subDays($ventanaDias - 1);
 
         $movimientosPorDia = Historial_stock::where('stock_id', $stock->id)
+            ->where('cantidad', '<', 0)
             ->whereBetween('fecha', [$fechaInicio->toDateString(), $hoy->toDateString() . ' 23:59:59'])
-            ->select(DB::raw('DATE(fecha) as fecha_dia'), DB::raw('SUM(cantidad) as neto'))
+            ->select(DB::raw('DATE(fecha) as fecha_dia'), DB::raw('SUM(ABS(cantidad)) as consumo'))
             ->groupBy('fecha_dia')
-            ->pluck('neto', 'fecha_dia');
+            ->pluck('consumo', 'fecha_dia');
 
         $serie = [];
         for ($i = 0; $i < $ventanaDias; $i++) {
             $fecha = $fechaInicio->copy()->addDays($i)->toDateString();
-            $neto = $movimientosPorDia[$fecha] ?? 0;
-            $serie[] = $neto < 0 ? abs($neto) : 0.0;
+            $serie[] = (float) ($movimientosPorDia[$fecha] ?? 0);
         }
 
         $n = count($serie);

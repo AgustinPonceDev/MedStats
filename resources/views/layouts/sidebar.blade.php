@@ -26,7 +26,6 @@
                 case 'cirugias.estadisticas':
                 case 'stocks.estadisticasstock':
                 case 'ajustes':
-                case 'trazabilidad.index':
                     $rutaAnterior = 'inicio';
                     break;
 
@@ -159,13 +158,6 @@
                 case 'especialidades.edit':
                     $rutaAnterior = 'especialidades.index';
                     break;
-                // Trazabilidad
-                case 'trazabilidad.create':
-                case 'trazabilidad.edit':
-                case 'trazabilidad.show':
-                case 'trazabilidad.estadisticas':
-                $rutaAnterior = 'trazabilidad.index';
-                break;
 
                 default:
                     $rutaAnterior = 'inicio';
@@ -174,7 +166,7 @@
         @endphp
 
         @if ($rutaActual !== 'inicio')
-            <a href="#" onclick="event.preventDefault(); history.back();"
+            <a href="{{ is_array($rutaAnterior) ? route($rutaAnterior[0], $rutaAnterior[1]) : route($rutaAnterior) }}"
                class="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative overflow-hidden"
                title="Volver">
                 <i data-lucide="arrow-left" class="w-6 h-6 flex-shrink-0 transition-transform group-hover:-translate-x-1"></i>
@@ -194,19 +186,19 @@
             // va directo a Estadísticas de Stock.
             $rutaEstadisticas = 'cirugias.estadisticas';
             if (!Auth::user()->hasAccess('cirugias') && Auth::user()->hasAccess('estudios_medicos')) {
-                $rutaEstadisticas = 'stocks.estadisticasstock';
+                $rutaEstadisticas = 'estudios_medicos.estadisticas';
             }
 
             $menuItems = [
-    ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
-    ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
-    ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
-    ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
-    ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
-    ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
-    ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad'],
-    ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
-];
+                ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
+                ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
+                ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
+                ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
+                ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
+                ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
+                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad'],
+                ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
+            ];
         @endphp
 
         @foreach($menuItems as $item)
@@ -239,85 +231,105 @@
 </aside>
 
 <style>
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 20px; }
-    .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #d1d5db; }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #e5e7eb;
+        border-radius: 20px;
+    }
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+    }
 </style>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-    if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
 
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggleSidebar');
-    const linkTexts = document.querySelectorAll('.link-text');
-    const sidebarTitle = document.getElementById('sidebar-title');
-    const mainContent = document.getElementById('mainContent');
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const linkTexts = document.querySelectorAll('.link-text');
+        const sidebarTitle = document.getElementById('sidebar-title');
+        const mainContent = document.getElementById('mainContent');
 
-    // Apaga la animación mientras aplicamos el estado guardado
-    sidebar.classList.add('no-transition');
-    if (mainContent) mainContent.classList.add('no-transition');
+        function setSidebarState(expanded) {
+            const footer = document.getElementById('footer');
 
-    function setSidebarState(expanded) {
-        const footer = document.getElementById('footer');
+            if (expanded) {
+                sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
+                sidebar.classList.add('w-64', 'sidebar-expandido');
 
-        if (expanded) {
-            sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
-            sidebar.classList.add('w-64', 'sidebar-expandido');
-            linkTexts.forEach(el => {
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.remove('opacity-0'), 50);
-            });
-            if(sidebarTitle) {
-                sidebarTitle.classList.remove('hidden');
-                setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
-            }
-            if(mainContent) {
-                mainContent.style.marginLeft = "16rem";
-                mainContent.style.transform = "scale(0.98)";
-            }
-            if(footer) {
-                footer.style.marginLeft = "16rem";
-                footer.style.width = "calc(100% - 16rem)";
-            }
-        } else {
-            sidebar.classList.remove('w-64', 'sidebar-expandido');
-            sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
-            linkTexts.forEach(el => {
-                el.classList.add('opacity-0');
-                el.classList.add('hidden');
-            });
-            if(sidebarTitle) sidebarTitle.classList.add('hidden');
-            if(mainContent) {
-                mainContent.style.marginLeft = "5rem";
-                mainContent.style.transform = "scale(1)";
-            }
-            if(footer) {
-                footer.style.marginLeft = "5rem";
-                footer.style.width = "calc(100% - 5rem)";
+                linkTexts.forEach(el => {
+                    el.classList.remove('hidden');
+                    setTimeout(() => el.classList.remove('opacity-0'), 50);
+                });
+
+                if(sidebarTitle) {
+                    sidebarTitle.classList.remove('hidden');
+                    setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
+                }
+
+                if(mainContent) {
+                    mainContent.style.marginLeft = "16rem";
+                    mainContent.style.transform = "scale(0.98)";
+                }
+
+                if(footer) {
+                    footer.style.marginLeft = "16rem";
+                    footer.style.width = "calc(100% - 16rem)";
+                    footer.style.transition = "all 0.3s ease-in-out";
+                }
+
+            } else {
+                sidebar.classList.remove('w-64', 'sidebar-expandido');
+                sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
+
+                linkTexts.forEach(el => {
+                    el.classList.add('opacity-0');
+                    el.classList.add('hidden');
+                });
+
+                if(sidebarTitle) {
+                    sidebarTitle.classList.add('hidden');
+                }
+
+                if(mainContent) {
+                    mainContent.style.marginLeft = "5rem";
+                    mainContent.style.transform = "scale(1)";
+                }
+
+                if(footer) {
+                    footer.style.marginLeft = "5rem";
+                    footer.style.width = "calc(100% - 5rem)";
+                    footer.style.transition = "all 0.3s ease-in-out";
+                }
             }
         }
-    }
 
-    const storedState = localStorage.getItem('sidebar-expanded');
-    const isExpanded = storedState === 'true';
-    setSidebarState(isExpanded);
+        // Estado inicial al cargar la página (por defecto cerrado si no hay valor true previo)
+        const storedState = localStorage.getItem('sidebar-expanded');
+        const isExpanded = storedState === 'true'; 
 
-    // Vuelve a encender la animación recién después de aplicar el estado inicial
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            sidebar.classList.remove('no-transition');
-            if (mainContent) mainContent.classList.remove('no-transition');
+        setSidebarState(isExpanded);
+
+        // Botón toggle manual
+        toggleBtn.addEventListener('click', function() {
+            const isCurrentlyExpanded = sidebar.classList.contains('w-64');
+            const newState = !isCurrentlyExpanded;
+
+            setSidebarState(newState);
+            localStorage.setItem('sidebar-expanded', newState);
+        });
+
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                localStorage.setItem('sidebar-expanded', 'false');
+            });
         });
     });
-
-    toggleBtn.addEventListener('click', function() {
-        const isCurrentlyExpanded = sidebar.classList.contains('w-64');
-        const newState = !isCurrentlyExpanded;
-        sidebar.style.transition = ''; // asegura que el toggle manual sí anime
-        setSidebarState(newState);
-        localStorage.setItem('sidebar-expanded', newState);
-    });
-});
 </script>

@@ -209,7 +209,7 @@
             // directo a Estadísticas de Stock, que es lo que realmente puede usar.
             $rutaEstadisticas = 'cirugias.estadisticas';
             if (!Auth::user()->hasAccess('cirugias') && Auth::user()->hasAccess('estudios_medicos')) {
-                $rutaEstadisticas = 'stocks.estadisticasstock';
+                $rutaEstadisticas = 'estudios_medicos.estadisticas';
             }
 
             $menuItems = [
@@ -254,7 +254,6 @@
 </aside>
 
 <style>
-    /* Estilos para el scrollbar personalizado */
     .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
     }
@@ -334,17 +333,26 @@
             }
         }
 
+        // Estado inicial al cargar la página (por defecto cerrado si no hay valor true previo)
         const storedState = localStorage.getItem('sidebar-expanded');
-        const isExpanded = storedState === 'true';
+        const isExpanded = storedState === 'true'; 
 
         setSidebarState(isExpanded);
 
+        // Botón toggle manual
         toggleBtn.addEventListener('click', function() {
             const isCurrentlyExpanded = sidebar.classList.contains('w-64');
             const newState = !isCurrentlyExpanded;
 
             setSidebarState(newState);
             localStorage.setItem('sidebar-expanded', newState);
+        });
+
+        const sidebarLinks = sidebar.querySelectorAll('a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                localStorage.setItem('sidebar-expanded', 'false');
+            });
         });
     });
 </script>
