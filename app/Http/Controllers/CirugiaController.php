@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Cirugia;
@@ -10,6 +11,7 @@ use App\Models\Quirofano;
 use App\Models\Tipo_anestesia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class CirugiaController extends Controller
@@ -47,7 +49,7 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
         $procedimientos = Procedimiento::orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -60,7 +62,10 @@ class CirugiaController extends Controller
         // try{
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
-            'especialidad_id' => 'required|exists:especialidads,id',
+            'especialidad_id' => [
+                'required',
+                Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', false)),
+            ],
             'procedimiento_id' => 'required|exists:procedimientos,id',
             'quirofano_id' => 'required|exists:quirofanos,id',
             'cirujano_id' => 'required|exists:empleados,id',
@@ -79,7 +84,7 @@ class CirugiaController extends Controller
             'paciente_id.exists' => 'El paciente seleccionado no existe en el sistema.',
 
             'especialidad_id.required' => 'Indicá la especialidad a realizar.',
-            'especialidad_id.exists' => 'La especialidad no está registrada.',
+            'especialidad_id.exists' => 'La especialidad seleccionada no es válida para cirugías.',
 
             'procedimiento_id.required' => 'Indicá el procedimiento a realizar.',
             'procedimiento_id.exists' => 'El procedimiento no está registrado.',
@@ -210,7 +215,17 @@ class CirugiaController extends Controller
     {
         $pacientes = Paciente::orderBy('apellido')->orderBy('nombre')->get();
         $empleados = Empleado::with('get_profesion')->orderBy('apellido')->orderBy('nombre')->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
+        $especialidades = Especialidad::quirurgicas()->orderBy('nombre')->get();
+
+        // Si la cirugía ya tenía cargada una especialidad de Diagnóstico por Imágenes
+        // (dato previo al toggle), la agregamos igual para no dejar el select vacío.
+        if ($cirugia->especialidad_id && !$especialidades->contains('id', $cirugia->especialidad_id)) {
+            $especialidadActual = Especialidad::find($cirugia->especialidad_id);
+            if ($especialidadActual) {
+                $especialidades->push($especialidadActual);
+            }
+        }
+
         $procedimientos = Procedimiento::with('get_especialidad')->orderBy('nombre_procedimiento')->get();
         $quirofanos = Quirofano::orderBy('nombre')->get();
         $tipoAnestesias = Tipo_anestesia::orderBy('nombre')->get();
@@ -221,7 +236,13 @@ class CirugiaController extends Controller
     {
         $request->validate([
             'paciente_id' => 'required|exists:pacientes,id',
-            'especialidad_id' => 'required|exists:especialidads,id',
+            'especialidad_id' => [
+                'required',
+                Rule::exists('especialidads', 'id')->where(function ($q) use ($cirugia) {
+                    $q->where('es_modalidad_imagen', false)
+                        ->orWhere('id', $cirugia->especialidad_id);
+                }),
+            ],
             'procedimiento_id' => 'required|exists:procedimientos,id',
             'quirofano_id' => 'required|exists:quirofanos,id',
             'cirujano_id' => 'required|exists:empleados,id',
@@ -360,7 +381,7 @@ class CirugiaController extends Controller
         $desde = $validated['desde'] ?? null;
         $hasta = $validated['hasta'] ?? null;
         $especialidadId = $request->input('especialidad_id');
-        $especialidades = \App\Models\Especialidad::orderBy('nombre')->get();
+        $especialidades = \App\Models\Especialidad::quirurgicas()->orderBy('nombre')->get();
         $aniosDisponibles = \App\Models\Cirugia::select(DB::raw('YEAR(fecha_cirugia) as anio'))
             ->distinct()
             ->orderBy('anio', 'desc')
@@ -371,67 +392,67 @@ class CirugiaController extends Controller
 
         // Base query reutilizable (excluye cirugías suspendidas)
         $baseQuery = \App\Models\Cirugia::query()
-        ->where('suspendida', false)
-        ->when($desde && $hasta, function ($query) use ($desde, $hasta) {
-            return $query->whereBetween('fecha_cirugia', [$desde, $hasta]);
-        }, function ($query) use ($anio) {
-            if ($anio) {
-                return $query->whereYear('fecha_cirugia', $anio);
-            }
-            return $query;
-        })
-        ->when($especialidadId, function ($query, $especialidadId) {
-            return $query->where('especialidad_id', $especialidadId);
-        })
-        ->when($cirujanoId, function ($query, $cirujanoId) {
-            return $query->where(function ($q) use ($cirujanoId) {
-                $q->where('cirujano_id', $cirujanoId)
-                  ->orWhere('ayudante_1_id', $cirujanoId)
-                  ->orWhere('ayudante_2_id', $cirujanoId)
-                  ->orWhere('ayudante_3_id', $cirujanoId);
+            ->where('suspendida', false)
+            ->when($desde && $hasta, function ($query) use ($desde, $hasta) {
+                return $query->whereBetween('fecha_cirugia', [$desde, $hasta]);
+            }, function ($query) use ($anio) {
+                if ($anio) {
+                    return $query->whereYear('fecha_cirugia', $anio);
+                }
+                return $query;
+            })
+            ->when($especialidadId, function ($query, $especialidadId) {
+                return $query->where('especialidad_id', $especialidadId);
+            })
+            ->when($cirujanoId, function ($query, $cirujanoId) {
+                return $query->where(function ($q) use ($cirujanoId) {
+                    $q->where('cirujano_id', $cirujanoId)
+                        ->orWhere('ayudante_1_id', $cirujanoId)
+                        ->orWhere('ayudante_2_id', $cirujanoId)
+                        ->orWhere('ayudante_3_id', $cirujanoId);
+                });
             });
-        });
 
         // Obtener cirujanos disponibles para el filtro (cirujano o ayudante, excluyendo suspendidas)
-        $cirujanosDisponibles = \App\Models\Empleado::whereIn('id', function($query) use ($especialidadId) {
+        $cirujanosDisponibles = \App\Models\Empleado::whereIn('id', function ($query) use ($especialidadId) {
             $query->select('cirujano_id')
-                  ->from('cirugias')
-                  ->where('suspendida', false)
-                  ->when($especialidadId, function($q, $especialidadId) {
-                      return $q->where('especialidad_id', $especialidadId);
-                  })
-                  ->whereNotNull('cirujano_id')
-                  ->union(
-                      DB::table('cirugias')
+                ->from('cirugias')
+                ->where('suspendida', false)
+                ->when($especialidadId, function ($q, $especialidadId) {
+                    return $q->where('especialidad_id', $especialidadId);
+                })
+                ->whereNotNull('cirujano_id')
+                ->union(
+                    DB::table('cirugias')
                         ->select('ayudante_1_id')
                         ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
+                        ->when($especialidadId, function ($q, $especialidadId) {
                             return $q->where('especialidad_id', $especialidadId);
                         })
                         ->whereNotNull('ayudante_1_id')
-                  )
-                  ->union(
-                      DB::table('cirugias')
+                )
+                ->union(
+                    DB::table('cirugias')
                         ->select('ayudante_2_id')
                         ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
+                        ->when($especialidadId, function ($q, $especialidadId) {
                             return $q->where('especialidad_id', $especialidadId);
                         })
                         ->whereNotNull('ayudante_2_id')
-                  )
-                  ->union(
-                      DB::table('cirugias')
+                )
+                ->union(
+                    DB::table('cirugias')
                         ->select('ayudante_3_id')
                         ->where('suspendida', false)
-                        ->when($especialidadId, function($q, $especialidadId) {
+                        ->when($especialidadId, function ($q, $especialidadId) {
                             return $q->where('especialidad_id', $especialidadId);
                         })
                         ->whereNotNull('ayudante_3_id')
-                  );
+                );
         })
-        ->orderBy('apellido')
-        ->orderBy('nombre')
-        ->get();
+            ->orderBy('apellido')
+            ->orderBy('nombre')
+            ->get();
 
         $total = $baseQuery->count();
 
@@ -532,7 +553,7 @@ class CirugiaController extends Controller
         // Urgentes y programadas
         $urgentes = (clone $baseQuery)->where('urgencia', '1')->count();
         $programadas = (clone $baseQuery)->where('urgencia', '0')->count();
-        
+
         // Top procedimientos / cirugías más realizadas
         $subQueryProcedimientos = (clone $baseQuery)->select('procedimiento_id as procedimiento_id')->whereNotNull('procedimiento_id')
             ->unionAll((clone $baseQuery)->select('procedimiento_2_id as procedimiento_id')->whereNotNull('procedimiento_2_id'));

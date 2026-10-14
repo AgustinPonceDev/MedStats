@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('titulo', 'Ingresar Medicamento')
 @section('contenido')
-<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
             <h1
                 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent  bg-clip-text drop-shadow-md  flex items-center gap-2 px-2">
@@ -19,6 +19,18 @@
                     placeholder="Apuntá el lector acá y escaneá, o escribilo a mano...">
             </div>
             <p id="scan_msg" class="text-xs text-gray-500 mt-2"></p>
+
+            <!-- Chip con el código ya escaneado + botón de borrado -->
+            <div id="barcode_chip"
+                class="mt-2 items-center gap-2 bg-[#1B7D8F]/10 border border-[#1B7D8F]/30 text-[#15616d] rounded-full px-3 py-1 text-sm w-fit"
+                style="display:none;">
+                <span>Código escaneado: <strong id="barcode_chip_text"></strong></span>
+                <button type="button" id="barcode_chip_clear"
+                    class="ml-1 text-gray-500 hover:text-red-600 font-bold leading-none" title="Quitar código escaneado"
+                    style="border:none;background:none;cursor:pointer;">
+                    &times;
+                </button>
+            </div>
         </div>
 
         <form action="{{ route('stocks.store') }}" method="POST"
@@ -105,7 +117,8 @@
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso (🟡)</label>
+                        <label for="umbral_aviso" class="block text-sm font-medium text-gray-700 mb-1">Umbral de Aviso
+                            (🟡)</label>
                         <input type="number" name="umbral_aviso" id="umbral_aviso" min="0"
                             class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-500"
                             placeholder="Ej: 50" value="{{ old('umbral_aviso') }}">
@@ -115,7 +128,8 @@
                     </div>
 
                     <div>
-                        <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico (🔴)</label>
+                        <label for="umbral_critico" class="block text-sm font-medium text-gray-700 mb-1">Umbral Crítico
+                            (🔴)</label>
                         <input type="number" name="umbral_critico" id="umbral_critico" min="0"
                             class="w-full border-2 border-gray-400 rounded-md shadow-sm px-4 py-2 focus:ring-2 focus:ring-red-400 focus:border-red-500"
                             placeholder="Ej: 30" value="{{ old('umbral_critico') }}">
@@ -139,7 +153,7 @@
             </div>
         </form>
 
-    <!-- Script para alerta de vencimiento -->
+        <!-- Script para alerta de vencimiento -->
         <script>
             const vencimiento = document.getElementById('fecha_vencimiento');
             vencimiento.addEventListener('change', () => {
@@ -183,7 +197,10 @@
         <script>
             const medicamentosOptions = [
                 @foreach ($medicamentos as $id => $nombre)
-                    { value: '{{ $id }}', text: '{{ $nombre }}' },
+                    {
+                        value: '{{ $id }}',
+                        text: '{{ $nombre }}'
+                    },
                 @endforeach
             ];
 
@@ -193,7 +210,10 @@
                 maxItems: 1,
                 placeholder: "Escriba para buscar un medicamento...",
                 allowEmptyOption: true,
-                sortField: { field: "text", direction: "asc" },
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
                 render: {
                     no_results: function(data, escape) {
                         return '<div class="no-results">No se encontró ningún medicamento</div>';
@@ -207,7 +227,33 @@
             const barcodeHidden = document.getElementById('barcode_hidden');
             const guardarCatalogoWrapper = document.getElementById('guardar_catalogo_wrapper');
             const guardarCatalogoCheckbox = document.getElementById('guardar_en_catalogo');
+            const barcodeChip = document.getElementById('barcode_chip');
+            const barcodeChipText = document.getElementById('barcode_chip_text');
+            const barcodeChipClear = document.getElementById('barcode_chip_clear');
             scanInput.focus();
+
+            function mostrarBarcodeChip(codigo) {
+                barcodeChipText.textContent = codigo;
+                barcodeChip.style.display = 'flex';
+            }
+
+            function limpiarBarcode() {
+                barcodeHidden.value = '';
+                barcodeChip.style.display = 'none';
+                barcodeChipText.textContent = '';
+                scanMsg.textContent = '';
+                guardarCatalogoWrapper.style.display = 'none';
+                guardarCatalogoCheckbox.checked = false;
+                scanInput.value = '';
+                scanInput.focus();
+            }
+
+            // Si el form vuelve con errores de validación y ya había un código cargado, lo mostramos
+            if (barcodeHidden.value) {
+                mostrarBarcodeChip(barcodeHidden.value);
+            }
+
+            barcodeChipClear.addEventListener('click', limpiarBarcode);
 
             scanInput.addEventListener('keydown', function(e) {
                 if (e.key !== 'Enter') return;
@@ -220,22 +266,28 @@
                     .then(res => res.json())
                     .then(data => {
                         barcodeHidden.value = barcode;
+                        mostrarBarcodeChip(barcode);
 
                         if (data.tipo === 'lote_existente') {
-                            scanMsg.innerHTML = `Este código ya pertenece a un lote cargado (${data.stock.medicamento}, lote ${data.stock.lote}, ${data.stock.cantidad_act} u.). ` +
+                            scanMsg.innerHTML =
+                                `Este código ya pertenece a un lote cargado (${data.stock.medicamento}, lote ${data.stock.lote}, ${data.stock.cantidad_act} u.). ` +
                                 `<a href="${data.stock.url_agregar}" class="text-green-600 underline font-semibold">Agregar stock →</a>` +
                                 ` &nbsp;|&nbsp; <a href="${data.stock.url_extraer}" class="text-red-600 underline font-semibold">Extraer stock →</a>`;
                             guardarCatalogoWrapper.style.display = 'none';
                         } else if (data.tipo === 'producto_conocido') {
                             tomSelectMedicamento.setValue(String(data.producto.medicamento_id));
-                            if (data.producto.lote_sugerido) document.getElementById('lote').value = data.producto.lote_sugerido;
-                            if (data.producto.fecha_vencimiento_sugerida) document.getElementById('fecha_vencimiento').value = data.producto.fecha_vencimiento_sugerida;
-                            scanMsg.textContent = `Código conocido: ${data.producto.medicamento_nombre}. Revisá lote, vencimiento y cantidad (son solo una sugerencia del último ingreso).`;
+                            if (data.producto.lote_sugerido) document.getElementById('lote').value = data.producto
+                                .lote_sugerido;
+                            if (data.producto.fecha_vencimiento_sugerida) document.getElementById(
+                                'fecha_vencimiento').value = data.producto.fecha_vencimiento_sugerida;
+                            scanMsg.textContent =
+                                `Código conocido: ${data.producto.medicamento_nombre}. Revisá lote, vencimiento y cantidad (son solo una sugerencia del último ingreso).`;
                             guardarCatalogoWrapper.style.display = 'flex';
                             guardarCatalogoCheckbox.checked = false;
                             document.getElementById('cantidad_act').focus();
                         } else {
-                            scanMsg.textContent = 'Código nuevo — completá los datos manualmente. Se puede guardar en el catálogo para la próxima vez.';
+                            scanMsg.textContent =
+                                'Código nuevo — completá los datos manualmente. Se puede guardar en el catálogo para la próxima vez.';
                             guardarCatalogoWrapper.style.display = 'flex';
                             guardarCatalogoCheckbox.checked = true;
                             document.getElementById('medicamento_input').focus();
@@ -248,5 +300,5 @@
                 scanInput.value = '';
             });
         </script>
-</div>
+    </div>
 @endsection

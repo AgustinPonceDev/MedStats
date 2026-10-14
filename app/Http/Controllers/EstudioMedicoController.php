@@ -14,6 +14,7 @@ use App\Models\Stock;
 use App\Models\Medicamento;
 use App\Models\Historial_stock;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class EstudioMedicoController extends Controller
 {
@@ -27,14 +28,14 @@ class EstudioMedicoController extends Controller
     private const INSUMO_JERINGA = 'Jeringa Prellenada';
 
     public function index()
-{
-    $estudios = EstudioMedico::with(['paciente', 'medico_solicitante', 'especialidad', 'estudio'])
-        ->orderBy('fecha', 'asc')
-        ->orderBy('hora_estudio', 'asc')
-        ->get();
+    {
+        $estudios = EstudioMedico::with(['paciente', 'medico_solicitante', 'especialidad', 'estudio'])
+            ->orderBy('fecha', 'asc')
+            ->orderBy('hora_estudio', 'asc')
+            ->get();
 
-    return view('estudios_medicos.index', compact('estudios'));
-}
+        return view('estudios_medicos.index', compact('estudios'));
+    }
 
     public function create()
     {
@@ -57,15 +58,15 @@ class EstudioMedicoController extends Controller
     public function store(StoreEstudioMedicoRequest $request)
     {
         $data = $request->validated();
-$estudioReal = Estudio::findOrFail($data['estudio_id']);
+        $estudioReal = Estudio::findOrFail($data['estudio_id']);
 
-// Inyectamos el nombre del estudio real en la columna obligatoria
-$data['tipo_estudio'] = $estudioReal->nombre;
+        // Mantener sincronizado el nombre del estudio guardado en el registro
+        $data['tipo_estudio'] = $estudioReal->nombre;
 
-DB::beginTransaction();
-try {
-    $estudioMedico = EstudioMedico::create($data);
-// ...
+        DB::beginTransaction();
+        try {
+            $estudioMedico = EstudioMedico::create($data);
+            // ...
 
             $this->descontarInsumoFijo($estudioMedico, self::INSUMO_CONTRASTE_50, (int) $data['cont_50ml']);
             $this->descontarInsumoFijo($estudioMedico, self::INSUMO_CONTRASTE_100, (int) $data['cont_100ml']);
@@ -113,8 +114,8 @@ try {
             'hora_estudio'          => 'nullable|date_format:H:i|before_or_equal:today',
             'paciente_id'           => 'required|exists:pacientes,id',
             'ia'                    => 'nullable|string|max:20',
-            'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn ($q) => $q->where('es_modalidad_imagen', true))],
-            'estudio_id'            => ['required', 'integer', \Illuminate\Validation\Rule::exists('estudios', 'id')->where(fn ($q) => $q->where('especialidad_id', $request->input('especialidad_id')))],
+            'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', true))],
+            'estudio_id'            => ['required', 'integer', \Illuminate\Validation\Rule::exists('estudios', 'id')->where(fn($q) => $q->where('especialidad_id', $request->input('especialidad_id')))],
             'regiones'              => 'required|integer|min:1|max:20',
             'cont_50ml'             => 'required|integer|min:0',
             'cont_100ml'            => 'required|integer|min:0',
@@ -128,7 +129,7 @@ try {
         ]);
 
         $estudioReal = Estudio::findOrFail($data['estudio_id']);
-
+        $data['tipo_estudio'] = $estudioReal->nombre;
         DB::beginTransaction();
         try {
             // Evaluamos los deltas para cada uno de los 3 insumos fijos
@@ -169,6 +170,190 @@ try {
 
         return redirect()->route('estudios_medicos.index')
             ->with('success', 'Estudio médico eliminado y stock devuelto correctamente.');
+    }
+
+    /**
+     * Estadísticas de Diagnóstico por Imágenes (misma estructura que Estadísticas de Cirugías).
+     * Sin rango de fechas muestra el año elegido (por defecto el actual o el último con datos).
+     */
+    public function estadisticas(Request $request)
+    {
+        $validated = $request->validate([
+            'desde'           => 'nullable|date|before_or_equal:today',
+            'hasta'           => 'nullable|date|after_or_equal:desde|before_or_equal:today',
+            'anio'            => 'nullable|integer|min:2000|max:2100',
+            'especialidad_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', true))],
+            'medico_id'       => 'nullable|integer|exists:empleados,id',
+        ], [
+            'desde.date'            => 'La fecha de inicio no tiene un formato válido.',
+            'desde.before_or_equal' => 'La fecha de inicio no puede ser futura.',
+            'hasta.date'            => 'La fecha de fin no tiene un formato válido.',
+            'hasta.after_or_equal'  => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
+            'hasta.before_or_equal' => 'La fecha de fin no puede ser futura.',
+        ]);
+
+        $desde       = $validated['desde'] ?? null;
+        $hasta       = $validated['hasta'] ?? null;
+        $modalidadId = $validated['especialidad_id'] ?? null;
+        $medicoId    = $validated['medico_id'] ?? null;
+        $porRango    = $desde && $hasta;
+
+        $aniosDisponibles = EstudioMedico::select(DB::raw('YEAR(fecha) as anio'))
+            ->distinct()
+            ->orderByDesc('anio')
+            ->pluck('anio');
+
+        $anioSeleccionado = (int) ($validated['anio']
+            ?? ($aniosDisponibles->contains(now()->year) ? now()->year : ($aniosDisponibles->first() ?? now()->year)));
+
+        // Base reutilizable con los filtros activos
+        $base = EstudioMedico::query()
+            ->when(
+                $porRango,
+                fn($q) => $q->whereBetween('fecha', [$desde, $hasta]),
+                fn($q) => $q->whereYear('fecha', $anioSeleccionado)
+            )
+            ->when($modalidadId, fn($q, $v) => $q->where('especialidad_id', $v))
+            ->when($medicoId, fn($q, $v) => $q->where('medico_solicitante_id', $v));
+
+        // Cantidad de meses/semanas del período, para los promedios
+        if ($porRango) {
+            $inicio = Carbon::parse($desde)->startOfDay();
+            $fin    = Carbon::parse($hasta)->startOfDay();
+        } else {
+            $inicio = Carbon::create($anioSeleccionado, 1, 1)->startOfDay();
+            $fin    = $anioSeleccionado === now()->year
+                ? now()->startOfDay()
+                : Carbon::create($anioSeleccionado, 12, 31)->startOfDay();
+        }
+        $dias        = max(1, (int) round($inicio->diffInDays($fin)) + 1);
+        $total       = (clone $base)->count();
+        $promedioMensual = round($total / max(1, $dias / 30.4375), 1);
+        $promedioSemanal = round($total / max(1, $dias / 7), 1);
+
+        // Estudios por mes
+        $multiAnio = $porRango && Carbon::parse($desde)->year !== Carbon::parse($hasta)->year;
+        $porMes = (clone $base)
+            ->select(DB::raw("DATE_FORMAT(fecha, '%Y-%m') as ym"), DB::raw('COUNT(*) as total'))
+            ->groupBy('ym')
+            ->orderBy('ym')
+            ->get()
+            ->map(function ($item) use ($multiAnio) {
+                $fecha = Carbon::createFromFormat('Y-m-d', $item->ym . '-01');
+                $item->mes_nombre = ucfirst($fecha->translatedFormat($multiAnio ? 'M Y' : 'F'));
+                return $item;
+            });
+        $porMesLabels  = $porMes->pluck('mes_nombre')->values();
+        $porMesValores = $porMes->pluck('total')->values();
+
+        // Top médicos solicitantes
+        $porMedico = (clone $base)
+            ->select('medico_solicitante_id', DB::raw('COUNT(*) as total'))
+            ->groupBy('medico_solicitante_id')
+            ->orderByDesc('total')
+            ->with('medico_solicitante')
+            ->get();
+        $medicoLabels = $porMedico->take(5)->map(fn($i) => $i->medico_solicitante
+            ? $i->medico_solicitante->apellido . ', ' . $i->medico_solicitante->nombre
+            : 'Sin asignar')->values();
+        $medicoValores = $porMedico->take(5)->pluck('total')->values();
+
+        // Estudios reales (Rx de hombro, TC de abdomen, etc.), con regiones vistas
+        $topEstudios = (clone $base)
+            ->select(
+                'estudio_id',
+                DB::raw('COUNT(*) as total'),
+                DB::raw('COALESCE(SUM(regiones), 0) as regiones_total'),
+                DB::raw('MAX(tipo_estudio) as tipo_estudio_ref')
+            )
+            ->groupBy('estudio_id')
+            ->orderByDesc('total')
+            ->with('estudio.especialidad')
+            ->get()
+            ->map(function ($item) {
+                $item->nombre = optional($item->estudio)->nombre ?? $item->tipo_estudio_ref ?? 'Sin especificar';
+                return $item;
+            });
+        $estudioLabels  = $topEstudios->take(5)->pluck('nombre')->values();
+        $estudioValores = $topEstudios->take(5)->pluck('total')->values();
+
+        // Por modalidad (Rayos X / Tomografía) con sus estudios reales adentro
+        $modalidades = $topEstudios
+            ->groupBy(fn($i) => optional($i->estudio)->especialidad_id)
+            ->map(function ($items) {
+                return (object) [
+                    'nombre'   => optional(optional($items->first()->estudio)->especialidad)->nombre ?? 'Sin modalidad',
+                    'total'    => $items->sum('total'),
+                    'estudios' => $items->sortByDesc('total')->values(),
+                ];
+            })
+            ->sortByDesc('total')
+            ->values();
+        $modalidadLabels  = $modalidades->pluck('nombre')->values();
+        $modalidadValores = $modalidades->pluck('total')->values();
+
+        // Día de la semana (WEEKDAY: 0 = lunes ... 6 = domingo)
+        $porDia = (clone $base)
+            ->select(DB::raw('WEEKDAY(fecha) as dia'), DB::raw('COUNT(*) as total'))
+            ->groupBy('dia')
+            ->pluck('total', 'dia');
+        $diaLabels  = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        $diaValores = collect(range(0, 6))->map(fn($d) => (int) ($porDia[$d] ?? 0))->values();
+
+        // Ambulatorios vs Internados
+        $internados   = (clone $base)->where('ia', 'I')->count();
+        $ambulatorios = (clone $base)->where('ia', 'A')->count();
+
+        // Regiones e insumos de contraste
+        $totalRegiones   = (int) (clone $base)->sum('regiones');
+        $promedioRegiones = $total > 0 ? round($totalRegiones / $total, 1) : 0;
+        $conContraste = (clone $base)->where(function ($q) {
+            $q->where('cont_50ml', '>', 0)->orWhere('cont_100ml', '>', 0);
+        })->count();
+        $cont50   = (int) (clone $base)->sum('cont_50ml');
+        $cont100  = (int) (clone $base)->sum('cont_100ml');
+        $jeringas = (int) (clone $base)->sum('jeringa_prellenada');
+
+        // Datos para los filtros
+        $modalidadesDisponibles = Especialidad::modalidadesImagen()->orderBy('nombre')->get();
+        $medicosDisponibles = Empleado::whereIn('id', EstudioMedico::select('medico_solicitante_id')->whereNotNull('medico_solicitante_id'))
+            ->orderBy('apellido')->orderBy('nombre')->get();
+        $servicioImagenId = Servicio::where('nombre', self::SERVICIO_DIAGNOSTICO_IMAGEN)->value('id');
+
+        return view('estudios_medicos.estadisticas', compact(
+            'total',
+            'promedioMensual',
+            'promedioSemanal',
+            'porMes',
+            'porMesLabels',
+            'porMesValores',
+            'porMedico',
+            'medicoLabels',
+            'medicoValores',
+            'topEstudios',
+            'estudioLabels',
+            'estudioValores',
+            'modalidades',
+            'modalidadLabels',
+            'modalidadValores',
+            'diaLabels',
+            'diaValores',
+            'internados',
+            'ambulatorios',
+            'totalRegiones',
+            'promedioRegiones',
+            'conContraste',
+            'cont50',
+            'cont100',
+            'jeringas',
+            'aniosDisponibles',
+            'anioSeleccionado',
+            'modalidadesDisponibles',
+            'medicosDisponibles',
+            'modalidadId',
+            'medicoId',
+            'servicioImagenId'
+        ));
     }
 
     // Stock actual (sumado) de los 3 insumos fijos, solo para mostrar "disponible: N" en el formulario
@@ -292,7 +477,7 @@ try {
         // Buscamos los registros del historial de consumos de este estudio para este medicamento específico
         $historiales = Historial_stock::where('estudio_medico_id', $estudioMedico->id)
             ->where('cantidad', '<', 0) // Que sean salidas
-            ->whereHas('get_stock', function($query) use ($medicamento) {
+            ->whereHas('get_stock', function ($query) use ($medicamento) {
                 $query->where('medicamento_id', $medicamento->id);
             })
             ->orderBy('created_at', 'desc') // Devolvemos primero a los últimos lotes afectados
@@ -341,7 +526,7 @@ try {
 
             if ($loteVigente) {
                 $loteVigente->increment('cantidad_act', $restante);
-                
+
                 Historial_stock::create([
                     'stock_id'           => $loteVigente->id,
                     'estudio_medico_id'  => $estudioMedico->id,
