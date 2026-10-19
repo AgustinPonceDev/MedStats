@@ -253,6 +253,7 @@ Route::middleware(['auth', 'roles:cirugias'])->group(function () {
     // Surgery medications
     Route::get('/cirugias/{cirugia}/medicamentos', [CirugiaController::class, 'medicamentos'])->name('cirugias.medicamentos');
     Route::post('/cirugias/{cirugia}/medicamentos', [CirugiaController::class, 'guardarMedicamentos'])->name('cirugias.medicamentos.store');
+    Route::post('/cirugias/{cirugia}/medicamentos/escanear', [CirugiaController::class, 'escanearMedicamento'])->name('cirugias.medicamentos.escanear');
     Route::delete('/cirugias/{cirugia}/medicamentos/{historial}', [CirugiaController::class, 'eliminarMedicamento'])->name('cirugias.medicamentos.destroy');
 });
 
@@ -310,7 +311,8 @@ Route::middleware(['auth', 'roles:estudios_medicos'])->group(function () {
         ->names('estudios_medicos')
         ->parameters(['estudios-medicos' => 'estudio_medico']);
     // Nueva ruta para el select dinámico de estudios por especialidad
-    Route::get('/estudios-medicos/especialidad/{especialidad}/estudios',
+    Route::get(
+        '/estudios-medicos/especialidad/{especialidad}/estudios',
         [App\Http\Controllers\EstudioMedicoController::class, 'estudiosPorEspecialidad']
     )->name('estudios_medicos.estudios_por_especialidad');
 });

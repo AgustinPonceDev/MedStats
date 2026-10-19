@@ -12,6 +12,7 @@ use App\Models\Tipo_anestesia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
 class CirugiaController extends Controller
@@ -626,11 +627,10 @@ class CirugiaController extends Controller
 
     public function medicamentos(Cirugia $cirugia)
     {
-        $quirofanoServicio = \App\Models\Servicio::where('nombre', 'like', '%quirofano%')->first()
-            ?? \App\Models\Servicio::find(3);
+        $quirofanoServicio = $this->resolverServicioQuirofano();
 
         if (!$quirofanoServicio) {
-            return redirect()->back()->withErrors(['error' => 'No se encontró el servicio Quirófano en la base de datos.']);
+            return redirect()->back()->withErrors(['error' => 'No se encontró el servicio de Quirófano. Creá un servicio llamado "Quirófano" en Servicios y cargale stock.']);
         }
 
         $stocks = \App\Models\Stock::where('servicio_id', $quirofanoServicio->id)
@@ -659,55 +659,236 @@ class CirugiaController extends Controller
             'cantidad.min' => 'La cantidad debe ser al menos 1.',
         ]);
 
-        $stock = \App\Models\Stock::find($request->stock_id);
-        $quirofanoServicio = \App\Models\Servicio::where('nombre', 'like', '%quirofano%')->first()
-            ?? \App\Models\Servicio::find(3);
-
+        $quirofanoServicio = $this->resolverServicioQuirofano();
 
         if (!$quirofanoServicio) {
             abort(500, 'No se encontró ningún servicio con "quirófano" o "cirugía" en el nombre (tabla servicios). Entrá a /servicios, fijate el nombre exacto y avisame para ajustar la búsqueda.');
         }
 
-        if ($stock->servicio_id != $quirofanoServicio->id) {
-            return redirect()->back()->withErrors(['stock_id' => 'El stock seleccionado no pertenece al servicio de Quirófano.'])->withInput();
-        }
+        $cantidad = (int) $request->cantidad;
 
-        $cantidad = $request->cantidad;
+        // Si algo falla se lanza una ValidationException: Laravel revierte la transacción
+        // y vuelve al formulario con el error y los datos cargados.
+        DB::transaction(function () use ($request, $cirugia, $quirofanoServicio, $cantidad) {
+            // Bloqueamos la fila para que dos cargas simultáneas no dejen el stock en negativo
+            $stock = \App\Models\Stock::lockForUpdate()->findOrFail($request->stock_id);
 
-        if ($stock->cantidad_act < $cantidad) {
-            return redirect()->back()->withErrors(['cantidad' => 'No hay suficiente stock de este lote. Stock disponible: ' . $stock->cantidad_act])->withInput();
-        }
+            if ($stock->servicio_id != $quirofanoServicio->id) {
+                throw ValidationException::withMessages([
+                    'stock_id' => 'El stock seleccionado no pertenece al servicio de Quirófano.',
+                ]);
+            }
 
-        $stock->decrement('cantidad_act', $cantidad);
+            if ($stock->cantidad_act < $cantidad) {
+                throw ValidationException::withMessages([
+                    'cantidad' => 'No hay suficiente stock de este lote. Stock disponible: ' . $stock->cantidad_act,
+                ]);
+            }
 
-        \App\Models\Historial_stock::create([
-            'stock_id' => $stock->id,
-            'cirugia_id' => $cirugia->id,
-            'cantidad' => -$cantidad,
-            'fecha' => now()->toDateString(),
-            'empleado_id' => $cirugia->cirujano_id,
-            'paciente_id' => $cirugia->paciente_id,
-            'comentario' => 'cirugia ' . $cirugia->id,
-            'creado_por' => auth()->id(),
-        ]);
+            $this->registrarConsumoCirugia($cirugia, $stock, $cantidad);
+        });
 
         return redirect()->route('cirugias.medicamentos', $cirugia)->with('success', 'Medicamento cargado y descontado del stock correctamente.');
     }
 
-    public function eliminarMedicamento(Cirugia $cirugia, \App\Models\Historial_stock $historial)
+    /**
+     * Carga por lector de código de barras (USB, funciona como teclado).
+     * Cada lectura descuenta "unidades" (por defecto 1) del stock de Quirófano.
+     *
+     *  1) Si el código es de un lote de Quirófano, descuenta de ese lote.
+     *  2) Si no, y está en el catálogo de códigos, descuenta de los lotes de ese insumo
+     *     en Quirófano (primero el que vence antes).
+     *  3) Si no está en ninguno, o no alcanza el stock, informa el error y no descuenta nada.
+     */
+    public function escanearMedicamento(Request $request, Cirugia $cirugia)
     {
-        if ($historial->comentario !== 'cirugia ' . $cirugia->id) {
+        $data = $request->validate([
+            'barcode'  => 'required|string|max:100',
+            'unidades' => 'nullable|integer|min:1|max:999',
+        ], [
+            'barcode.required' => 'No se recibió ningún código de barras.',
+            'unidades.integer' => 'Las unidades por lectura deben ser un número entero.',
+            'unidades.min'     => 'Las unidades por lectura deben ser al menos 1.',
+            'unidades.max'     => 'Las unidades por lectura no pueden superar 999.',
+        ]);
+
+        $barcode  = trim($data['barcode']);
+        $unidades = (int) ($data['unidades'] ?? 1);
+
+        $servicio = $this->resolverServicioQuirofano();
+
+        if (!$servicio) {
+            return redirect()->back()->withErrors(['barcode' => 'No se encontró el servicio de Quirófano. Creá un servicio llamado "Quirófano" en Servicios y cargale stock.']);
+        }
+
+        $mensaje = DB::transaction(function () use ($barcode, $unidades, $servicio, $cirugia) {
+            // 1) ¿El código corresponde a un lote puntual de Quirófano?
+            $lotes = \App\Models\Stock::where('servicio_id', $servicio->id)
+                ->where('barcode', $barcode)
+                ->lockForUpdate()
+                ->get();
+
+            if ($lotes->isNotEmpty()) {
+                $nombre = optional($lotes->first()->get_medicamento)->nombre;
+            } else {
+                // 2) No es un lote de Quirófano: identificamos el insumo por el catálogo o por un lote de otro servicio
+                $catalogo  = \App\Models\InsumoBarcode::where('barcode', $barcode)->with('medicamento')->first();
+                $loteAjeno = \App\Models\Stock::where('barcode', $barcode)->with('get_medicamento')->first();
+
+                $medicamentoId = optional($catalogo)->medicamento_id ?? optional($loteAjeno)->medicamento_id;
+
+                if (!$medicamentoId) {
+                    throw ValidationException::withMessages([
+                        'barcode' => 'El código "' . $barcode . '" no está registrado. Cargalo primero en el stock de ' . $servicio->nombre . '.',
+                    ]);
+                }
+
+                $nombre = optional(optional($catalogo)->medicamento)->nombre
+                    ?? optional(optional($loteAjeno)->get_medicamento)->nombre;
+
+                // Solo lotes del servicio de Quirófano, el que vence antes primero
+                $lotes = \App\Models\Stock::where('servicio_id', $servicio->id)
+                    ->where('medicamento_id', $medicamentoId)
+                    ->where('cantidad_act', '>', 0)
+                    ->orderBy('fecha_vencimiento')
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($lotes->isEmpty()) {
+                    $otrosServicios = \App\Models\Stock::where('medicamento_id', $medicamentoId)
+                        ->where('servicio_id', '!=', $servicio->id)
+                        ->with('get_servicio')
+                        ->get()
+                        ->pluck('get_servicio.nombre')
+                        ->filter()
+                        ->unique()
+                        ->implode(', ');
+
+                    throw ValidationException::withMessages([
+                        'barcode' => $otrosServicios !== ''
+                            ? "{$nombre} pertenece a {$otrosServicios} y no se puede usar en cirugías. Solo se descuentan insumos de {$servicio->nombre}."
+                            : "No hay stock de {$nombre} en {$servicio->nombre}.",
+                    ]);
+                }
+            }
+
+            $nombre     = $nombre ?? 'el insumo escaneado';
+            $disponible = (int) $lotes->sum('cantidad_act');
+
+            if ($disponible < $unidades) {
+                throw ValidationException::withMessages([
+                    'barcode' => "Stock insuficiente de {$nombre} en {$servicio->nombre} (disponible: {$disponible}, necesitás: {$unidades}).",
+                ]);
+            }
+
+            $restante  = $unidades;
+            $loteUsado = null;
+
+            foreach ($lotes as $stock) {
+                if ($restante <= 0) {
+                    break;
+                }
+
+                $aDescontar = min($restante, (int) $stock->cantidad_act);
+                if ($aDescontar <= 0) {
+                    continue;
+                }
+
+                $this->registrarConsumoCirugia($cirugia, $stock, $aDescontar);
+                $restante -= $aDescontar;
+                $loteUsado = $loteUsado ?? $stock->lote;
+            }
+
+            return "Descontado: {$unidades} × {$nombre} (lote {$loteUsado}). Quedan " . ($disponible - $unidades) . ' en ' . $servicio->nombre . '.';
+        });
+
+        return redirect()->route('cirugias.medicamentos', $cirugia)
+            ->with('success', $mensaje);
+    }
+
+    /**
+     * Descuenta "$cantidad" del lote y lo registra en el historial de la cirugía.
+     * Si ese lote ya se cargó hoy para esta cirugía, suma a la misma fila (la lista queda limpia).
+     * Tiene que llamarse dentro de una transacción, con el lote ya bloqueado.
+     */
+    private function registrarConsumoCirugia(Cirugia $cirugia, \App\Models\Stock $stock, int $cantidad): void
+    {
+        $stock->decrement('cantidad_act', $cantidad);
+
+        $movimiento = \App\Models\Historial_stock::where('cirugia_id', $cirugia->id)
+            ->where('stock_id', $stock->id)
+            ->where('comentario', 'cirugia ' . $cirugia->id)
+            ->where('cantidad', '<', 0)
+            ->whereDate('fecha', now()->toDateString())
+            ->lockForUpdate()
+            ->first();
+
+        if ($movimiento) {
+            $movimiento->cantidad = $movimiento->cantidad - $cantidad;
+            $movimiento->save();
+
+            return;
+        }
+
+        \App\Models\Historial_stock::create([
+            'stock_id'    => $stock->id,
+            'cirugia_id'  => $cirugia->id,
+            'cantidad'    => -$cantidad,
+            'fecha'       => now()->toDateString(),
+            'empleado_id' => $cirugia->cirujano_id,
+            'paciente_id' => $cirugia->paciente_id,
+            'comentario'  => 'cirugia ' . $cirugia->id,
+            'creado_por'  => auth()->id(),
+        ]);
+    }
+
+    /**
+     * Devuelve al stock una parte (o todo) de una carga de la cirugía.
+     *  - "cantidad": unidades a devolver (por defecto 1).
+     *  - "todo": devuelve toda la carga y elimina la fila.
+     */
+    public function eliminarMedicamento(Request $request, Cirugia $cirugia, \App\Models\Historial_stock $historial)
+    {
+        if ($historial->comentario !== 'cirugia ' . $cirugia->id || $historial->cantidad >= 0) {
             return redirect()->back()->withErrors(['error' => 'El registro de historial no pertenece a esta cirugía.']);
         }
 
-        $stock = \App\Models\Stock::find($historial->stock_id);
-        if ($stock) {
-            $stock->increment('cantidad_act', abs($historial->cantidad));
-        }
+        $request->validate([
+            'cantidad' => 'nullable|integer|min:1',
+        ], [
+            'cantidad.integer' => 'La cantidad a devolver debe ser un número entero.',
+            'cantidad.min'     => 'La cantidad a devolver debe ser al menos 1.',
+        ]);
 
-        $historial->delete();
+        $mensaje = DB::transaction(function () use ($request, $historial) {
+            $historial = \App\Models\Historial_stock::lockForUpdate()->findOrFail($historial->id);
+            $cargadas  = abs((int) $historial->cantidad);
+            $devolver  = $request->boolean('todo') ? $cargadas : (int) ($request->input('cantidad') ?? 1);
 
-        return redirect()->route('cirugias.medicamentos', $cirugia)->with('success', 'Carga de medicamento eliminada y stock restaurado.');
+            if ($devolver > $cargadas) {
+                throw ValidationException::withMessages([
+                    'cantidad' => "Solo hay {$cargadas} unidad(es) cargada(s) de este insumo en la cirugía.",
+                ]);
+            }
+
+            $stock = \App\Models\Stock::lockForUpdate()->find($historial->stock_id);
+            if ($stock) {
+                $stock->increment('cantidad_act', $devolver);
+            }
+
+            if ($devolver === $cargadas) {
+                $historial->delete();
+
+                return 'Carga eliminada y stock restaurado.';
+            }
+
+            $historial->cantidad = -($cargadas - $devolver);
+            $historial->save();
+
+            return "Se devolvieron {$devolver} unidad(es) al stock. Quedan " . ($cargadas - $devolver) . ' cargadas en la cirugía.';
+        });
+
+        return redirect()->route('cirugias.medicamentos', $cirugia)->with('success', $mensaje);
     }
 
     /**

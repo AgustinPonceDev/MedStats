@@ -141,7 +141,8 @@
                                     };
                                 @endphp
 
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50" data-stock-id="{{ $item->id }}"
+                                    data-medicamento-id="{{ $item->medicamento_id }}">
                                     <td class="px-4 py-2 border">{{ $item->get_medicamento->nombre }}</td>
                                     <td class="px-4 py-2 border">{{ $item->get_servicio->nombre }}</td>
                                     <td class="px-4 py-2 border">{{ $item->lote }}</td>
@@ -233,6 +234,8 @@
                 }
             };
 
+            let filtroEscaneo = null; // { medicamentoId } cuando hay un escaneo activo
+            let stockResaltado = null; // id del lote escaneado
             const tabla = $('#tablaStock').DataTable({
                 dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
                 language: idiomaEspanol,
@@ -248,6 +251,7 @@
                     if (window.lucide) {
                         lucide.createIcons();
                     }
+                    aplicarResaltado();
                 }
             });
 
@@ -257,7 +261,7 @@
             });
 
             // ----------------------------------------------------
-            // Lógica de Escaneo Rápido (con persistencia y botón X)
+            // Lógica de Escaneo Rápido (muestra el insumo del código)
             // ----------------------------------------------------
             const inputScan = document.getElementById('scan_rapido');
             const btnLimpiar = document.getElementById('btn_limpiar_scan');
@@ -265,6 +269,37 @@
 
             if (inputScan) {
                 inputScan.focus();
+            }
+
+            // Evita inyectar HTML si algún nombre trae caracteres especiales
+            const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
+
+            // Filtro por insumo: deja visibles solo los lotes del medicamento escaneado
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'tablaStock' || !filtroEscaneo) return true;
+                const fila = $(tabla.row(dataIndex).node());
+                return String(fila.data('medicamento-id')) === String(filtroEscaneo.medicamentoId);
+            });
+
+            // Pinta el lote exacto que se escaneó
+            function aplicarResaltado() {
+                $('#tablaStock tbody tr').css('background-color', '');
+                if (!stockResaltado) return;
+                $('#tablaStock tbody tr').filter(function() {
+                    return String($(this).data('stock-id')) === String(stockResaltado);
+                }).css('background-color', '#e6f4f3');
+            }
+
+            function limpiarFiltroEscaneo() {
+                filtroEscaneo = null;
+                stockResaltado = null;
+                tabla.draw();
             }
 
             function actualizarVisibilidadBotonX() {
@@ -293,27 +328,50 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.tipo === 'lote_existente') {
+                                // Mostramos todos los lotes del insumo y resaltamos el escaneado
+                                filtroEscaneo = {
+                                    medicamentoId: data.stock.medicamento_id
+                                };
+                                stockResaltado = data.stock.id;
+                                tabla.draw();
+
+                                const visibles = tabla.rows({
+                                    search: 'applied'
+                                }).count();
                                 if (msg) {
                                     msg.innerHTML =
-                                        `<strong>${data.stock.medicamento}</strong> (lote ${data.stock.lote}, ${data.stock.cantidad_act} u.) — ` +
+                                        `<strong>${esc(data.stock.medicamento)}</strong> · ${esc(data.stock.servicio)} · lote ${esc(data.stock.lote)} (${esc(data.stock.cantidad_act)} u.) — ` +
                                         `<a href="${data.stock.url_agregar}" class="text-green-600 underline font-semibold">Agregar</a> ` +
-                                        `&nbsp;|&nbsp; <a href="${data.stock.url_extraer}" class="text-red-600 underline font-semibold">Extraer</a>`;
+                                        `&nbsp;|&nbsp; <a href="${data.stock.url_extraer}" class="text-red-600 underline font-semibold">Extraer</a>` +
+                                        (visibles === 0 ?
+                                            ` <span class="text-amber-600">· No aparece en la tabla: revisá el filtro de servicio o el buscador.</span>` :
+                                            '');
                                 }
-                                // Filtrar tabla con el lote o nombre exacto
-                                tabla.search(data.stock.lote).draw();
-
                             } else if (data.tipo === 'producto_conocido') {
+                                filtroEscaneo = {
+                                    medicamentoId: data.producto.medicamento_id
+                                };
+                                stockResaltado = null;
+                                tabla.draw();
+
+                                const visibles = tabla.rows({
+                                    search: 'applied'
+                                }).count();
+                                if (msg) {
+                                    msg.innerHTML = visibles > 0 ?
+                                        `<strong>${esc(data.producto.medicamento_nombre)}</strong> — mostrando ${visibles} lote(s) de este insumo.` :
+                                        `<strong>${esc(data.producto.medicamento_nombre)}</strong> está en el catálogo, pero no hay lotes cargados en la vista actual.`;
+                                }
+                            } else {
+                                limpiarFiltroEscaneo();
                                 if (msg) {
                                     msg.textContent =
-                                        `Catálogo: ${data.producto.medicamento_nombre} (No hay stock activo para este lote exacto).`;
+                                        'Código no encontrado en ningún lote ni en el catálogo.';
                                 }
-                                tabla.search(data.producto.medicamento_nombre).draw();
-                            } else {
-                                if (msg) {
-                                    msg.textContent = 'Código no encontrado en ningún lote cargado.';
-                                }
-                                tabla.search(barcode).draw();
                             }
+
+                            // Deja el texto seleccionado: el próximo escaneo lo reemplaza solo
+                            inputScan.select();
                         })
                         .catch(() => {
                             if (msg) msg.textContent = 'Error al buscar el código.';
@@ -330,7 +388,7 @@
                     inputScan.value = '';
                     if (msg) msg.textContent = '';
                     actualizarVisibilidadBotonX();
-                    tabla.search('').draw(); // Restablecer la tabla de DataTables
+                    limpiarFiltroEscaneo(); // vuelve a mostrar toda la tabla
                     inputScan.focus();
                 });
             }

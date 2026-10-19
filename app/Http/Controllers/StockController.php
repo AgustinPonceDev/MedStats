@@ -59,7 +59,7 @@ class StockController extends Controller
         return view('stocks.create', compact('medicamentos', 'servicios'));
     }
 
-        /**
+    /**
      * Endpoint para el lector de código de barras (USB, funciona como teclado).
      * Devuelve:
      *  - tipo=lote_existente: ya hay un Stock con ese barcode -> ofrecer ir a Agregar/Extraer
@@ -74,7 +74,7 @@ class StockController extends Controller
         $servicioRestringido = $user->servicioRestringido();
 
         $stockExistente = Stock::where('barcode', $barcode)
-            ->when($servicioRestringido, fn ($q) => $q->where('servicio_id', $servicioRestringido))
+            ->when($servicioRestringido, fn($q) => $q->where('servicio_id', $servicioRestringido))
             ->with('get_medicamento', 'get_servicio')
             ->first();
 
@@ -83,6 +83,7 @@ class StockController extends Controller
                 'tipo' => 'lote_existente',
                 'stock' => [
                     'id' => $stockExistente->id,
+                    'medicamento_id' => $stockExistente->medicamento_id,   // <-- NUEVO
                     'medicamento' => optional($stockExistente->get_medicamento)->nombre,
                     'servicio' => optional($stockExistente->get_servicio)->nombre,
                     'lote' => $stockExistente->lote,
