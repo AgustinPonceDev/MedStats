@@ -122,7 +122,8 @@
                         
                         <div class="absolute -top-20 flex gap-2 items-center">
                             
-                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST">
+                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST"
+                            onsubmit="return confirm('¿Estás seguro de retroceder la caja {{ $caja->codigo }} al estado {{ $estadoAnterior }}?');">
                                 @csrf
                                 <input type="hidden" name="accion" value="retroceder">
                                 <button type="submit" class="p-2 bg-red-50 rounded-lg border border-red-200 shadow-sm hover:shadow hover:bg-red-100 hover:border-red-300 transition-all group flex items-center justify-center cursor-pointer" title="Deshacer a {{ $estadoAnterior }}">
@@ -130,7 +131,8 @@
                                 </button>
                             </form>
 
-                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST">
+                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST"
+                            onsubmit="return confirm('¿Estás seguro de avanzar la caja {{ $caja->codigo }} al estado {{ $siguienteEstado }}?');">
                                 @csrf
                                 <input type="hidden" name="accion" value="avanzar">
                                 <button type="submit" class="p-2 bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow hover:bg-blue-100 hover:border-blue-300 transition-all group flex items-center justify-center cursor-pointer" title="Avanzar a {{ $siguienteEstado }}">
