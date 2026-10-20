@@ -303,18 +303,26 @@ Route::middleware(['auth', 'roles:admin'])->group(function () {
     Route::delete('/usuarios/{usuario}', [App\Http\Controllers\UserController::class, 'destroy'])->name('usuarios.destroy');
 });
 
-//Diag
+//Diagnóstico por Imágenes
 Route::middleware(['auth', 'roles:estudios_medicos'])->group(function () {
     Route::get('/estudios-medicos/estadisticas', [EstudioMedicoController::class, 'estadisticas'])
         ->name('estudios_medicos.estadisticas');
+
     Route::resource('estudios-medicos', EstudioMedicoController::class)
         ->names('estudios_medicos')
         ->parameters(['estudios-medicos' => 'estudio_medico']);
+
     // Nueva ruta para el select dinámico de estudios por especialidad
     Route::get(
         '/estudios-medicos/especialidad/{especialidad}/estudios',
         [App\Http\Controllers\EstudioMedicoController::class, 'estudiosPorEspecialidad']
     )->name('estudios_medicos.estudios_por_especialidad');
+
+    // Nueva ruta para internación de paciente
+    Route::get(
+        '/estudios-medicos/paciente/{paciente}/internacion',
+        [EstudioMedicoController::class, 'internacionPaciente']
+    )->name('estudios_medicos.internacion_paciente');
 });
 
 // 👇 Debe ir fuera de cualquier grupo con 'auth' o 'roles'

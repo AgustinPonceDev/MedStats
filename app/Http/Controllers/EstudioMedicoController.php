@@ -89,7 +89,24 @@ class EstudioMedicoController extends Controller
         $estudio = EstudioMedico::with(['paciente', 'medico_solicitante', 'especialidad', 'estudio', 'movimientos_stock.get_stock.get_medicamento'])
             ->findOrFail($id);
 
-        return view('estudios_medicos.show', compact('estudio'));
+        // Cama que ocupaba el paciente en la fecha del estudio (solo si fue marcado como Internado)
+        $cama = null;
+        if ($estudio->ia === 'I' && $estudio->fecha) {
+            $fecha = $estudio->fecha->toDateString();
+
+            $cama = DB::table('ocupacion_camas as oc')
+                ->join('camas as c', 'c.id', '=', 'oc.cama_id')
+                ->join('habitacions as h', 'h.id', '=', 'c.habitacion_id')
+                ->join('salas as s', 's.id', '=', 'h.sala_id')
+                ->where('oc.paciente_id', $estudio->paciente_id)
+                ->whereDate('oc.fecha_ingreso', '<=', $fecha)
+                ->where(fn($q) => $q->whereNull('oc.fecha_egreso')->orWhereDate('oc.fecha_egreso', '>=', $fecha))
+                ->orderByDesc('oc.fecha_ingreso')
+                ->select('c.codigo as cama', 'h.numero as habitacion', 's.nombre as sala')
+                ->first();
+        }
+
+        return view('estudios_medicos.show', compact('estudio', 'cama'));
     }
 
     public function edit(EstudioMedico $estudioMedico)
@@ -461,6 +478,32 @@ class EstudioMedicoController extends Controller
                 'creado_por'         => auth()->id(),
             ]);
         }
+    }
+
+    //Endpoint para obtener la información de internación de un paciente (si está internado actualmente)
+    public function internacionPaciente(Paciente $paciente)
+    {
+        $ocupacion = DB::table('ocupacion_camas as oc')
+            ->join('camas as c', 'c.id', '=', 'oc.cama_id')
+            ->join('habitacions as h', 'h.id', '=', 'c.habitacion_id')
+            ->join('salas as s', 's.id', '=', 'h.sala_id')
+            ->where('oc.paciente_id', $paciente->id)
+            ->whereNull('oc.fecha_egreso')
+            ->orderByDesc('oc.fecha_ingreso')
+            ->select('c.codigo as cama', 'h.numero as habitacion', 's.nombre as sala', 'oc.fecha_ingreso')
+            ->first();
+
+        if (!$ocupacion) {
+            return response()->json(['internado' => false]);
+        }
+
+        return response()->json([
+            'internado'  => true,
+            'cama'       => $ocupacion->cama,
+            'habitacion' => $ocupacion->habitacion,
+            'sala'       => $ocupacion->sala,
+            'desde'      => \Carbon\Carbon::parse($ocupacion->fecha_ingreso)->format('d/m/Y H:i'),
+        ]);
     }
 
     /**

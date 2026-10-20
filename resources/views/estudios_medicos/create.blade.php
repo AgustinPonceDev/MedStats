@@ -5,7 +5,8 @@
 @section('contenido')
     <div class="max-w-4xl mx-auto px-4 py-8">
 
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md mb-6">
+        <h1
+            class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md mb-6">
             Registrar Nuevo Estudio e Insumos
         </h1>
 
@@ -23,13 +24,12 @@
                         max="{{ now()->format('Y-m-d') }}" value="{{ old('fecha', now()->format('Y-m-d')) }}" required>
                 </div>
 
-<div>
-    <label for="hora_estudio" class="block text-sm font-medium text-gray-700 mb-1">Hora del Estudio</label>
-    <input type="time" name="hora_estudio" id="hora_estudio"
-        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
-        max="{{ now()->format('H:i') }}" 
-        value="{{ old('hora_estudio', now()->format('H:i')) }}">
-</div>
+                <div>
+                    <label for="hora_estudio" class="block text-sm font-medium text-gray-700 mb-1">Hora del Estudio</label>
+                    <input type="time" name="hora_estudio" id="hora_estudio"
+                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                        max="{{ now()->format('H:i') }}" value="{{ old('hora_estudio', now()->format('H:i')) }}">
+                </div>
                 <div class="md:col-span-1">
                     <label for="paciente_id" class="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                     <select name="paciente_id" id="paciente_id" class="select2 w-full" required>
@@ -42,7 +42,7 @@
                     </select>
                 </div>
             </div>
-            
+
             {{-- Fila 2: I-A --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -52,22 +52,28 @@
                         <label class="relative inline-flex items-center cursor-pointer select-none">
                             <input type="checkbox" id="ia_toggle" class="sr-only peer"
                                 {{ old('ia') == 'I' ? 'checked' : '' }}>
-                            <div class="w-11 h-6 bg-blue-200 rounded-full peer peer-checked:bg-amber-400 transition-colors duration-300"></div>
-                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform duration-300 peer-checked:translate-x-5"></div>
+                            <div
+                                class="w-11 h-6 bg-blue-200 rounded-full peer peer-checked:bg-amber-400 transition-colors duration-300">
+                            </div>
+                            <div
+                                class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform duration-300 peer-checked:translate-x-5">
+                            </div>
                         </label>
                         <span id="ia_label_i" class="text-sm font-semibold text-amber-700">Internado</span>
                         <input type="hidden" name="ia" id="ia" value="{{ old('ia', 'A') }}">
                     </div>
+                    <div id="ia_cama_info" class="hidden"></div>
                 </div>
 
                 {{-- Select 1: Modalidad (Rayos / Tomografía) --}}
                 <div>
                     <label for="especialidad_id" class="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
-                    <select name="especialidad_id" id="especialidad_id"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]" required>
+                    <select name="especialidad_id" id="especialidad_id" class="select2 w-full"
+                        data-minimum-results-for-search="Infinity" required>
                         <option value="">Seleccione</option>
                         @foreach ($especialidades as $especialidad)
-                            <option value="{{ $especialidad->id }}" {{ old('especialidad_id') == $especialidad->id ? 'selected' : '' }}>
+                            <option value="{{ $especialidad->id }}"
+                                {{ old('especialidad_id') == $especialidad->id ? 'selected' : '' }}>
                                 {{ $especialidad->nombre }}
                             </option>
                         @endforeach
@@ -77,17 +83,25 @@
                 {{-- Select 2: Estudio Real --}}
                 <div>
                     <label for="estudio_id" class="block text-sm font-medium text-gray-700 mb-1">Estudio Real</label>
-                    <select name="estudio_id" id="estudio_id"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]" required disabled>
+                    <select name="estudio_id" id="estudio_id" class="select2 w-full"
+                        data-minimum-results-for-search="Infinity" required disabled>
                         <option value="">Seleccione primero la modalidad</option>
                     </select>
                 </div>
             </div>
 
-            {{-- Fila 3: Regiones --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {{-- Fila 3: Regiones (solo si el estudio las usa) --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                 <div>
-                    <label for="regiones" class="block text-sm font-medium text-gray-700 mb-1">Cantidad de Regiones Vistas</label>
+                    <label class="inline-flex items-center gap-2 h-[42px] text-sm text-gray-700 cursor-pointer select-none">
+                        <input type="checkbox" id="usa_regiones"
+                            class="rounded border-gray-300 text-[#1B7D8F] focus:ring-[#1B7D8F]">
+                        Este estudio tiene regiones
+                    </label>
+                </div>
+                <div id="regiones_wrap" class="hidden">
+                    <label for="regiones" class="block text-sm font-medium text-gray-700 mb-1">Cantidad de Regiones
+                        Vistas</label>
                     <input type="number" name="regiones" id="regiones" min="1" max="20"
                         class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
                         placeholder="Ej: 2" value="{{ old('regiones', 1) }}" required>
@@ -97,14 +111,17 @@
             {{-- Sección de Insumos y Medios de Contraste --}}
             <div class="bg-gray-50 p-5 rounded-xl border border-gray-100">
                 <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">Medios de Contraste e Insumos</h3>
-                <p class="text-xs text-gray-500 mb-4">Se descuentan automáticamente del stock de Diagnóstico por Imágenes al guardar.</p>
+                <p class="text-xs text-gray-500 mb-4">Se descuentan automáticamente del stock de Diagnóstico por Imágenes al
+                    guardar.</p>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">
                             Contraste 50ml (Cantidad)
-                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Contraste 50ml'] ?? 0 }}</span>
+                            <span class="text-gray-400 font-normal">— disponible:
+                                {{ $stockInsumos['Contraste 50ml'] ?? 0 }}</span>
                         </label>
-                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                        <div
+                            class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
                             <button type="button" data-target="cont_50ml" data-step="-1"
                                 class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
                             <input type="number" name="cont_50ml" id="cont_50ml" min="0"
@@ -118,9 +135,11 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">
                             Contraste 100ml (Cantidad)
-                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Contraste 100ml'] ?? 0 }}</span>
+                            <span class="text-gray-400 font-normal">— disponible:
+                                {{ $stockInsumos['Contraste 100ml'] ?? 0 }}</span>
                         </label>
-                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                        <div
+                            class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
                             <button type="button" data-target="cont_100ml" data-step="-1"
                                 class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
                             <input type="number" name="cont_100ml" id="cont_100ml" min="0"
@@ -134,9 +153,11 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">
                             Jeringa Prellenada (Cantidad)
-                            <span class="text-gray-400 font-normal">— disponible: {{ $stockInsumos['Jeringa Prellenada'] ?? 0 }}</span>
+                            <span class="text-gray-400 font-normal">— disponible:
+                                {{ $stockInsumos['Jeringa Prellenada'] ?? 0 }}</span>
                         </label>
-                        <div class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
+                        <div
+                            class="flex items-center justify-between gap-2 bg-white border border-gray-300 rounded-md shadow-sm px-2 py-1.5">
                             <button type="button" data-target="jeringa_prellenada" data-step="-1"
                                 class="stepper-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg leading-none flex items-center justify-center transition-colors">−</button>
                             <input type="number" name="jeringa_prellenada" id="jeringa_prellenada" min="0"
@@ -150,14 +171,16 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
-                        <label for="descartables" class="block text-xs font-semibold text-gray-600 mb-1">Descartables utilizados</label>
+                        <label for="descartables" class="block text-xs font-semibold text-gray-600 mb-1">Descartables
+                            utilizados</label>
                         <input type="text" name="descartables" id="descartables"
                             class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
                             placeholder="Ej: Guantes, jeringa simple, gasas..." value="{{ old('descartables') }}">
                     </div>
 
                     <div>
-                        <label for="otros_agujas" class="block text-xs font-semibold text-gray-600 mb-1">Otros y Agujas de Punción</label>
+                        <label for="otros_agujas" class="block text-xs font-semibold text-gray-600 mb-1">Otros y Agujas de
+                            Punción</label>
                         <input type="text" name="otros_agujas" id="otros_agujas"
                             class="w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
                             placeholder="Ej: Aguja espinal 22G, Abocath..." value="{{ old('otros_agujas') }}">
@@ -167,11 +190,13 @@
 
             {{-- Fila: Médico Solicitante (Ahora hereda automáticamente el estilo de arriba) --}}
             <div>
-                <label for="medico_solicitante_id" class="block text-sm font-medium text-gray-700 mb-1">Médico Solicitante</label>
+                <label for="medico_solicitante_id" class="block text-sm font-medium text-gray-700 mb-1">Médico
+                    Solicitante</label>
                 <select name="medico_solicitante_id" id="medico_solicitante_id" class="select2 w-full" required>
                     <option value="">Seleccione el médico</option>
                     @foreach ($medicos as $medico)
-                        <option value="{{ $medico->id }}" {{ old('medico_solicitante_id') == $medico->id ? 'selected' : '' }}>
+                        <option value="{{ $medico->id }}"
+                            {{ old('medico_solicitante_id') == $medico->id ? 'selected' : '' }}>
                             {{ $medico->apellido }}, {{ $medico->nombre }}
                         </option>
                     @endforeach
@@ -180,7 +205,8 @@
 
             {{-- Fila: Resultado --}}
             <div>
-                <label for="resultado" class="block text-sm font-medium text-gray-700 mb-1">Observaciones / Informe</label>
+                <label for="resultado" class="block text-sm font-medium text-gray-700 mb-1">Observaciones /
+                    Informe</label>
                 <textarea name="resultado" id="resultado" rows="3"
                     class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
                     placeholder="Diagnóstico preliminar o notas internas...">{{ old('resultado') }}</textarea>
@@ -199,107 +225,165 @@
             </div>
         </form>
     </div>
-<style>
-    /* 1. Contenedor principal de Select2 */
-    .select2-container--default .select2-selection--single {
-        border: 1px solid #d1d5db !important; /* border-gray-300 */
-        height: 42px !important; /* Altura idéntica */
-        border-radius: 0.375rem !important; /* rounded-md */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
-        display: flex !important;
-        align-items: center !important;
-        background-color: #ffffff !important;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
-    }
+    <style>
+        /* 1. Contenedor principal de Select2 */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #d1d5db !important;
+            /* border-gray-300 */
+            height: 42px !important;
+            /* Altura idéntica */
+            border-radius: 0.375rem !important;
+            /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+            /* shadow-sm */
+            display: flex !important;
+            align-items: center !important;
+            background-color: #ffffff !important;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+        }
 
-    /* 2. Formato de texto idéntico al input nativo */
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 40px !important;
-        padding-left: 1rem !important; /* px-4 */
-        padding-right: 2.5rem !important;
-        color: #1f2937 !important; /* text-gray-800 - igual a Modalidad */
-        font-size: 0.95rem !important; /* Ajustado para igualar el tamaño visual */
-        font-weight: 400 !important;
-        width: 100% !important;
-    }
+        /* 2. Formato de texto idéntico al input nativo */
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 40px !important;
+            padding-left: 1rem !important;
+            /* px-4 */
+            padding-right: 2.5rem !important;
+            color: #1f2937 !important;
+            /* text-gray-800 - igual a Modalidad */
+            font-size: 16px !important;
+            font-family: inherit !important;
+            font-weight: 400 !important;
+            width: 100% !important;
+        }
 
-    /* Si es un placeholder (por ejemplo, "Seleccione un paciente"), le damos un color gris más suave */
-    .select2-container--default .select2-selection--single .select2-selection__placeholder {
-        color: #6b7280 !important; /* text-gray-500 */
-    }
+        /* Si es un placeholder (por ejemplo, "Seleccione un paciente"), le damos un color gris más suave */
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #000 !important;
+        }
 
-    /* 3. Reemplazar la flecha fea por una idéntica a la de Tailwind */
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 40px !important;
-        top: 1px !important;
-        right: 12px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
+        /* 3. Reemplazar la flecha fea por una idéntica a la de Tailwind */
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            top: 1px !important;
+            right: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
 
-    /* Eliminamos el triángulo gris clásico de Select2 */
-    .select2-container--default .select2-selection--single .select2-selection__arrow b {
-        border: none !important; /* Borra el triángulo */
-        
-        /* Creamos la flecha angular (chevron) con CSS puro */
-        width: 6px !important;
-        height: 6px !important;
-        border-right: 2px solid #1f2937 !important; /* Color oscuro */
-        border-bottom: 2px solid #1f2937 !important;
-        transform: rotate(45deg) !important; /* Lo gira para hacer la "V" */
-        margin-top: -3px !important; /* Ajuste fino de altura */
-        transition: transform 0.2s ease;
-    }
+        /* Eliminamos el triángulo gris clásico de Select2 */
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border: none !important;
+            /* Borra el triángulo */
 
-    /* Rotar la flecha hacia arriba cuando el select esté abierto */
-    .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
-        transform: rotate(-135deg) !important;
-        margin-top: 1px !important;
-    }
+            /* Creamos la flecha angular (chevron) con CSS puro */
+            width: 7px !important;
+            height: 7px !important;
+            border-right: 1.5px solid #6b7280 !important;
+            border-bottom: 1.5px solid #6b7280 !important;
+            transform: rotate(45deg) !important;
+            /* Lo gira para hacer la "V" */
+            margin-top: -3px !important;
+            /* Ajuste fino de altura */
+            transition: transform 0.2s ease;
+        }
 
-    /* 4. Efecto de Foco Activo */
-    .select2-container--default.select2-container--focus .select2-selection--single,
-    .select2-container--default.select2-container--open .select2-selection--single {
-        border-color: #1B7D8F !important;
-        outline: none !important;
-        box-shadow: 0 0 0 2px rgba(27, 125, 143, 0.3) !important;
-    }
+        /* Rotar la flecha hacia arriba cuando el select esté abierto */
+        .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            transform: rotate(-135deg) !important;
+            margin-top: 1px !important;
+        }
 
-    /* 5. Dropdown de opciones */
-    .select2-dropdown {
-        border-color: #d1d5db !important;
-        border-radius: 0.375rem !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    }
-</style>
+        /* 4. Efecto de Foco Activo */
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #1B7D8F !important;
+            outline: none !important;
+            box-shadow: 0 0 0 2px rgba(27, 125, 143, 0.3) !important;
+        }
+
+        /* 5. Dropdown de opciones */
+        .select2-dropdown {
+            border-color: #d1d5db !important;
+            border-radius: 0.375rem !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .select2-results__option,
+        .select2-search--dropdown .select2-search__field {
+            font-size: 16px !important;
+        }
+
+        /* Estudio Real deshabilitado hasta elegir modalidad */
+        .select2-container--default.select2-container--disabled .select2-selection--single {
+            background-color: #f9fafb !important;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
 @endsection
 
 @push('scripts')
+    <style>
+        /* Aviso de campo obligatorio (reemplaza el globito nativo en los select2) */
+        .aviso-campo {
+            position: absolute;
+            left: 0;
+            top: 100%;
+            margin-top: 6px;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+            padding: 0.5rem 0.8rem;
+            font-size: 14px;
+            color: #1f2937;
+            white-space: nowrap;
+        }
+
+        .aviso-campo .aviso-icono {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            background: #ea580c;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+        }
+    </style>
     <script>
         $(document).ready(function() {
             if ($.fn.select2) {
-                $('.select2').select2({ width: '100%' });
+                $('.select2').select2({
+                    width: '100%'
+                });
             }
         });
-                    // ---------- Control de Hora del Estudio ----------
-            const horaInput = document.getElementById('hora_estudio');
-            if (horaInput) {
-                const corregirHora = () => {
-                    const ahora = new Date();
-                    const horaActual = String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0');
-                    horaInput.max = horaActual;
-                    if (horaInput.value && horaInput.value > horaActual) {
-                        horaInput.value = horaActual;
-                    }
-                };
+        // ---------- Control de Hora del Estudio ----------
+        const horaInput = document.getElementById('hora_estudio');
+        if (horaInput) {
+            const corregirHora = () => {
+                const ahora = new Date();
+                const horaActual = String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes())
+                    .padStart(2, '0');
+                horaInput.max = horaActual;
+                if (horaInput.value && horaInput.value > horaActual) {
+                    horaInput.value = horaActual;
+                }
+            };
 
-                corregirHora();
-                horaInput.addEventListener('input', corregirHora);
-                horaInput.addEventListener('change', corregirHora);
-                document.querySelector('form').addEventListener('submit', corregirHora);
-            }
-
+            corregirHora();
+            horaInput.addEventListener('input', corregirHora);
+            horaInput.addEventListener('change', corregirHora);
+            document.querySelector('form').addEventListener('submit', corregirHora);
+        }
         document.addEventListener('DOMContentLoaded', function() {
             // ---------- Toggle I-A ----------
             const toggle = document.getElementById('ia_toggle');
@@ -317,8 +401,64 @@
                 toggle.addEventListener('change', syncIaLabels);
                 syncIaLabels();
             }
+            // ---------- Internación automática según la cama ----------
+            const selectPaciente = document.getElementById('paciente_id');
+            const infoCama = document.getElementById('ia_cama_info');
+            const urlInternacion =
+                "{{ route('estudios_medicos.internacion_paciente', ['paciente' => '__ID__']) }}";
+            let internacionActual = null;
 
-            // ---------- Contadores +/- de insumos fijos ----------
+            function pintarInfoCama() {
+                if (!infoCama) return;
+                if (!internacionActual || !internacionActual.internado) {
+                    infoCama.className = 'hidden';
+                    infoCama.textContent = '';
+                    return;
+                }
+                const i = internacionActual;
+                const marcadoInternado = toggle && toggle.checked;
+                infoCama.className = 'mt-1 text-xs ' + (marcadoInternado ? 'text-amber-700' : 'text-red-600');
+                infoCama.textContent = `Cama ${i.cama} · Hab. ${i.habitacion} · ${i.sala} (desde ${i.desde})` +
+                    (marcadoInternado ? '' : ' — figura internado, pero está marcado como Ambulatorio.');
+            }
+
+            function consultarInternacion(aplicarAlToggle) {
+                const id = selectPaciente ? selectPaciente.value : '';
+                if (!id) {
+                    internacionActual = null;
+                    pintarInfoCama();
+                    return;
+                }
+                fetch(urlInternacion.replace('__ID__', id), {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (selectPaciente.value !== id) return; // cambió de paciente mientras cargaba
+                        internacionActual = data;
+                        if (aplicarAlToggle && toggle) {
+                            toggle.checked = !!data.internado;
+                            syncIaLabels();
+                        }
+                        pintarInfoCama();
+                    })
+                    .catch(() => {
+                        internacionActual = null;
+                        pintarInfoCama();
+                    });
+            }
+
+            if (selectPaciente) {
+                // Al elegir un paciente se marca solo; después se puede cambiar a mano con el toggle.
+                $(selectPaciente).on('change', () => consultarInternacion(true));
+                // Al cargar la página (edición o error de validación) solo muestra la cama, sin pisar lo guardado.
+                consultarInternacion(false);
+            }
+            if (toggle) toggle.addEventListener('change', pintarInfoCama);
+
+            // ---------- Contadores +/- ----------
             document.querySelectorAll('.stepper-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const input = document.getElementById(this.dataset.target);
@@ -338,9 +478,11 @@
             function cargarEstudios(especialidadId, seleccionado) {
                 estudioSelect.innerHTML = '<option value="">Cargando...</option>';
                 estudioSelect.disabled = true;
+                $(estudioSelect).trigger('change.select2');
 
                 if (!especialidadId) {
                     estudioSelect.innerHTML = '<option value="">Seleccione primero la modalidad</option>';
+                    $(estudioSelect).trigger('change.select2');
                     return;
                 }
 
@@ -358,38 +500,111 @@
                             estudioSelect.appendChild(opt);
                         });
                         estudioSelect.disabled = false;
+                        $(estudioSelect).trigger('change.select2');
                     })
                     .catch(() => {
                         estudioSelect.innerHTML = '<option value="">Error al cargar los estudios</option>';
+                        $(estudioSelect).trigger('change.select2');
                     });
             }
 
-            especialidadSelect.addEventListener('change', function() {
+            $(especialidadSelect).on('change', function() {
                 cargarEstudios(this.value, null);
             });
 
             if (especialidadSelect.value) {
                 cargarEstudios(especialidadSelect.value, oldEstudioId);
             }
-                        // ---------- Control de Hora del Estudio (no permite horas futuras) ----------
-            const horaInput = document.getElementById('hora_estudio');
-            if (horaInput) {
-                const obtenerHoraActual = () => {
-                    const ahora = new Date();
-                    return String(ahora.getHours()).padStart(2, '0') + ':' + String(ahora.getMinutes()).padStart(2, '0');
-                };
 
-                const corregirHora = () => {
-                    const horaActual = obtenerHoraActual();
-                    horaInput.max = horaActual;
-                    if (horaInput.value && horaInput.value > horaActual) {
-                        horaInput.value = horaActual;
+            // ---------- Regiones vistas (solo Tomografía o si se tilda a mano) ----------
+            const usaRegiones = document.getElementById('usa_regiones');
+            const regionesWrap = document.getElementById('regiones_wrap');
+            const regionesInput = document.getElementById('regiones');
+
+            function esTomografia() {
+                const opt = especialidadSelect.options[especialidadSelect.selectedIndex];
+                return !!opt && /tomograf/i.test(opt.textContent);
+            }
+
+            function aplicarRegiones() {
+                const activo = usaRegiones.checked;
+                regionesWrap.classList.toggle('hidden', !activo);
+                if (!activo) regionesInput.value = 1;
+            }
+
+            usaRegiones.addEventListener('change', aplicarRegiones);
+            $(especialidadSelect).on('change', () => {
+                usaRegiones.checked = esTomografia();
+                aplicarRegiones();
+            });
+
+            // Estado inicial (create, edit o vuelta por error de validación)
+            usaRegiones.checked = esTomografia() || (parseInt(regionesInput.value, 10) || 1) > 1;
+            aplicarRegiones();
+
+            // ---------- Validación de campos obligatorios ----------
+            const formEstudio = document.getElementById('paciente_id').closest('form');
+            formEstudio.setAttribute('novalidate', 'novalidate'); // los avisos los manejamos nosotros
+
+            // Campos con Select2, en el orden en que aparecen en pantalla
+            const camposObligatorios = [
+                ['paciente_id', 'Seleccioná el paciente.'],
+                ['especialidad_id', 'Seleccioná la modalidad (Rayos X / Tomografía).'],
+                ['estudio_id', 'Seleccioná el estudio real.'],
+                ['medico_solicitante_id', 'Seleccioná el médico solicitante.']
+            ];
+
+            function limpiarAvisos() {
+                document.querySelectorAll('.aviso-campo').forEach(n => n.remove());
+            }
+
+            function mostrarAviso(el, mensaje) {
+                limpiarAvisos();
+                const caja = el.parentElement;
+                caja.style.position = 'relative';
+
+                const aviso = document.createElement('div');
+                aviso.className = 'aviso-campo';
+                const icono = document.createElement('span');
+                icono.className = 'aviso-icono';
+                icono.textContent = '!';
+                const texto = document.createElement('span');
+                texto.textContent = mensaje;
+                aviso.append(icono, texto);
+                caja.appendChild(aviso);
+
+                caja.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                setTimeout(() => aviso.remove(), 4000);
+            }
+
+            // El aviso desaparece apenas se elige algo
+            camposObligatorios.forEach(([id]) => {
+                $(document.getElementById(id)).on('change', limpiarAvisos);
+            });
+
+            formEstudio.addEventListener('submit', function(e) {
+                for (const [id, mensaje] of camposObligatorios) {
+                    const el = document.getElementById(id);
+                    if (el && !el.disabled && !el.value) {
+                        e.preventDefault();
+                        mostrarAviso(el, mensaje);
+                        return;
                     }
-                };
+                }
+                // Resto de campos (fecha, hora, regiones...) con la validación nativa
+                if (!formEstudio.reportValidity()) {
+                    e.preventDefault();
+                }
+            });
 
-                corregirHora();
-                setInterval(corregirHora, 30000); // Actualiza cada 30 segundos
-                horaInput.addEventListener('change', corregirHora);
+            // ---------- Control de Hora del Estudio (no permite horas futuras) ----------
+            const horaInputInterval = document.getElementById('hora_estudio');
+            if (horaInputInterval) {
+                setInterval(() => horaInputInterval.dispatchEvent(new Event('change')),
+                30000); // revalida cada 30 s
             }
         });
     </script>

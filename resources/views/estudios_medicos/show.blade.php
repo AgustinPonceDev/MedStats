@@ -25,6 +25,11 @@
                     <span
                         class="text-xs font-bold uppercase tracking-wider {{ $estudio->ia == 'I' ? 'text-amber-700' : 'text-gray-400' }}">Internado</span>
                 </span>
+                @if ($cama)
+                    <p class="mt-2 text-xs font-semibold text-amber-700 sm:text-right">
+                        Cama {{ $cama->cama }} · Hab. {{ $cama->habitacion }} · {{ $cama->sala }}
+                    </p>
+                @endif
             </div>
         </div>
 
@@ -114,18 +119,22 @@
                     </div>
                     <div class="bg-teal-50/50 p-3 rounded-lg border border-teal-100/50 text-center">
                         <span class="block text-xs font-medium text-teal-800 uppercase">Jeringa Prellenada</span>
-                        <span class="block text-xl font-bold text-teal-900 mt-1">{{ $estudio->jeringa_prellenada ?? 0 }} u.</span>
+                        <span class="block text-xl font-bold text-teal-900 mt-1">{{ $estudio->jeringa_prellenada ?? 0 }}
+                            u.</span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-gray-50/80 p-3.5 rounded-lg border border-gray-100">
                         <span class="block text-xs text-gray-400 font-semibold uppercase mb-1">Material Descartable</span>
-                        <p class="text-gray-700 text-sm font-medium">{{ $estudio->descartables ?: 'Ninguno registrado' }}</p>
+                        <p class="text-gray-700 text-sm font-medium">{{ $estudio->descartables ?: 'Ninguno registrado' }}
+                        </p>
                     </div>
                     <div class="bg-gray-50/80 p-3.5 rounded-lg border border-gray-100">
-                        <span class="block text-xs text-gray-400 font-semibold uppercase mb-1">Otros y Agujas de Punción</span>
-                        <p class="text-gray-700 text-sm font-medium">{{ $estudio->otros_agujas ?: 'Ninguno registrado' }}</p>
+                        <span class="block text-xs text-gray-400 font-semibold uppercase mb-1">Otros y Agujas de
+                            Punción</span>
+                        <p class="text-gray-700 text-sm font-medium">{{ $estudio->otros_agujas ?: 'Ninguno registrado' }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -154,11 +163,13 @@
             </div>
 
             {{-- Aviso interactivo: Redirige a la edición para corregir insumos --}}
-            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div
+                class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     Los insumos de stock consumidos por este estudio pueden ser modificados si hubo un error en la carga.
                 </div>
-                <a href="{{ route('estudios_medicos.edit', $estudio->id) }}" class="underline font-semibold hover:text-blue-900 shrink-0">
+                <a href="{{ route('estudios_medicos.edit', $estudio->id) }}"
+                    class="underline font-semibold hover:text-blue-900 shrink-0">
                     Corregir en el editor →
                 </a>
             </div>
@@ -180,7 +191,8 @@
 
                 <div class="md:col-span-2">
                     <p class="text-xs text-gray-400 font-semibold uppercase mb-1">Observaciones / Informe Clínico</p>
-                    <div class="bg-gray-50/60 rounded-lg p-3 border border-gray-100 font-mono text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
+                    <div
+                        class="bg-gray-50/60 rounded-lg p-3 border border-gray-100 font-mono text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
                         {{ $estudio->resultado ?: 'Sin informe o notas adicionales.' }}
                     </div>
                 </div>
