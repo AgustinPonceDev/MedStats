@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CajaQuirurgica;
 use App\Models\HistorialCaja;
+use Illuminate\Support\Facades\DB;
 
 class TrazabilidadController extends Controller
 {
@@ -98,76 +99,83 @@ class TrazabilidadController extends Controller
         return redirect()->route('trazabilidad.index')->with('success', 'Caja creada exitosamente.');
     }
 
- public function actualizarEstado(\Illuminate\Http\Request $request, $id)
+     public function actualizarEstado(\Illuminate\Http\Request $request, $id)
     {
-        
-        if (!auth()->user()->hasAccess('admin')) {
-            abort(403, 'Acceso denegado. Solo administradores.');
+        if (!auth()->user()->hasAccess(['admin', 'trazabilidad'])) {
+            abort(403, 'Acceso denegado.');
         }
 
         $caja = CajaQuirurgica::findOrFail($id);
-        
-        
-        $accion = $request->input('accion', 'avanzar'); 
+        $accion = $request->input('accion', 'avanzar');
+        $usuario = auth()->user();
 
-        
-        // LÓGICA DE RETROCEDER (BORRAR EL ÚLTIMO)
-       
         if ($accion == 'retroceder') {
-            
-            // Consultamos directamente a la BD cuántos pasos hay en total
-            $cantidadPasos = HistorialCaja::where('caja_quirurgicas_id', $caja->id)->count();
+            $ultimo = HistorialCaja::enLinea()
+                        ->where('caja_quirurgicas_id', $caja->id)
+                        ->orderByDesc('id')->first();
 
-            if ($cantidadPasos > 1) {
-                // Buscamos el último registro real y lo borramos
-                $ultimoMovimiento = HistorialCaja::where('caja_quirurgicas_id', $caja->id)
-                                                 ->latest()
-                                                 ->first();
-                $ultimoMovimiento->delete();
-
-                // Ahora buscamos cuál quedó como último en la lista
-                $nuevoUltimo = HistorialCaja::where('caja_quirurgicas_id', $caja->id)
-                                            ->latest()
-                                            ->first();
-
-                // Actualizamos la caja para que regrese a ese estado anterior
-                $caja->update([
-                    'estado_actual' => $nuevoUltimo->estado_registrado
-                ]);
-
-                return redirect()->back()->with('success', 'Paso deshecho. La caja volvió a estado: ' . $nuevoUltimo->estado_registrado);
-            } else {
+            if (!$ultimo || $ultimo->accion !== 'avance') {
                 return redirect()->back()->with('error', 'No se puede retroceder más. Este es el estado inicial de la caja.');
             }
-        } 
-       
-        else {
-            $flujo_normal = [
-               'Almacenada' => 'En Uso',
-                'En Uso' => 'Esterilizada',
-                'Esterilizada' => 'Depósito Estéril',
-                'Depósito Estéril' => 'Almacenada'
-            ];
-            $nuevo_estado = $flujo_normal[$caja->estado_actual] ?? 'Lavado';
 
-            
-            $caja->update([
-                'estado_actual' => $nuevo_estado
-            ]);
+            $anterior = HistorialCaja::enLinea()
+                        ->where('caja_quirurgicas_id', $caja->id)
+                        ->where('id', '<', $ultimo->id)
+                        ->orderByDesc('id')->first();
 
-            // Creamos el nuevo punto en la línea de tiempo
+            if (!$anterior) {
+                return redirect()->back()->with('error', 'No se puede retroceder más. Este es el estado inicial de la caja.');
+            }
+
+            $estadoDesde = $caja->estado_actual;
+            $estadoHasta = $anterior->estado_registrado;
+
+            DB::transaction(function () use ($caja, $ultimo, $estadoDesde, $estadoHasta, $usuario) {
+                $ultimo->update(['anulado' => true]);   // no se borra: queda como rastro
+                $caja->update(['estado_actual' => $estadoHasta]);
+
+                HistorialCaja::create([
+                    'caja_quirurgicas_id' => $caja->id,
+                    'empleado_id' => null,
+                    'user_id' => $usuario->id,
+                    'cirugia_id' => null,
+                    'estado_registrado' => $estadoHasta,
+                    'accion' => 'retroceso',
+                    'estado_anterior' => $estadoDesde,
+                    'observaciones' => 'Retroceso de "' . $estadoDesde . '" a "' . $estadoHasta . '" por ' . $usuario->name,
+                ]);
+            });
+
+            return redirect()->back()->with('success', 'Paso deshecho. La caja volvió a estado: ' . $estadoHasta);
+        }
+
+        // AVANZAR
+        $flujo_normal = [
+            'Almacenada' => 'En Uso',
+            'En Uso' => 'Esterilizada',
+            'Esterilizada' => 'Depósito Estéril',
+            'Depósito Estéril' => 'Almacenada'
+        ];
+        $estadoDesde = $caja->estado_actual;
+        $nuevo_estado = $flujo_normal[$estadoDesde] ?? 'Lavado';
+
+        DB::transaction(function () use ($caja, $estadoDesde, $nuevo_estado, $usuario) {
+            $caja->update(['estado_actual' => $nuevo_estado]);
+
             HistorialCaja::create([
                 'caja_quirurgicas_id' => $caja->id,
                 'empleado_id' => null,
+                'user_id' => $usuario->id,
                 'cirugia_id' => null,
                 'estado_registrado' => $nuevo_estado,
-                'observaciones' => 'Avance a: ' . $nuevo_estado
+                'accion' => 'avance',
+                'estado_anterior' => $estadoDesde,
+                'observaciones' => 'Avance de "' . $estadoDesde . '" a "' . $nuevo_estado . '" por ' . $usuario->name,
             ]);
+        });
 
-            return redirect()->back()->with('success', '¡Estado avanzado a ' . $nuevo_estado . '!');
-        }
+        return redirect()->back()->with('success', '¡Estado avanzado a ' . $nuevo_estado . '!');
     }
-  
     public function destroy($id)
     {
         
@@ -257,7 +265,7 @@ class TrazabilidadController extends Controller
                                         ->where('tipo_esterilizacion', 'Óxido de Etileno')->count();
 
         // 2. DATOS PARA LA TABLA DEL HISTORIAL
-        $historial = \App\Models\HistorialCaja::with(['cajaQuirurgica', 'empleado'])
+        $historial = \App\Models\HistorialCaja::with(['cajaQuirurgica', 'empleado', 'user'])
                         ->orderBy('created_at', 'desc')
                         ->get();
 

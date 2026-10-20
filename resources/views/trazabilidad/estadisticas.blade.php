@@ -84,6 +84,7 @@
                     <tr>
                         <th class="py-3 px-4 text-left font-semibold text-gray-600">Fecha y Hora</th>
                         <th class="py-3 px-4 text-left font-semibold text-gray-600">Caja Quirúrgica</th>
+                        <th class="py-3 px-4 text-left font-semibold text-gray-600">Acción</th>
                         <th class="py-3 px-4 text-left font-semibold text-gray-600">Estado</th>
                         <th class="py-3 px-4 text-left font-semibold text-gray-600">Registrado por</th>
                         <th class="py-3 px-4 text-left font-semibold text-gray-600">Observaciones</th>
@@ -102,7 +103,23 @@
                             <span class="font-bold text-gray-800">{{ $movimiento->cajaQuirurgica?->codigo ?? 'N/A' }}</span><br>
                             <span class="text-xs text-gray-500">{{ $movimiento->cajaQuirurgica?->nombre ?? 'Caja eliminada' }}</span>
                         </td>
-                        
+                        <td class="py-3 px-4 align-middle">
+    @php
+        $accionesMov = [
+            'alta'         => ['Alta',         'bg-blue-100 text-blue-800'],
+            'avance'       => ['Avance',       'bg-green-100 text-green-800'],
+            'retroceso'    => ['Retroceso',    'bg-red-100 text-red-800'],
+            'desuso'       => ['Desuso',       'bg-orange-100 text-orange-800'],
+            'restauracion' => ['Restauración', 'bg-purple-100 text-purple-800'],
+        ];
+        [$etiquetaAccion, $claseAccion] = $accionesMov[$movimiento->accion] ?? [ucfirst($movimiento->accion ?? '-'), 'bg-gray-100 text-gray-800'];
+    @endphp
+    <span class="px-3 py-1 text-xs font-semibold rounded-full {{ $claseAccion }}">{{ $etiquetaAccion }}</span>
+    @if($movimiento->anulado)
+        <span class="block text-xs text-gray-400 mt-1">(luego deshecho)</span>
+    @endif
+</td>
+
                        <!-- Estado con colores y métodos dinámicos -->
                         <td class="py-3 px-4 align-middle">
                         <span class="px-3 py-1 text-xs font-semibold rounded-full
@@ -124,12 +141,8 @@
                         
                         <!-- Empleado protegida la relación -->
                         <td class="py-3 px-4 align-middle">
-                            @if($movimiento->empleado)
-                                {{ $movimiento->empleado->name ?? trim(($movimiento->empleado->nombre ?? '') . ' ' . ($movimiento->empleado->apellido ?? '')) }}
-                            @else
-                                Sistema
-                            @endif
-                        </td>
+                          {{ $movimiento->responsable }}
+                                  </td>
                         
                         <!-- Observaciones -->
                         <td class="py-3 px-4 align-middle text-gray-600">
