@@ -94,20 +94,20 @@
 
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto rounded-t-lg">
+                <div class="overflow-x-auto">
                     <table id="tablaStock" class="w-full text-xs text-left text-gray-500" style="width:100%">
-                        <thead>
+                        <thead class="bg-[#1B7D8F] text-white uppercase text-[11px] tracking-wider">
                             <tr>
-                                <th class="px-4 py-2 border">Medicamento</th>
-                                <th class="px-4 py-2 border">Servicio</th>
-                                <th class="px-4 py-2 border">Lote</th>
-                                <th class="px-4 py-2 border">Fecha de vencimiento</th>
-                                <th class="px-4 py-2 border text-center">Cantidad actual</th>
-                                <th class="px-4 py-2 border text-center">Proyección</th>
-                                <th class="px-4 py-2 border text-center">Acciones</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap">Medicamento</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap">Servicio</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap">Lote</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap">Fecha de vencimiento</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Cantidad actual</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Proyección</th>
+                                <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-100">
                             @forelse($stock as $item)
                                 @php
                                     $estado = $item->estadoStock();
@@ -141,26 +141,29 @@
                                     };
                                 @endphp
 
-                                <tr class="hover:bg-gray-50" data-stock-id="{{ $item->id }}"
+                                <tr class="hover:bg-gray-50 transition-colors" data-stock-id="{{ $item->id }}"
                                     data-medicamento-id="{{ $item->medicamento_id }}">
-                                    <td class="px-4 py-2 border">{{ $item->get_medicamento->nombre }}</td>
-                                    <td class="px-4 py-2 border">{{ $item->get_servicio->nombre }}</td>
-                                    <td class="px-4 py-2 border">{{ $item->lote }}</td>
-                                    <td class="px-4 py-2 border">{{ $item->fecha_vencimiento }}</td>
-                                    <td class="px-4 py-2 border text-center">
+                                    <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
+                                        {{ $item->get_medicamento->nombre }}</td>
+                                    <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
+                                        {{ $item->get_servicio->nombre }}</td>
+                                    <td class="px-3 py-3.5 font-mono text-gray-600">{{ $item->lote }}</td>
+                                    <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">{{ $item->fecha_vencimiento }}
+                                    </td>
+                                    <td class="px-3 py-3.5 text-center">
                                         <span class="{{ $claseColor }}"
                                             title="Aviso: {{ $item->umbral_aviso ?? 50 }} · Crítico: {{ $item->umbral_critico ?? 30 }}">
                                             {{ $item->cantidad_act }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-2 border text-center">
+                                    <td class="px-3 py-3.5 text-center">
                                         <span
                                             class="inline-block px-2 py-1 rounded-full text-xs font-semibold {{ $badgeClase }}"
                                             title="Promedio ponderado: {{ $proy['consumo_diario_ponderado'] ?? 0 }}/día · Tendencia: {{ $proy['tendencia'] ?? '-' }}">
                                             {{ $badgeTexto }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-center whitespace-nowrap border">
+                                    <td class="px-3 py-3.5 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <!-- Historial / Ver Detalle -->
                                             <a href="{{ route('stocks.show', $item) }}"
@@ -194,7 +197,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-2 text-center text-gray-500">No hay medicamentos en
+                                    <td colspan="7" class="px-6 py-10 text-center text-gray-400">No hay medicamentos en
                                         stock.</td>
                                 </tr>
                             @endforelse
@@ -396,26 +399,6 @@
     </script>
 
     <style>
-        /* Solución definitiva para los píxeles blancos en las esquinas redondeadas */
-        .overflow-hidden {
-            overflow: hidden;
-            -webkit-mask-image: -webkit-radial-gradient(white, black);
-            /* Forzar renderizado limpio en Safari/Chrome */
-        }
-
-        #tablaStock {
-            border-radius: 0.5rem 0.5rem 0 0;
-            overflow: hidden;
-        }
-
-        #tablaStock thead th:first-child {
-            border-top-left-radius: 0.5rem;
-        }
-
-        #tablaStock thead th:last-child {
-            border-top-right-radius: 0.5rem;
-        }
-
         /* Estilos personalizados heredados y adaptados para la tabla de Stock */
         #tablaStock_wrapper {
             width: 100% !important;
@@ -438,19 +421,11 @@
             display: none !important;
         }
 
+        /* Paginación y texto de información (igual en todas las tablas) */
         #tablaStock_wrapper .dataTables_info {
             color: #6b7280 !important;
             font-size: 0.875rem !important;
             padding-top: 0 !important;
-        }
-
-        #tablaStock_wrapper .dataTables_paginate .paginate_button.current,
-        #tablaStock_wrapper .dataTables_paginate .paginate_button.current:hover,
-        #tablaStock_wrapper .dataTables_paginate .paginate_button.current:active {
-            background: #32989D !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 0.5rem !important;
         }
 
         #tablaStock_wrapper .dataTables_paginate .paginate_button {
@@ -459,8 +434,7 @@
             border: none !important;
             border-radius: 0.5rem !important;
             padding: 0.35rem 0.75rem !important;
-            margin-left: 0.2rem !important;
-            margin-right: 0.2rem !important;
+            margin: 0 0.2rem !important;
             cursor: pointer;
         }
 
@@ -468,14 +442,20 @@
             background: #e5e7eb !important;
             color: #111827 !important;
             border: none !important;
-            border-radius: 0.5rem !important;
         }
 
         #tablaStock_wrapper .dataTables_paginate .paginate_button:active {
             background: #25636d !important;
             color: #ffffff !important;
             border: none !important;
-            border-radius: 0.5rem !important;
+        }
+
+        #tablaStock_wrapper .dataTables_paginate .paginate_button.current,
+        #tablaStock_wrapper .dataTables_paginate .paginate_button.current:hover,
+        #tablaStock_wrapper .dataTables_paginate .paginate_button.current:active {
+            background: #32989D !important;
+            color: #ffffff !important;
+            border: none !important;
         }
 
         #tablaStock_wrapper .dataTables_paginate .paginate_button.disabled,
@@ -500,12 +480,6 @@
         @media (max-width: 768px) {
             #tablaStock_wrapper .dataTables_info {
                 font-size: 0.75rem !important;
-            }
-
-            #tablaStock_wrapper .dataTables_paginate .paginate_button {
-                padding: 0.3rem 0.55rem !important;
-                margin-left: 0.1rem !important;
-                margin-right: 0.1rem !important;
             }
         }
     </style>

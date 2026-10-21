@@ -94,28 +94,33 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse($estudios as $estudio)
                             <tr class="hover:bg-gray-50 transition-colors">
-{{-- Fecha --}}
-{{-- Fecha --}}
-<td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
-    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
-    {{ $estudio->fecha->format('d/m/Y') }}
-</td>       
-{{-- Hora --}}
-<td class="px-3 py-3.5 text-gray-600 whitespace-nowrap"
-    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
-    {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
-</td>
-                                 {{-- Apellido y Nombre --}}                                <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
+                                {{-- Fecha --}}
+                                {{-- Fecha --}}
+                                <td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
+                                    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
+                                    {{ $estudio->fecha->format('d/m/Y') }}
+                                </td>
+                                {{-- Hora --}}
+                                <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap"
+                                    data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
+                                    {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
+                                </td>
+                                {{-- Apellido y Nombre --}} <td
+                                    class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                     {{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}
                                 </td>
                                 {{-- I-A --}}
                                 <td class="px-3 py-3.5 text-center">
                                     <div class="inline-flex items-center justify-center"
                                         title="{{ $estudio->ia == 'I' ? 'Internado' : 'Ambulatorio' }}">
-                                        <div class="relative w-9 h-5 rounded-full transition-colors {{ $estudio->ia == 'I' ? 'bg-amber-400' : 'bg-blue-200' }}">
-                                            <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all {{ $estudio->ia == 'I' ? 'left-4' : 'left-0.5' }}"></div>
+                                        <div
+                                            class="relative w-9 h-5 rounded-full transition-colors {{ $estudio->ia == 'I' ? 'bg-amber-400' : 'bg-blue-200' }}">
+                                            <div
+                                                class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all {{ $estudio->ia == 'I' ? 'left-4' : 'left-0.5' }}">
+                                            </div>
                                         </div>
-                                        <span class="ml-1.5 text-[10px] font-bold {{ $estudio->ia == 'I' ? 'text-amber-700' : 'text-blue-700' }}">
+                                        <span
+                                            class="ml-1.5 text-[10px] font-bold {{ $estudio->ia == 'I' ? 'text-amber-700' : 'text-blue-700' }}">
                                             {{ $estudio->ia ?? '-' }}
                                         </span>
                                     </div>
@@ -126,10 +131,11 @@
                                 </td>
                                 {{-- Estudio Real --}}
                                 <td class="px-3 py-3.5 font-medium text-gray-800 whitespace-nowrap">
-                                    {{ optional ($estudio->estudio)-> nombre??'-'}}
+                                    {{ optional($estudio->estudio)->nombre ?? '-' }}
                                 </td>
                                 {{-- Regiones --}}
-                                <td class="px-3 py-3.5 text-gray-600 max-w-[150px] truncate" title="{{ $estudio->regiones }}">
+                                <td class="px-3 py-3.5 text-gray-600 max-w-[150px] truncate"
+                                    title="{{ $estudio->regiones }}">
                                     {{ $estudio->regiones ?? '-' }}
                                 </td>
                                 {{-- Cont 50ml --}}
@@ -145,11 +151,13 @@
                                     {{ $estudio->jeringa_prellenada ?: '-' }}
                                 </td>
                                 {{-- Descartables --}}
-                                <td class="px-3 py-3.5 text-gray-600 max-w-[120px] truncate" title="{{ $estudio->descartables }}">
+                                <td class="px-3 py-3.5 text-gray-600 max-w-[120px] truncate"
+                                    title="{{ $estudio->descartables }}">
                                     {{ $estudio->descartables ?? '-' }}
                                 </td>
                                 {{-- Otros y agujas de punción --}}
-                                <td class="px-3 py-3.5 text-gray-600 max-w-[150px] truncate" title="{{ $estudio->otros_agujas }}">
+                                <td class="px-3 py-3.5 text-gray-600 max-w-[150px] truncate"
+                                    title="{{ $estudio->otros_agujas }}">
                                     {{ $estudio->otros_agujas ?? '-' }}
                                 </td>
                                 {{-- Acciones --}}
@@ -165,8 +173,8 @@
                                             title="Editar">
                                             <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                                         </a>
-                                        <form action="{{ route('estudios_medicos.destroy', $estudio->id) }}" method="POST"
-                                            class="inline"
+                                        <form action="{{ route('estudios_medicos.destroy', $estudio->id) }}"
+                                            method="POST" class="inline"
                                             onsubmit="return confirm('¿Está seguro de eliminar este registro clínico?');">
                                             @csrf
                                             @method('DELETE')
@@ -180,7 +188,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="px-6 py-10 text-center text-gray-400">                                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                <td colspan="13" class="px-6 py-10 text-center text-gray-400"> <i
+                                        data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                                     No se encontraron registros de diagnóstico por imágenes.
                                 </td>
                             </tr>
@@ -188,19 +197,22 @@
                     </tbody>
                 </table>
             </div>
-                    </div>
+        </div>
 
         <!-- Botones de Acción -->
         <div class="mt-6 flex flex-wrap gap-3 justify-start">
-            <button onclick="imprimirTablaCompleta()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-[#1B7D8F] transition-all shadow-sm">
+            <button onclick="imprimirTablaCompleta()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-[#1B7D8F] transition-all shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 <span>Imprimir Tabla</span>
             </button>
-            <button onclick="exportarFiltradoPDF()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-red-600 rounded-xl hover:bg-red-50 transition-all shadow-sm">
+            <button onclick="exportarFiltradoPDF()"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-red-600 rounded-xl hover:bg-red-50 transition-all shadow-sm">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 <span>Exportar PDF</span>
             </button>
-            <button id="btnExportarExcel" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-green-600 rounded-xl hover:bg-green-50 transition-all shadow-sm">
+            <button id="btnExportarExcel"
+                class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-green-600 rounded-xl hover:bg-green-50 transition-all shadow-sm">
                 <i data-lucide="sheet" class="w-4 h-4"></i>
                 <span>Exportar Excel</span>
             </button>
@@ -209,12 +221,30 @@
     </div>
     <style>
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            .card, .shadow-sm { box-shadow: none !important; border: none !important; }
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            .card,
+            .shadow-sm {
+                box-shadow: none !important;
+                border: none !important;
+            }
+
             /* Ocultar sidebar/nav si existe en el layout */
-            aside, nav { display: none !important; }
-            main { margin: 0 !important; padding: 0 !important; }
+            aside,
+            nav {
+                display: none !important;
+            }
+
+            main {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
         }
 
         /* CORRECCIÓN PARA EL ANCHO DE LA TABLA */
@@ -231,7 +261,9 @@
 
         /* Ocultar controles default de DataTables */
         .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter { display: none !important; }
+        .dataTables_wrapper .dataTables_filter {
+            display: none !important;
+        }
 
         /* Eliminar líneas superior e inferior de la tabla */
         table.dataTable.no-footer {
@@ -239,38 +271,49 @@
             border-bottom: none !important;
         }
 
-        /* Botón actual (página seleccionada) */
+        /* Paginación y texto de información (igual en todas las tablas) */
+        #miTabla_wrapper .dataTables_info {
+            color: #6b7280 !important;
+            font-size: 0.875rem !important;
+            padding-top: 0 !important;
+        }
+
+        #miTabla_wrapper .dataTables_paginate .paginate_button {
+            background: #f9fafb !important;
+            color: #374151 !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+            padding: 0.35rem 0.75rem !important;
+            margin: 0 0.2rem !important;
+            cursor: pointer;
+        }
+
+        #miTabla_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #e5e7eb !important;
+            color: #111827 !important;
+            border: none !important;
+        }
+
+        #miTabla_wrapper .dataTables_paginate .paginate_button:active {
+            background: #25636d !important;
+            color: #ffffff !important;
+            border: none !important;
+        }
+
         #miTabla_wrapper .dataTables_paginate .paginate_button.current,
         #miTabla_wrapper .dataTables_paginate .paginate_button.current:hover,
         #miTabla_wrapper .dataTables_paginate .paginate_button.current:active {
             background: #32989D !important;
             color: #ffffff !important;
             border: none !important;
-            border-radius: 0.5rem !important;
         }
 
-        /* Botones normales */
-        #miTabla_wrapper .dataTables_paginate .paginate_button {
+        #miTabla_wrapper .dataTables_paginate .paginate_button.disabled,
+        #miTabla_wrapper .dataTables_paginate .paginate_button.disabled:hover {
             background: #f9fafb !important;
-            color: #374151 !important;
+            color: #9ca3af !important;
             border: none !important;
-            border-radius: 0.5rem !important;
-        }
-
-        /* Hover en botones normales */
-        #miTabla_wrapper .dataTables_paginate .paginate_button:hover {
-            background: #e5e7eb !important;
-            color: #111827 !important;
-            border: none !important;
-            border-radius: 0.5rem !important;
-        }
-
-        /* Estado activo */
-        #miTabla_wrapper .dataTables_paginate .paginate_button:active {
-            background: #25636d !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 0.5rem !important;
+            cursor: default !important;
         }
     </style>
 @endsection
@@ -307,19 +350,26 @@
                 }
             };
 
-const tabla = $('#miTabla').DataTable({
-    dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
-    language: idiomaEspanol,
-    pageLength: 10,
-    order: [[1, 'desc']], // Al cargar: Fecha descendente
-    columnDefs: [
-        { orderable: true, targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, // Todas ordenables excepto Acciones
-        { orderable: false, targets: [12] } // Acciones NO ordenable
-    ],
-    drawCallback: function() {
-        if (window.lucide) lucide.createIcons();
-    }
-});
+            const tabla = $('#miTabla').DataTable({
+                dom: 'rt<"flex items-center justify-between px-6 py-3"ip>',
+                language: idiomaEspanol,
+                pageLength: 10,
+                order: [
+                    [1, 'desc']
+                ], // Al cargar: Fecha descendente
+                columnDefs: [{
+                        orderable: true,
+                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    }, // Todas ordenables excepto Acciones
+                    {
+                        orderable: false,
+                        targets: [12]
+                    } // Acciones NO ordenable
+                ],
+                drawCallback: function() {
+                    if (window.lucide) lucide.createIcons();
+                }
+            });
 
             // --- BÚSQUEDA CUSTOM ---
             $('#customSearch').on('keyup', function() {
@@ -339,9 +389,9 @@ const tabla = $('#miTabla').DataTable({
                 const desde = fechaDesde ? new Date(fechaDesde) : null;
                 const hasta = fechaHasta ? new Date(fechaHasta) : null;
 
-                if(desde) desde.setHours(0,0,0,0);
-                if(hasta) hasta.setHours(23,59,59,999);
-                if(fechaEstudio) fechaEstudio.setHours(12,0,0,0);
+                if (desde) desde.setHours(0, 0, 0, 0);
+                if (hasta) hasta.setHours(23, 59, 59, 999);
+                if (fechaEstudio) fechaEstudio.setHours(12, 0, 0, 0);
 
                 return (!desde || fechaEstudio >= desde) && (!hasta || fechaEstudio <= hasta);
             });
@@ -388,17 +438,31 @@ const tabla = $('#miTabla').DataTable({
             `);
             ventana.document.close();
             ventana.focus();
-            setTimeout(() => { ventana.print(); ventana.close(); }, 500);
+            setTimeout(() => {
+                ventana.print();
+                ventana.close();
+            }, 500);
         }
 
         async function exportarFiltradoPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape', format: 'legal' });
+            const {
+                jsPDF
+            } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                format: 'legal'
+            });
 
             const tablaDT = $('#miTabla').DataTable();
-            const datosFiltrados = tablaDT.rows({ search: 'applied' }).data();
+            const datosFiltrados = tablaDT.rows({
+                search: 'applied'
+            }).data();
 
-            const headers = [['Fecha', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real', 'Regiones', 'Cont 50ml', 'Cont 100ml', 'Jer. Prel.', 'Descartables', 'Otros y Agujas']];
+            const headers = [
+                ['Fecha', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real', 'Regiones', 'Cont 50ml', 'Cont 100ml',
+                    'Jer. Prel.', 'Descartables', 'Otros y Agujas'
+                ]
+            ];
             const body = [];
 
             datosFiltrados.each(function(value, index) {
@@ -429,15 +493,22 @@ const tabla = $('#miTabla').DataTable({
                 body: body,
                 startY: 30,
                 theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [27, 125, 143] }
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2
+                },
+                headStyles: {
+                    fillColor: [27, 125, 143]
+                }
             });
             doc.save('estudios_medicos_filtrados.pdf');
         }
 
         document.getElementById('btnExportarExcel').addEventListener('click', function() {
             const tablaDT = $('#miTabla').DataTable();
-            const datos = tablaDT.rows({ search: 'applied' }).data().toArray();
+            const datos = tablaDT.rows({
+                search: 'applied'
+            }).data().toArray();
 
             const clean = (html) => {
                 const tmp = document.createElement("DIV");

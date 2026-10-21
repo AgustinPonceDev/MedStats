@@ -84,64 +84,65 @@
         </div>
 
         {{-- Movimientos --}}
-        <div class="bg-white shadow rounded-lg border border-gray-200 overflow-auto">
-            <table class="table table-hover table-bordered shadow-sm text-center rounded">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 border text-center">Cantidad</th>
-                        <th class="px-4 py-2 border text-center">Fecha</th>
-                        <th class="px-4 py-2 border">Médico</th>
-                        <th class="px-4 py-2 border">Paciente</th>
-                        <th class="px-4 py-2 border">Comentario</th>
-                        <th class="px-4 py-2 border text-center">Usuario</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($hist_item as $item)
-                        @php
-                            $fechaMov = $item->fecha ? \Carbon\Carbon::parse($item->fecha) : null;
-                        @endphp
-                        <tr class="hover:bg-gray-50">
-                            <td
-                                class="px-4 py-2 border text-center font-bold {{ $item->cantidad < 0 ? 'text-red-600' : 'text-emerald-600' }}">
-                                {{ $item->cantidad > 0 ? '+' : '' }}{{ $item->cantidad }}
-                            </td>
-                            <td class="px-4 py-2 border text-center">
-                                @if ($fechaMov)
-                                    {{ $fechaMov->format('d/m/Y') }}
-                                    @if ($fechaMov->format('H:i:s') !== '00:00:00')
-                                        <span class="block text-xs text-gray-400">{{ $fechaMov->format('H:i') }}</span>
-                                    @endif
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td class="px-4 py-2 border">
-                                {{ $item->get_empleado?->nombre }} {{ $item->get_empleado?->apellido }}
-                                @if ($item->get_empleado)
-                                    (Mat. {{ $item->get_empleado->matricula ?? 'S/M' }})
-                                @endif
-                            </td>
-                            <td class="px-4 py-2 border">
-                                {{ $item->get_paciente?->nombre }} {{ $item->get_paciente?->apellido }}
-                                @if ($item->get_paciente)
-                                    (DNI {{ $item->get_paciente->dni }})
-                                @endif
-                            </td>
-                            <td class="px-4 py-2 border">{{ $item->comentario }}</td>
-                            <td class="px-4 py-2 border text-center">{{ $item->get_creador->name ?? '-' }}</td>
-                        </tr>
-                    @empty
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left text-gray-500">
+                    <thead class="bg-[#1B7D8F] text-white uppercase text-[11px] tracking-wider">
                         <tr>
-                            <td colspan="6" class="px-4 py-2 text-center text-gray-500">No hay movimientos registrados.
-                            </td>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Cantidad</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Fecha</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Médico</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Paciente</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Comentario</th>
+                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Usuario</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-6">
-            {{ $hist_item->links() }}
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($hist_item as $item)
+                            @php
+                                $fechaMov = $item->fecha ? \Carbon\Carbon::parse($item->fecha) : null;
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td
+                                    class="px-3 py-3.5 text-center font-bold {{ $item->cantidad < 0 ? 'text-red-600' : 'text-emerald-600' }}">
+                                    {{ $item->cantidad > 0 ? '+' : '' }}{{ $item->cantidad }}
+                                </td>
+                                <td class="px-3 py-3.5 text-center">
+                                    @if ($fechaMov)
+                                        {{ $fechaMov->format('d/m/Y') }}
+                                        @if ($fechaMov->format('H:i:s') !== '00:00:00')
+                                            <span class="block text-xs text-gray-400">{{ $fechaMov->format('H:i') }}</span>
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5 text-gray-600">
+                                    {{ $item->get_empleado?->nombre }} {{ $item->get_empleado?->apellido }}
+                                    @if ($item->get_empleado)
+                                        (Mat. {{ $item->get_empleado->matricula ?? 'S/M' }})
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5 text-gray-600">
+                                    {{ $item->get_paciente?->nombre }} {{ $item->get_paciente?->apellido }}
+                                    @if ($item->get_paciente)
+                                        (DNI {{ $item->get_paciente->dni }})
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5 text-gray-600">{{ $item->comentario }}</td>
+                                <td class="px-3 py-3.5 text-center">{{ $item->get_creador->name ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-10 text-center text-gray-400">No hay movimientos
+                                    registrados.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            {{ $hist_item->links('vendor.pagination.medstats') }}
         </div>
     </div>
 @endsection
