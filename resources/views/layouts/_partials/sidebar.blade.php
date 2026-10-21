@@ -11,7 +11,7 @@
     </div>
 
     <!-- Contenido Scrollable -->
-    <div class="flex-1 overflow-y-auto py-4 space-y-1 px-3 custom-scrollbar">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-1 px-3 custom-scrollbar">
 
         <!-- Botón volver -->
         @php
@@ -187,15 +187,10 @@
 
         @if ($rutaActual !== 'inicio')
             <a href="#" onclick="event.preventDefault(); history.back();"
-               class="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative overflow-hidden"
+               class="sb-link flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F] transition-all group relative"
                title="Volver">
                 <i data-lucide="arrow-left" class="w-6 h-6 flex-shrink-0 transition-transform group-hover:-translate-x-1"></i>
-                <span class="link-text font-medium whitespace-nowrap hidden opacity-0 transition-opacity duration-300">Volver</span>
-
-                <!-- Tooltip para modo colapsado -->
-                <div class="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap md:hidden">
-                    Volver
-                </div>
+                <span class="link-text text-[13px] leading-tight font-medium hidden opacity-0 transition-opacity duration-300">Volver</span>
             </a>
             <div class="my-2 border-t border-gray-100 mx-2"></div>
         @endif
@@ -212,29 +207,44 @@
                 $rutaEstadisticas = 'estudios_medicos.estadisticas';
             }
 
+            // 'match': rutas que pertenecen a la sección (el item se resalta también en
+            // sus pantallas internas: crear, editar, ver). 'except': rutas que pertenecen a otra.
             $menuItems = [
-                ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos'],
-                ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas'],
-                ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes'],
-                ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
-                ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
-                ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
-                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad'],
-                ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
+                ['route' => 'stocks.index', 'title' => 'Insumos', 'icon' => 'package', 'access' => 'insumos',
+                    'match' => ['stocks.*'], 'except' => ['stocks.estadisticasstock']],
+                ['route' => $rutaEstadisticas, 'title' => 'Estadísticas', 'icon' => 'bar-chart-2', 'access' => 'estadisticas',
+                    'match' => ['cirugias.estadisticas', 'estudios_medicos.estadisticas', 'stocks.estadisticasstock', 'estadisticas']],
+                ['route' => 'pacientes.index', 'title' => 'Pacientes', 'icon' => 'users', 'access' => 'pacientes',
+                    'match' => ['pacientes.*', 'persona.*']],
+                ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas',
+                    'match' => ['camas.index']],
+                ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias',
+                    'match' => ['cirugias.*'], 'except' => ['cirugias.estadisticas']],
+                ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos',
+                    'match' => ['estudios_medicos.*'], 'except' => ['estudios_medicos.estadisticas']],
+                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad',
+                    'match' => ['trazabilidad.*']],
             ];
+
+            $itemAjustes = ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null,
+                'match' => ['ajustes', 'usuarios.*', 'camas.listar', 'camas.create', 'camas.edit', 'camas.show', 'medicamentos.*',
+                    'UsuarioPerfil.*', 'empleados.*', 'salas.*', 'habitaciones.*', 'quirofanos.*', 'procedimientos.*',
+                    'profesion.*', 'tipoAnestesias.*', 'ocupacionCamas.*', 'especialidades.*', 'servicios.*',
+                    'paises.*', 'provincias.*', 'codigos_postales.*', 'estudios.*']];
+
+            $esActivo = function (array $item) {
+                return request()->routeIs($item['match']) && !request()->routeIs($item['except'] ?? []);
+            };
         @endphp
 
         @foreach($menuItems as $item)
             @if(Auth::user()->hasAccess($item['access']))
-            <a href="{{ route($item['route']) }}"
-               class="flex items-center gap-3 p-3 rounded-xl transition-all group relative overflow-hidden
-                      {{ request()->routeIs($item['route']) ? 'bg-[#1B7D8F]/10 text-[#1B7D8F]' : 'text-gray-600 hover:bg-gray-50 hover:text-[#1B7D8F]' }}"
-               title="{{ $item['title'] }}">
-                <i data-lucide="{{ $item['icon'] }}" class="w-6 h-6 flex-shrink-0"></i>
-                <span class="link-text font-medium whitespace-nowrap hidden opacity-0 transition-opacity duration-300">{{ $item['title'] }}</span>
-            </a>
+                @include('layouts._partials.sidebar-link', ['item' => $item, 'activo' => $esActivo($item)])
             @endif
         @endforeach
+
+        <div class="my-2 border-t border-gray-100 mx-2"></div>
+        @include('layouts._partials.sidebar-link', ['item' => $itemAjustes, 'activo' => $esActivo($itemAjustes)])
 
     </div>
 
@@ -243,10 +253,10 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                class="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all group relative overflow-hidden"
+                class="sb-link w-full flex items-center gap-3 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-all group relative"
                 title="Cerrar Sesión">
                 <i data-lucide="log-out" class="w-6 h-6 flex-shrink-0"></i>
-                <span class="link-text font-medium whitespace-nowrap hidden opacity-0 transition-opacity duration-300">Cerrar Sesión</span>
+                <span class="link-text text-[13px] leading-tight font-medium hidden opacity-0 transition-opacity duration-300">Cerrar Sesión</span>
             </button>
         </form>
     </div>
@@ -254,6 +264,12 @@
 </aside>
 
 <style>
+    /* Colapsado: íconos centrados en los 80px del sidebar */
+    /* Al cargar una página no se anima el sidebar: queda como el usuario lo dejó */
+    .sb-sin-animacion #sidebar, .sb-sin-animacion #mainContent, .sb-sin-animacion #footer,
+    .sb-sin-animacion #sidebar .link-text, .sb-sin-animacion #sidebar-title { transition: none !important; }
+    #sidebar.collapsed .sb-link { justify-content: center; }
+    #sidebar.collapsed .sb-link .link-text { display: none; }
     .custom-scrollbar::-webkit-scrollbar {
         width: 4px;
     }
@@ -270,89 +286,81 @@
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if (window.lucide) lucide.createIcons();
-
+    (function () {
+        const KEY = 'sidebar-expanded';
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggleSidebar');
-        const linkTexts = document.querySelectorAll('.link-text');
+        const linkTexts = document.querySelectorAll('#sidebar .link-text');
         const sidebarTitle = document.getElementById('sidebar-title');
-        const mainContent = document.getElementById('mainContent');
 
-        function setSidebarState(expanded) {
+        function leerEstado() {
+            try { return localStorage.getItem(KEY) === 'true'; } catch (e) { return false; }
+        }
+        function guardarEstado(expanded) {
+            try { localStorage.setItem(KEY, expanded ? 'true' : 'false'); } catch (e) {}
+        }
+
+        // instant = true: aplica el estado sin animaciones ni destellos (carga de página)
+        function setSidebarState(expanded, instant) {
+            const mainContent = document.getElementById('mainContent');
             const footer = document.getElementById('footer');
+            const margen = expanded ? '16rem' : '5rem';
 
-            if (expanded) {
-                sidebar.classList.remove('w-20', 'sidebar-colapsado', 'collapsed');
-                sidebar.classList.add('w-64', 'sidebar-expandido');
+            sidebar.classList.toggle('w-64', expanded);
+            sidebar.classList.toggle('sidebar-expandido', expanded);
+            sidebar.classList.toggle('w-20', !expanded);
+            sidebar.classList.toggle('sidebar-colapsado', !expanded);
+            sidebar.classList.toggle('collapsed', !expanded);
 
-                linkTexts.forEach(el => {
+            linkTexts.forEach(el => {
+                if (expanded) {
                     el.classList.remove('hidden');
-                    setTimeout(() => el.classList.remove('opacity-0'), 50);
-                });
+                    if (instant) el.classList.remove('opacity-0');
+                    else setTimeout(() => el.classList.remove('opacity-0'), 50);
+                } else {
+                    el.classList.add('opacity-0', 'hidden');
+                }
+            });
 
-                if(sidebarTitle) {
+            if (sidebarTitle) {
+                if (expanded) {
                     sidebarTitle.classList.remove('hidden');
-                    setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
-                }
-
-                if(mainContent) {
-                    mainContent.style.marginLeft = "16rem";
-                    mainContent.style.transform = "scale(0.98)";
-                }
-
-                if(footer) {
-                    footer.style.marginLeft = "16rem";
-                    footer.style.width = "calc(100% - 16rem)";
-                    footer.style.transition = "all 0.3s ease-in-out";
-                }
-
-            } else {
-                sidebar.classList.remove('w-64', 'sidebar-expandido');
-                sidebar.classList.add('w-20', 'sidebar-colapsado', 'collapsed');
-
-                linkTexts.forEach(el => {
-                    el.classList.add('opacity-0');
-                    el.classList.add('hidden');
-                });
-
-                if(sidebarTitle) {
+                    if (instant) sidebarTitle.classList.remove('opacity-0');
+                    else setTimeout(() => sidebarTitle.classList.remove('opacity-0'), 50);
+                } else {
                     sidebarTitle.classList.add('hidden');
                 }
+            }
 
-                if(mainContent) {
-                    mainContent.style.marginLeft = "5rem";
-                    mainContent.style.transform = "scale(1)";
-                }
-
-                if(footer) {
-                    footer.style.marginLeft = "5rem";
-                    footer.style.width = "calc(100% - 5rem)";
-                    footer.style.transition = "all 0.3s ease-in-out";
-                }
+            if (mainContent) mainContent.style.marginLeft = margen;
+            if (footer) {
+                footer.style.marginLeft = margen;
+                footer.style.width = 'calc(100% - ' + margen + ')';
             }
         }
 
-        // Estado inicial al cargar la página (por defecto cerrado si no hay valor true previo)
-        const storedState = localStorage.getItem('sidebar-expanded');
-        const isExpanded = storedState === 'true'; 
+        // Estado recordado: se aplica ya mismo al sidebar (sin animar) para que no "salte" al cambiar de página
+        document.documentElement.classList.add('sb-sin-animacion');
+        const expandido = leerEstado();
+        setSidebarState(expandido, true);
 
-        setSidebarState(isExpanded);
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.lucide) lucide.createIcons();
 
-        // Botón toggle manual
-        toggleBtn.addEventListener('click', function() {
-            const isCurrentlyExpanded = sidebar.classList.contains('w-64');
-            const newState = !isCurrentlyExpanded;
+            // main y footer ya existen: les aplicamos el mismo estado, sin animación
+            setSidebarState(leerEstado(), true);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.documentElement.classList.remove('sb-sin-animacion');
+                const footer = document.getElementById('footer');
+                if (footer) footer.style.transition = 'all 0.3s ease-in-out';
+            }));
 
-            setSidebarState(newState);
-            localStorage.setItem('sidebar-expanded', newState);
-        });
-
-        const sidebarLinks = sidebar.querySelectorAll('a');
-        sidebarLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                localStorage.setItem('sidebar-expanded', 'false');
+            // Solo el botón del menú cambia (y guarda) el estado; navegar no lo toca
+            toggleBtn.addEventListener('click', function () {
+                const nuevo = !sidebar.classList.contains('w-64');
+                setSidebarState(nuevo, false);
+                guardarEstado(nuevo);
             });
         });
-    });
+    })();
 </script>

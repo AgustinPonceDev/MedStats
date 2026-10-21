@@ -122,17 +122,17 @@
                         
                         <div class="absolute -top-20 flex gap-2 items-center">
                             
-                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST"
-                            onsubmit="return confirm('¿Estás seguro de retroceder la caja {{ $caja->codigo }} al estado {{ $estadoAnterior }}?');">
-                                @csrf
+                           
+                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST" id="form-retroceder">
+                            @csrf
                                 <input type="hidden" name="accion" value="retroceder">
-                                <button type="submit" class="p-2 bg-red-50 rounded-lg border border-red-200 shadow-sm hover:shadow hover:bg-red-100 hover:border-red-300 transition-all group flex items-center justify-center cursor-pointer" title="Deshacer a {{ $estadoAnterior }}">
+                           
+                                <button type="button" onclick="confirmarRetroceso('{{ $estadoAnterior }}')" class="p-2 bg-red-50 rounded-lg border border-red-200 shadow-sm hover:shadow hover:bg-red-100 hover:border-red-300 transition-all group flex items-center justify-center cursor-pointer" title="Deshacer a {{ $estadoAnterior }}">
                                     <i data-lucide="rotate-ccw" class="w-5 h-5 text-red-500 group-hover:-rotate-45 transition-transform"></i>
                                 </button>
                             </form>
 
-                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST"
-                            onsubmit="return confirm('¿Estás seguro de avanzar la caja {{ $caja->codigo }} al estado {{ $siguienteEstado }}?');">
+                            <form action="{{ route('trazabilidad.estado', $caja->id) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="accion" value="avanzar">
                                 <button type="submit" class="p-2 bg-blue-50 rounded-lg border border-blue-200 shadow-sm hover:shadow hover:bg-blue-100 hover:border-blue-300 transition-all group flex items-center justify-center cursor-pointer" title="Avanzar a {{ $siguienteEstado }}">
@@ -152,11 +152,35 @@
     </div>
 </div>
 
+<script src="{{ asset('vendor/js/sweetalert2.all.min.js') }}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         if(typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
     });
+
+    function confirmarRetroceso(estadoAnterior) {
+        Swal.fire({
+            title: '¿Deshacer movimiento?',
+            text: `Estás a punto de retroceder la caja al estado: ${estadoAnterior}.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#cf1111',
+            cancelButtonColor: '#6b7280',  
+            confirmButtonText: 'Sí, retroceder',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true, 
+            customClass: {
+                popup: 'rounded-xl shadow-lg border border-gray-100'
+            }
+        }).then((result) => {
+        
+            if (result.isConfirmed) {
+                
+                document.getElementById('form-retroceder').submit();
+            }
+        });
+    }
 </script>
 @endsection

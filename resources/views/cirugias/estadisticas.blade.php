@@ -15,11 +15,13 @@
                 <i class="bi bi-box-seam me-2 text-[#1B7D8F]"></i> 
                 <span class="font-medium">Estadísticas de Stock</span>
             </a>
+            @if (Auth::user()->hasAccess(['admin', 'trazabilidad']))
             <a href="{{ route('trazabilidad.estadisticas') }}" 
                class="btn bg-white text-gray-700 shadow-sm hover:shadow-md border border-gray-200 d-flex align-items-center px-4 py-2 rounded-lg transition-all">
-                <i class="bi bi-box-seam me-2 text-[#1B7D8F]"></i> 
-                <span class="font-medium">Trazabilidad</span>
+                <i class="bi bi-diagram-3 me-2 text-[#1B7D8F]"></i> 
+                <span class="font-medium">Estadísticas de Trazabilidad</span>
             </a>
+            @endif
             </div>
         </div>
 

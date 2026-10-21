@@ -4,8 +4,8 @@
     <div class="flex min-h-screen bg-gray-100 transition-all duration-300 ease-in-out">
         <!-- Main -->
         <main class="flex-1 p-4 max-w-full">
-            <div class="text-center mt-10 mb-12">
-                <h1 class="text-4xl font-bold text-gray-800 mb-2">
+            <div class="text-center mt-6 mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-4">
                     Hola, <span class="text-[#1B7D8F]">{{ Auth::user()->name ?? 'Usuario' }}</span>
                 </h1>
 
@@ -20,8 +20,8 @@
                             </div>
                             <input type="text" id="busqueda" name="busqueda" autocomplete="off"
                                 placeholder="Buscar paciente por nombre, apellido o DNI..."
-                                class="w-full pl-12 pr-4 py-4 rounded-full border-2 border-gray-200 focus:border-[#1B7D8F] focus:ring-4 focus:ring-[#1B7D8F]/10 focus:outline-none shadow-sm text-lg transition-all duration-300" />
-                            <button type="submit" class="absolute right-2 top-2 bottom-2 px-6 bg-[#1B7D8F] hover:bg-[#176d7b] text-white rounded-full font-medium shadow-md transition-all duration-300 hover:shadow-lg">
+                                class="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-200 focus:border-[#1B7D8F] focus:ring-4 focus:ring-[#1B7D8F]/10 focus:outline-none shadow-sm text-base transition-all duration-300" />
+                            <button type="submit" class="absolute right-2 top-1.5 bottom-1.5 px-5 text-sm bg-[#1B7D8F] hover:bg-[#176d7b] text-white rounded-full font-medium shadow-md transition-all duration-300 hover:shadow-lg">
                                 Buscar
                             </button>
                         </div>
@@ -30,43 +30,48 @@
             </div>
 
             <!-- KPIs rápidos -->
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 max-w-7xl mx-auto">
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 max-w-5xl mx-auto">
 
-                <!-- Pacientes activos -->
-                <div class="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-3 bg-blue-50 rounded-xl">
-                        <img src="{{ asset('assets/img/pacientes.png') }}" alt="Pacientes" class="h-10 w-10 object-contain" />
+                <!-- Cajas esterilizadas por método -->
+                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                    <div class="p-2.5 bg-blue-50 rounded-xl text-blue-600">
+                        <i data-lucide="flask-conical" class="h-6 w-6"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Pacientes en cama</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ $pacientes }}</p>
-                    </div>
-                </div>
-
-                <!-- Camas ocupadas -->
-                <div class="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-3 bg-teal-50 rounded-xl">
-                        <img src="{{ asset('assets/img/camas.png') }}" alt="Camas" class="h-10 w-10 object-contain" />
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Ocupación</p>
-                        <div class="flex items-baseline gap-2">
-                            <p class="text-3xl font-bold text-gray-800">{{ $porcentajeCamas }}%</p>
-                            <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ $porcentajeCamas > 80 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' }}">
-                                {{ $porcentajeCamas > 80 ? 'Alta' : 'Normal' }}
-                            </span>
+                    <div class="flex-1">
+                        <p class="text-xs font-medium text-gray-500 mb-1.5">Cajas esterilizadas</p>
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ $cajasOxido }}</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">Óxido de Etileno</p>
+                            </div>
+                            <div class="w-px self-stretch bg-gray-200"></div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ $cajasAutoclave }}</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">Autoclave</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cirugías realizadas -->
-                <div class="bg-white rounded-2xl p-6 flex items-center gap-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-3 bg-indigo-50 rounded-xl">
-                        <img src="{{ asset('assets/img/cirugias.png') }}" alt="Cirugías" class="h-10 w-10 object-contain" />
+                <!-- Cajas almacenadas -->
+                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                    <div class="p-2.5 bg-teal-50 rounded-xl text-teal-600">
+                        <i data-lucide="archive" class="h-6 w-6"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Cirugías (Año)</p>
-                        <p class="text-3xl font-bold text-gray-800">{{ $cantCirugias }}</p>
+                        <p class="text-xs font-medium text-gray-500 mb-0.5">Cajas almacenadas</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ $cajasAlmacenadas }}</p>
+                    </div>
+                </div>
+
+                <!-- Cirugías realizadas -->
+                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                    <div class="p-2.5 bg-indigo-50 rounded-xl">
+                        <img src="{{ asset('assets/img/cirugias.png') }}" alt="Cirugías" class="h-6 w-6 object-contain" />
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 mb-0.5">Cirugías (Año)</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ $cantCirugias }}</p>
                     </div>
                 </div>
 
@@ -189,50 +194,63 @@
                 </a>
                 @endif
 
-                <!-- CARD 6: Libro de Estudios médicos -->
+                <!-- CARD 6: Estudios médicos -->
                 @if(Auth::user()->hasAccess('estudios_medicos'))
-<a href="{{ route('estudios_medicos.index') }}"
-    class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none">
-    <div class="w-1/2 p-6 flex flex-col justify-between">
-        <div>
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
-                <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
-                Estudios médicos
-            </h2>
-            <p class="text-gray-500 mt-2 text-sm">Registro e historial de estudios médicos realizados</p>
-        </div>
-        <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
-    </div>
-    <div class="w-1/2 flex items-center justify-center">
-        <img src="{{ asset('vendor/img/unsplash-1.jpg') }}"
-             alt="Estudios Médicos"
-             class="h-24 w-32 object-cover rounded-lg">
-    </div>
-</a>
-@endif
-            </div>
-            
-            <!-- CARD 7: Trazabilidad -->
-            @if(Auth::user()->hasAccess('trazabilidad'))
-            <a href="{{ route('trazabilidad.index') }}"
-                class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none">
-                <div class="w-1/2 p-6 flex flex-col justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
-                            <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
-                            Trazabilidad
-                        </h2>
-                        <p class="text-gray-500 mt-2 text-sm">Control y seguimiento de cajas quirúrgicas e insumos</p>
+                <a href="{{ route('estudios_medicos.index') }}"
+                    class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none">
+                    <div class="w-1/2 p-6 flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
+                                <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
+                                Estudios médicos
+                            </h2>
+                            <p class="text-gray-500 mt-2 text-sm">Registro e historial de estudios médicos realizados</p>
+                        </div>
+                        <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
                     </div>
-                    <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
-                </div>
-                <div class="w-1/2 flex items-center justify-center">
-                    <img src="{{ asset('vendor/img/unsplash-2.jpg') }}"
-                         alt="Trazabilidad"
-                         class="h-24 w-32 object-cover rounded-lg">
-                </div>
-            </a>
-            @endif
+                    <div class="w-1/2 flex items-center justify-center">
+                        <img src="{{ asset('vendor/img/unsplash-1.jpg') }}" alt="Estudios médicos" class="h-24 w-32 object-cover rounded-lg">
+                    </div>
+                </a>
+                @endif
+
+                <!-- CARD 7: Trazabilidad -->
+                @if(Auth::user()->hasAccess('trazabilidad'))
+                <a href="{{ route('trazabilidad.index') }}"
+                    class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none">
+                    <div class="w-1/2 p-6 flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
+                                <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
+                                Trazabilidad
+                            </h2>
+                            <p class="text-gray-500 mt-2 text-sm">Control y seguimiento de cajas quirúrgicas e insumos</p>
+                        </div>
+                        <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
+                    </div>
+                    <div class="w-1/2 flex items-center justify-center">
+                        <img src="{{ asset('vendor/img/unsplash-2.jpg') }}" alt="Trazabilidad" class="h-24 w-32 object-cover rounded-lg">
+                    </div>
+                </a>
+                @endif
+
+                <!-- CARD 8: Ajustes -->
+                <a href="{{ route('ajustes') }}"
+                    class="flex rounded-2xl overflow-hidden transform hover:scale-[1.02] transition duration-300 bg-white h-40 text-decoration-none md:last:odd:col-span-2 md:last:odd:w-1/2 md:last:odd:mx-auto">
+                    <div class="w-1/2 p-6 flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold bg-gradient-to-r from-[#1B7D8F] via-[#2BA8A0] to-[#245360] text-transparent bg-clip-text drop-shadow-md flex items-center gap-2">
+                                <img src="{{ asset('assets/img/logo-san-felipe.png') }}" alt="Hospital San Felipe" class="w-6 h-6">
+                                Ajustes
+                            </h2>
+                            <p class="text-gray-500 mt-2 text-sm">Configuración del sistema, usuarios, perfiles y catálogos</p>
+                        </div>
+                        <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
+                    </div>
+                    <div class="w-1/2 flex items-center justify-center">
+                        <img src="{{ asset('assets/img/ajustes1.jpeg') }}" alt="Ajustes" class="h-24 w-32 object-cover rounded-lg">
+                    </div>
+                </a>
             </div>
         </main>
     </div>

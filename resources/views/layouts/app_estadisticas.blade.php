@@ -17,7 +17,6 @@
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <!-- Archivo CSS opcional específico para estadísticas -->
-    <link rel="stylesheet" href="{{ asset('assets/css/estadisticas.css') }}">
 
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="{{ asset('vendor/css/jquery-ui.min.css') }}">
