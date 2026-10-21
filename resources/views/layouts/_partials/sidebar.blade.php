@@ -222,7 +222,7 @@
                     'match' => ['cirugias.*'], 'except' => ['cirugias.estadisticas']],
                 ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos',
                     'match' => ['estudios_medicos.*'], 'except' => ['estudios_medicos.estadisticas']],
-                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad',
+                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'route', 'access' => 'trazabilidad',
                     'match' => ['trazabilidad.*']],
             ];
 

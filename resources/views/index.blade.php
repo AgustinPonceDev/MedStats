@@ -30,48 +30,48 @@
             </div>
 
             <!-- KPIs rápidos -->
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 max-w-5xl mx-auto">
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8 max-w-5xl mx-auto px-4">
 
-                <!-- Cajas esterilizadas por método -->
-                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-2.5 bg-blue-50 rounded-xl text-blue-600">
-                        <i data-lucide="flask-conical" class="h-6 w-6"></i>
+                <!-- En esterilización por método -->
+                <div class="bg-white rounded-2xl pl-4 pr-5 py-4 flex items-center gap-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300">
+                    <div class="h-14 w-14 shrink-0 flex items-center justify-center bg-amber-50 rounded-xl text-amber-500">
+                        <i data-lucide="loader" class="h-6 w-6"></i>
                     </div>
                     <div class="flex-1">
-                        <p class="text-xs font-medium text-gray-500 mb-1.5">Cajas esterilizadas</p>
+                        <p class="text-[13px] text-gray-500 mb-1">En Esterilización</p>
                         <div class="flex items-center gap-4">
                             <div>
-                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ $cajasOxido }}</p>
-                                <p class="text-[11px] text-gray-500 mt-0.5">Óxido de Etileno</p>
+                                <p class="text-2xl font-semibold text-gray-800 leading-none">{{ $cajasAutoclave }}</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Autoclave</p>
                             </div>
                             <div class="w-px self-stretch bg-gray-200"></div>
                             <div>
-                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ $cajasAutoclave }}</p>
-                                <p class="text-[11px] text-gray-500 mt-0.5">Autoclave</p>
+                                <p class="text-2xl font-semibold text-gray-800 leading-none">{{ $cajasOxido }}</p>
+                                <p class="text-[11px] text-gray-500 mt-1">Óxido de Et.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cajas almacenadas -->
-                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-2.5 bg-teal-50 rounded-xl text-teal-600">
-                        <i data-lucide="archive" class="h-6 w-6"></i>
+                <!-- Depósito estéril -->
+                <div class="bg-white rounded-2xl pl-4 pr-5 py-4 flex items-center gap-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300">
+                    <div class="h-14 w-14 shrink-0 flex items-center justify-center bg-emerald-50 rounded-xl text-emerald-600">
+                        <i data-lucide="package-check" class="h-6 w-6"></i>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-gray-500 mb-0.5">Cajas almacenadas</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $cajasAlmacenadas }}</p>
+                        <p class="text-[13px] text-gray-500 mb-1">Depósito Estéril</p>
+                        <p class="text-2xl font-semibold text-gray-800 leading-none">{{ $cajasAlmacenadas }}</p>
                     </div>
                 </div>
 
                 <!-- Cirugías realizadas -->
-                <div class="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-                    <div class="p-2.5 bg-indigo-50 rounded-xl">
+                <div class="bg-white rounded-2xl pl-4 pr-5 py-4 flex items-center gap-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300">
+                    <div class="h-14 w-14 shrink-0 flex items-center justify-center bg-indigo-50 rounded-xl">
                         <img src="{{ asset('assets/img/cirugias.png') }}" alt="Cirugías" class="h-6 w-6 object-contain" />
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-gray-500 mb-0.5">Cirugías (Año)</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ $cantCirugias }}</p>
+                        <p class="text-[13px] text-gray-500 mb-1">Cirugías (Año)</p>
+                        <p class="text-2xl font-semibold text-gray-800 leading-none">{{ $cantCirugias }}</p>
                     </div>
                 </div>
 
@@ -229,7 +229,7 @@
                         <span class="text-blue-600 font-semibold mt-4">Ver más →</span>
                     </div>
                     <div class="w-1/2 flex items-center justify-center">
-                        <img src="{{ asset('vendor/img/unsplash-2.jpg') }}" alt="Trazabilidad" class="h-24 w-32 object-cover rounded-lg">
+                        <img src="{{ asset('assets/img/card-trazabilidad.jpg') }}" alt="Trazabilidad" class="h-24 w-32 object-cover rounded-lg">
                     </div>
                 </a>
                 @endif

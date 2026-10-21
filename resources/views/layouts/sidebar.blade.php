@@ -196,7 +196,7 @@
                 ['route' => 'camas.index', 'title' => 'Camas', 'icon' => 'bed', 'access' => 'camas'],
                 ['route' => 'cirugias.index', 'title' => 'Cirugías', 'icon' => 'activity', 'access' => 'cirugias'],
                 ['route' => 'estudios_medicos.index', 'title' => 'Diagnóstico por imágenes', 'icon' => 'image', 'access' => 'estudios_medicos'],
-                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'box', 'access' => 'trazabilidad'],
+                ['route' => 'trazabilidad.index', 'title' => 'Trazabilidad', 'icon' => 'route', 'access' => 'trazabilidad'],
                 ['route' => 'ajustes', 'title' => 'Ajustes', 'icon' => 'settings', 'access' => null],
             ];
         @endphp
