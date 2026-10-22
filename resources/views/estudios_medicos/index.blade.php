@@ -95,8 +95,8 @@
                         @forelse($estudios as $estudio)
                             <tr class="hover:bg-gray-50 transition-colors">
                                 {{-- Fecha --}}
-                                {{-- Fecha --}}
                                 <td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
+                                    data-fecha="{{ $estudio->fecha->format('Y-m-d') }}"
                                     data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
                                     {{ $estudio->fecha->format('d/m/Y') }}
                                 </td>
@@ -105,8 +105,8 @@
                                     data-order="{{ $estudio->fecha->format('Y-m-d') }} {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '00:00' }}">
                                     {{ $estudio->hora_estudio ? \Carbon\Carbon::parse($estudio->hora_estudio)->format('H:i') : '-' }}
                                 </td>
-                                {{-- Apellido y Nombre --}} <td
-                                    class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
+                                {{-- Apellido y Nombre --}}
+                                <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                     {{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}
                                 </td>
                                 {{-- I-A --}}
@@ -188,8 +188,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="px-6 py-10 text-center text-gray-400"> <i
-                                        data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                <td colspan="13" class="px-6 py-10 text-center text-gray-400">
+                                    <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                                     No se encontraron registros de diagnóstico por imágenes.
                                 </td>
                             </tr>
@@ -201,6 +201,11 @@
 
         <!-- Botones de Acción -->
         <div class="mt-6 flex flex-wrap gap-3 justify-start">
+            <select id="alcanceExport"
+                class="px-3 py-2 bg-white border border-gray-200 text-gray-700 text-sm rounded-xl shadow-sm focus:ring-[#1B7D8F] focus:border-[#1B7D8F]">
+                <option value="pagina">Solo esta página</option>
+                <option value="todo">Todo lo filtrado</option>
+            </select>
             <button onclick="imprimirTablaCompleta()"
                 class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-[#1B7D8F] transition-all shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
@@ -219,6 +224,7 @@
         </div>
 
     </div>
+
     <style>
         @media print {
             .no-print {
@@ -235,7 +241,6 @@
                 border: none !important;
             }
 
-            /* Ocultar sidebar/nav si existe en el layout */
             aside,
             nav {
                 display: none !important;
@@ -247,7 +252,6 @@
             }
         }
 
-        /* CORRECCIÓN PARA EL ANCHO DE LA TABLA */
         .dataTables_wrapper {
             width: 100% !important;
             margin: 0 !important;
@@ -259,19 +263,16 @@
             margin: 0 !important;
         }
 
-        /* Ocultar controles default de DataTables */
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter {
             display: none !important;
         }
 
-        /* Eliminar líneas superior e inferior de la tabla */
         table.dataTable.no-footer {
             border-top: none !important;
             border-bottom: none !important;
         }
 
-        /* Paginación y texto de información (igual en todas las tablas) */
         #miTabla_wrapper .dataTables_info {
             color: #6b7280 !important;
             font-size: 0.875rem !important;
@@ -294,26 +295,10 @@
             border: none !important;
         }
 
-        #miTabla_wrapper .dataTables_paginate .paginate_button:active {
-            background: #25636d !important;
-            color: #ffffff !important;
-            border: none !important;
-        }
-
-        #miTabla_wrapper .dataTables_paginate .paginate_button.current,
-        #miTabla_wrapper .dataTables_paginate .paginate_button.current:hover,
-        #miTabla_wrapper .dataTables_paginate .paginate_button.current:active {
+        #miTabla_wrapper .dataTables_paginate .paginate_button.current {
             background: #32989D !important;
             color: #ffffff !important;
             border: none !important;
-        }
-
-        #miTabla_wrapper .dataTables_paginate .paginate_button.disabled,
-        #miTabla_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-            background: #f9fafb !important;
-            color: #9ca3af !important;
-            border: none !important;
-            cursor: default !important;
         }
     </style>
 @endsection
@@ -356,27 +341,25 @@
                 pageLength: 10,
                 order: [
                     [1, 'desc']
-                ], // Al cargar: Fecha descendente
+                ],
                 columnDefs: [{
                         orderable: true,
-                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-                    }, // Todas ordenables excepto Acciones
+                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                    },
                     {
                         orderable: false,
                         targets: [12]
-                    } // Acciones NO ordenable
+                    }
                 ],
                 drawCallback: function() {
                     if (window.lucide) lucide.createIcons();
                 }
             });
 
-            // --- BÚSQUEDA CUSTOM ---
             $('#customSearch').on('keyup', function() {
                 tabla.search(this.value).draw();
             });
 
-            // --- FILTRO DE FECHAS ---
             $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
                 const fechaDesde = $('#fechaDesde').val();
                 const fechaHasta = $('#fechaHasta').val();
@@ -408,11 +391,49 @@
             });
         });
 
-        // --- FUNCIONES DE EXPORTACIÓN ---
+        // --- EXTRACCIÓN ROBUSTA DE FILAS DESDE EL DOM ACTUAL ---
+        function filasParaExportar() {
+            const alcance = document.getElementById('alcanceExport')?.value || 'pagina';
+            const dt = $('#miTabla').DataTable();
+
+            // Obtenemos los índices de las filas aplicadas al filtro o página actual
+            const opciones = alcance === 'todo' ? {
+                search: 'applied'
+            } : {
+                search: 'applied',
+                page: 'current'
+            };
+            const indices = dt.rows(opciones).indexes();
+
+            let datos = [];
+            indices.each(function(idx) {
+                const tr = dt.row(idx).node();
+                // Tomamos las primeras 12 columnas (excluyendo Acciones) y limpiamos sus etiquetas HTML
+                const valoresFila = $(tr).find('td').slice(0, 12).map(function() {
+                    const texto = $(this).text().trim();
+                    return texto;
+                }).get();
+                datos.push(valoresFila);
+            });
+            return datos;
+        }
+
+        const escHtml = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        } [c]));
+
+        const CABECERA_EXPORT = [
+            'Fecha', 'Hora', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real',
+            'Regiones', 'Cont 50ml', 'Cont 100ml', 'Jer. Prel.', 'Descartables', 'Otros y Agujas'
+        ];
+
+        // --- 1. IMPRIMIR TABLA COMPLETA ---
         function imprimirTablaCompleta() {
-            const tablaOriginal = document.querySelector('#miTabla');
-            const encabezado = tablaOriginal.querySelector('thead').outerHTML;
-            const cuerpo = tablaOriginal.querySelector('tbody').outerHTML;
+            const filas = filasParaExportar();
 
             const ventana = window.open('', '', 'width=900,height=700');
             ventana.document.write(`
@@ -420,18 +441,18 @@
                 <head>
                     <title>Estudios Médicos</title>
                     <style>
+                        @page { size: landscape; }
                         body { font-family: Arial, sans-serif; margin: 20px; }
                         table { width: 100%; border-collapse: collapse; font-size: 11px; }
                         th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
                         th { background-color: #1B7D8F; color: white; font-weight: bold; }
-                        .no-print { display: none; }
                     </style>
                 </head>
                 <body>
                     <h2>Reporte de Estudios Médicos</h2>
                     <table>
-                        ${encabezado}
-                        ${cuerpo}
+                        <thead><tr>${CABECERA_EXPORT.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+                        <tbody>${filas.map(f => `<tr>${f.map(v => `<td>${escHtml(v)}</td>`).join('')}</tr>`).join('')}</tbody>
                     </table>
                 </body>
                 </html>
@@ -444,6 +465,7 @@
             }, 500);
         }
 
+        // --- 2. EXPORTAR PDF ---
         async function exportarFiltradoPDF() {
             const {
                 jsPDF
@@ -453,44 +475,10 @@
                 format: 'legal'
             });
 
-            const tablaDT = $('#miTabla').DataTable();
-            const datosFiltrados = tablaDT.rows({
-                search: 'applied'
-            }).data();
-
-            const headers = [
-                ['Fecha', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real', 'Regiones', 'Cont 50ml', 'Cont 100ml',
-                    'Jer. Prel.', 'Descartables', 'Otros y Agujas'
-                ]
-            ];
-            const body = [];
-
-            datosFiltrados.each(function(value, index) {
-                const clean = (html) => {
-                    const tmp = document.createElement("DIV");
-                    tmp.innerHTML = html;
-                    return tmp.textContent || tmp.innerText || "";
-                }
-
-                body.push([
-                    clean(value[0]), // Fecha
-                    clean(value[1]), // Apellido y Nombre
-                    clean(value[2]), // I-A
-                    clean(value[3]), // DNI
-                    clean(value[4]), // Estudio Real
-                    clean(value[5]), // Regiones
-                    clean(value[6]), // Cont 50ml
-                    clean(value[7]), // Cont 100ml
-                    clean(value[8]), // Jer. Prel.
-                    clean(value[9]), // Descartables
-                    clean(value[10]) // Otros y Agujas
-                ]);
-            });
-
             doc.text("Reporte de Estudios Médicos", 14, 20);
             doc.autoTable({
-                head: headers,
-                body: body,
+                head: [CABECERA_EXPORT],
+                body: filasParaExportar(),
                 startY: 30,
                 theme: 'grid',
                 styles: {
@@ -501,36 +489,49 @@
                     fillColor: [27, 125, 143]
                 }
             });
-            doc.save('estudios_medicos_filtrados.pdf');
+            doc.save('estudios_medicos.pdf');
         }
 
+        // --- 3. EXPORTAR EXCEL CON ANCHO AUTOMÁTICO ---
         document.getElementById('btnExportarExcel').addEventListener('click', function() {
-            const tablaDT = $('#miTabla').DataTable();
-            const datos = tablaDT.rows({
-                search: 'applied'
-            }).data().toArray();
+            const datosCrudos = filasParaExportar();
 
-            const clean = (html) => {
-                const tmp = document.createElement("DIV");
-                tmp.innerHTML = html;
-                return tmp.textContent || tmp.innerText || "";
-            }
-
-            const dataExport = datos.map(row => ({
-                Fecha: clean(row[0]),
-                Apellido_y_Nombre: clean(row[1]),
-                IA: clean(row[2]),
-                DNI: clean(row[3]),
-                Estudio_Real: clean(row[4]),
-                Regiones: clean(row[5]),
-                Contraste_50ml: clean(row[6]),
-                Contraste_100ml: clean(row[7]),
-                Jeringa_Prellenada: clean(row[8]),
-                Descartables: clean(row[9]),
-                Otros_y_Agujas: clean(row[10])
+            // Creamos los objetos para la hoja
+            const dataExport = datosCrudos.map(f => ({
+                Fecha: f[0],
+                Hora: f[1],
+                Apellido_y_Nombre: f[2],
+                IA: f[3],
+                DNI: f[4],
+                Estudio_Real: f[5],
+                Regiones: f[6],
+                Contraste_50ml: f[7],
+                Contraste_100ml: f[8],
+                Jeringa_Prellenada: f[9],
+                Descartables: f[10],
+                Otros_y_Agujas: f[11]
             }));
 
             const ws = XLSX.utils.json_to_sheet(dataExport);
+
+            // --- LÓGICA PARA AUTOAJUSTAR EL ANCHO DE LAS COLUMNAS ---
+            const colWidths = [];
+            // Recorremos las filas para medir la longitud del texto más largo de cada columna
+            dataExport.forEach(row => {
+                Object.keys(row).forEach((key, i) => {
+                    const valorCelda = row[key] ? String(row[key]) : '';
+                    const longitudTexto = Math.max(valorCelda.length, key.length);
+                    // Damos un margen mínimo de ancho (ej. 10 de ancho base + un rellenito)
+                    colWidths[i] = Math.max(colWidths[i] || 10, longitudTexto + 3);
+                });
+            });
+
+            // Asignamos los anchos calculados a la hoja de Excel
+            ws['!cols'] = colWidths.map(w => ({
+                wch: w
+            }));
+            // --------------------------------------------------------
+
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Estudios Medicos");
             XLSX.writeFile(wb, "reporte_estudios_medicos.xlsx");

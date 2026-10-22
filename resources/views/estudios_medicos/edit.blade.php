@@ -530,7 +530,12 @@
             function aplicarRegiones() {
                 const activo = usaRegiones.checked;
                 regionesWrap.classList.toggle('hidden', !activo);
-                if (!activo) regionesInput.value = 1;
+                regionesInput.required = activo; // solo es obligatorio si está activado
+                if (!activo) {
+                    regionesInput.value = ''; // vacío = se guarda como NULL
+                } else if (!regionesInput.value) {
+                    regionesInput.value = 1; // al activarlo arranca en 1
+                }
             }
 
             usaRegiones.addEventListener('change', aplicarRegiones);
@@ -539,8 +544,8 @@
                 aplicarRegiones();
             });
 
-            // Estado inicial (create, edit o vuelta por error de validación)
-            usaRegiones.checked = esTomografia() || (parseInt(regionesInput.value, 10) || 1) > 1;
+            // Estado inicial: tildado si es tomografía o si ya tiene un valor cargado
+            usaRegiones.checked = esTomografia() || regionesInput.value !== '';
             aplicarRegiones();
 
             // ---------- Validación de campos obligatorios ----------

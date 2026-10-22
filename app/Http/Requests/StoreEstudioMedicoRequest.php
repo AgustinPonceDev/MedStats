@@ -36,7 +36,7 @@ class StoreEstudioMedicoRequest extends FormRequest
             ],
 
             // Cantidad de regiones vistas (numeral)
-            'regiones'              => ['required', 'integer', 'min:1', 'max:20'],
+            'regiones'              => ['nullable', 'integer', 'min:1', 'max:20'],
 
             'fecha'                 => ['required', 'date', 'before_or_equal:today'],
             'hora_estudio'          => ['nullable', 'date_format:H:i', 'before_or_equal:now'],

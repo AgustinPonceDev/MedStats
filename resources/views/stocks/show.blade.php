@@ -86,61 +86,93 @@
         {{-- Movimientos --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-xs text-left text-gray-500">
-                    <thead class="bg-[#1B7D8F] text-white uppercase text-[11px] tracking-wider">
-                        <tr>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Cantidad</th>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Fecha</th>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Médico</th>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Paciente</th>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap">Comentario</th>
-                            <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Usuario</th>
+            <table class="w-full text-xs text-left text-gray-500">
+                <thead class="bg-[#1B7D8F] text-white uppercase text-[11px] tracking-wider">
+                    <tr>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Cantidad</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Fecha</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Tipo</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap">Médico</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap">Paciente</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap">Comentario</th>
+                        <th class="px-3 py-4 font-semibold whitespace-nowrap text-center">Usuario</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($hist_item as $item)
+                        @php
+                            $fechaMov = $item->fecha ? \Carbon\Carbon::parse($item->fecha) : null;
+
+                            // Tipo de movimiento a partir del comentario (y del signo si no coincide ninguno)
+                            $coment = mb_strtolower($item->comentario ?? '');
+                            if (str_contains($coment, 'carga inicial')) {
+                                [$tipo, $tipoClase] = ['Carga inicial', 'bg-blue-50 text-blue-700 border-blue-200'];
+                            } elseif (str_contains($coment, 'devoluci')) {
+                                [$tipo, $tipoClase] = ['Devolución', 'bg-emerald-50 text-emerald-700 border-emerald-200'];
+                            } elseif (str_contains($coment, 'consum') || str_starts_with($coment, 'cirugia')) {
+                                [$tipo, $tipoClase] = ['Consumo', 'bg-rose-50 text-rose-700 border-rose-200'];
+                            } elseif (str_contains($coment, 'ajuste')) {
+                                [$tipo, $tipoClase] = ['Ajuste', 'bg-amber-50 text-amber-700 border-amber-200'];
+                            } elseif ($item->cantidad >= 0) {
+                                [$tipo, $tipoClase] = ['Ingreso', 'bg-emerald-50 text-emerald-700 border-emerald-200'];
+                            } else {
+                                [$tipo, $tipoClase] = ['Egreso', 'bg-rose-50 text-rose-700 border-rose-200'];
+                            }
+
+                            // Comentario con enlace al estudio / cirugía de origen
+                            $textoComent = e($item->comentario ?? '');
+                            $textoComent = preg_replace_callback(
+                                '/estudio médico #(\d+)/iu',
+                                fn($m) => '<a href="' . route('estudios_medicos.show', $m[1]) . '" class="text-[#1B7D8F] hover:underline">' . $m[0] . '</a>',
+                                $textoComent,
+                            );
+                            $textoComent = preg_replace_callback(
+                                '/\bcirugia (\d+)\b/i',
+                                fn($m) => '<a href="' . route('cirugias.show', $m[1]) . '" class="text-[#1B7D8F] hover:underline">' . $m[0] . '</a>',
+                                $textoComent,
+                            );
+                        @endphp
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td
+                                class="px-3 py-3.5 text-center font-bold {{ $item->cantidad < 0 ? 'text-red-600' : 'text-emerald-600' }}">
+                                {{ $item->cantidad > 0 ? '+' : '' }}{{ $item->cantidad }}
+                            </td>
+                            <td class="px-3 py-3.5 text-center">
+                                @if ($fechaMov)
+                                    {{ $fechaMov->format('d/m/Y') }}
+                                    @if ($fechaMov->format('H:i:s') !== '00:00:00')
+                                        <span class="block text-xs text-gray-400">{{ $fechaMov->format('H:i') }}</span>
+                                    @endif
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="px-3 py-3.5 text-center">
+                                <span class="inline-block px-2 py-0.5 rounded-full border text-[11px] font-semibold whitespace-nowrap {{ $tipoClase }}">{{ $tipo }}</span>
+                            </td>
+                            <td class="px-3 py-3.5 text-gray-600">
+                                {{ $item->get_empleado?->nombre }} {{ $item->get_empleado?->apellido }}
+                                @if ($item->get_empleado)
+                                    (Mat. {{ $item->get_empleado->matricula ?? 'S/M' }})
+                                @endif
+                            </td>
+                            <td class="px-3 py-3.5 text-gray-600">
+                                {{ $item->get_paciente?->nombre }} {{ $item->get_paciente?->apellido }}
+                                @if ($item->get_paciente)
+                                    (DNI {{ $item->get_paciente->dni }})
+                                @endif
+                            </td>
+                            <td class="px-3 py-3.5 text-gray-600">{!! $textoComent !!}</td>
+                            <td class="px-3 py-3.5 text-center">{{ $item->get_creador->name ?? '-' }}</td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($hist_item as $item)
-                            @php
-                                $fechaMov = $item->fecha ? \Carbon\Carbon::parse($item->fecha) : null;
-                            @endphp
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td
-                                    class="px-3 py-3.5 text-center font-bold {{ $item->cantidad < 0 ? 'text-red-600' : 'text-emerald-600' }}">
-                                    {{ $item->cantidad > 0 ? '+' : '' }}{{ $item->cantidad }}
-                                </td>
-                                <td class="px-3 py-3.5 text-center">
-                                    @if ($fechaMov)
-                                        {{ $fechaMov->format('d/m/Y') }}
-                                        @if ($fechaMov->format('H:i:s') !== '00:00:00')
-                                            <span class="block text-xs text-gray-400">{{ $fechaMov->format('H:i') }}</span>
-                                        @endif
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td class="px-3 py-3.5 text-gray-600">
-                                    {{ $item->get_empleado?->nombre }} {{ $item->get_empleado?->apellido }}
-                                    @if ($item->get_empleado)
-                                        (Mat. {{ $item->get_empleado->matricula ?? 'S/M' }})
-                                    @endif
-                                </td>
-                                <td class="px-3 py-3.5 text-gray-600">
-                                    {{ $item->get_paciente?->nombre }} {{ $item->get_paciente?->apellido }}
-                                    @if ($item->get_paciente)
-                                        (DNI {{ $item->get_paciente->dni }})
-                                    @endif
-                                </td>
-                                <td class="px-3 py-3.5 text-gray-600">{{ $item->comentario }}</td>
-                                <td class="px-3 py-3.5 text-center">{{ $item->get_creador->name ?? '-' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-6 py-10 text-center text-gray-400">No hay movimientos
-                                    registrados.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-400">No hay movimientos registrados.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
             </div>
             {{ $hist_item->links('vendor.pagination.medstats') }}
         </div>

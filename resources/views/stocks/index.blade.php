@@ -111,6 +111,26 @@
                             @forelse($stock as $item)
                                 @php
                                     $estado = $item->estadoStock();
+                                    $aviso = $item->umbral_aviso ?? 50;
+                                    $porcentaje = min(
+                                        100,
+                                        (int) round(($item->cantidad_act / max($aviso * 2, 1)) * 100),
+                                    );
+                                    $colorBarra = match ($estado) {
+                                        'critico' => 'bg-red-500',
+                                        'aviso' => 'bg-yellow-500',
+                                        default => 'bg-green-500',
+                                    };
+
+                                    $venc = $item->fecha_vencimiento
+                                        ? \Carbon\Carbon::parse($item->fecha_vencimiento)
+                                        : null;
+                                    $diasVenc = $venc
+                                        ? (int) now()
+                                            ->startOfDay()
+                                            ->diffInDays($venc->copy()->startOfDay(), false)
+                                        : null;
+
                                     $claseColor = match ($estado) {
                                         'critico' => 'text-red-600 font-bold',
                                         'aviso' => 'text-yellow-600 font-medium',
@@ -148,13 +168,27 @@
                                     <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
                                         {{ $item->get_servicio->nombre }}</td>
                                     <td class="px-3 py-3.5 font-mono text-gray-600">{{ $item->lote }}</td>
-                                    <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">{{ $item->fecha_vencimiento }}
+                                    <td class="px-3 py-3.5 whitespace-nowrap"
+                                        data-order="{{ $venc ? $venc->format('Y-m-d') : '' }}">
+                                        <span class="text-gray-600">{{ $venc ? $venc->format('d/m/Y') : '—' }}</span>
+                                        @if ($diasVenc !== null && $diasVenc < 0)
+                                            <span
+                                                class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700 border border-red-200">Vencido</span>
+                                        @elseif ($diasVenc !== null && $diasVenc <= 90)
+                                            <span
+                                                class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">Vence
+                                                en {{ $diasVenc }} d</span>
+                                        @endif
                                     </td>
-                                    <td class="px-3 py-3.5 text-center">
-                                        <span class="{{ $claseColor }}"
+                                    <td class="px-3 py-3.5 text-center" data-order="{{ $item->cantidad_act }}">
+                                        <div class="inline-flex flex-col items-center gap-1"
                                             title="Aviso: {{ $item->umbral_aviso ?? 50 }} · Crítico: {{ $item->umbral_critico ?? 30 }}">
-                                            {{ $item->cantidad_act }}
-                                        </span>
+                                            <span class="{{ $claseColor }}">{{ $item->cantidad_act }}</span>
+                                            <div class="w-14 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                                                <div class="h-full rounded-full {{ $colorBarra }}"
+                                                    style="width: {{ $porcentaje }}%"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-3 py-3.5 text-center">
                                         <span
@@ -248,7 +282,7 @@
                 ],
                 columnDefs: [{
                     orderable: false,
-                    targets: [4, 5, 6]
+                    targets: [5, 6]
                 }],
                 drawCallback: function() {
                     if (window.lucide) {

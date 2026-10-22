@@ -133,7 +133,7 @@ class EstudioMedicoController extends Controller
             'ia'                    => 'nullable|string|max:20',
             'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', true))],
             'estudio_id'            => ['required', 'integer', \Illuminate\Validation\Rule::exists('estudios', 'id')->where(fn($q) => $q->where('especialidad_id', $request->input('especialidad_id')))],
-            'regiones'              => 'required|integer|min:1|max:20',
+            'regiones'              => 'nullable|integer|min:1|max:20',
             'cont_50ml'             => 'required|integer|min:0',
             'cont_100ml'            => 'required|integer|min:0',
             'jeringa_prellenada'    => 'required|integer|min:0',

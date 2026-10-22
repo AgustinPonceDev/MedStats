@@ -104,7 +104,7 @@
                         Vistas</label>
                     <input type="number" name="regiones" id="regiones" min="1" max="20"
                         class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
-                        placeholder="Ej: 2" value="{{ old('regiones', 1) }}" required>
+                        placeholder="Ej: 1" value="{{ old('regiones') }}" required>
                 </div>
             </div>
 
@@ -529,7 +529,12 @@
             function aplicarRegiones() {
                 const activo = usaRegiones.checked;
                 regionesWrap.classList.toggle('hidden', !activo);
-                if (!activo) regionesInput.value = 1;
+                regionesInput.required = activo; // solo es obligatorio si está activado
+                if (!activo) {
+                    regionesInput.value = ''; // vacío = se guarda como NULL
+                } else if (!regionesInput.value) {
+                    regionesInput.value = 1; // al activarlo arranca en 1
+                }
             }
 
             usaRegiones.addEventListener('change', aplicarRegiones);
@@ -538,8 +543,8 @@
                 aplicarRegiones();
             });
 
-            // Estado inicial (create, edit o vuelta por error de validación)
-            usaRegiones.checked = esTomografia() || (parseInt(regionesInput.value, 10) || 1) > 1;
+            // Estado inicial: tildado si es tomografía o si ya tiene un valor cargado
+            usaRegiones.checked = esTomografia() || regionesInput.value !== '';
             aplicarRegiones();
 
             // ---------- Validación de campos obligatorios ----------
@@ -604,7 +609,7 @@
             const horaInputInterval = document.getElementById('hora_estudio');
             if (horaInputInterval) {
                 setInterval(() => horaInputInterval.dispatchEvent(new Event('change')),
-                30000); // revalida cada 30 s
+                    30000); // revalida cada 30 s
             }
         });
     </script>
