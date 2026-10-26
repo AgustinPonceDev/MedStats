@@ -638,10 +638,26 @@ class CirugiaController extends Controller
             ->with('get_medicamento')
             ->get();
 
-        $consumidos = \App\Models\Historial_stock::where('comentario', 'cirugia ' . $cirugia->id)
-            ->where('cantidad', '<', 0)
+        $movimientos = \App\Models\Historial_stock::where(function ($q) use ($cirugia) {
+            $q->where('cirugia_id', $cirugia->id)
+                ->orWhere('comentario', 'cirugia ' . $cirugia->id); // movimientos viejos
+        })
             ->with('get_stock.get_medicamento')
+            ->orderBy('id')
             ->get();
+
+        // Una fila por lote con lo que realmente quedó cargado (consumos menos devoluciones)
+        $consumidos = $movimientos->groupBy('stock_id')->map(function ($grupo) {
+            $neto = (int) $grupo->sum('cantidad');
+            $fila = $grupo->firstWhere('cantidad', '<', 0);
+
+            if ($neto >= 0 || !$fila) {
+                return null; // ya se devolvió todo
+            }
+
+            $fila->cantidad = $neto; // solo para mostrar, no se guarda
+            return $fila;
+        })->filter()->values();
 
         return view('cirugias.medicamentos', compact('cirugia', 'stocks', 'consumidos'));
     }
@@ -814,10 +830,12 @@ class CirugiaController extends Controller
     private function registrarConsumoCirugia(Cirugia $cirugia, \App\Models\Stock $stock, int $cantidad): void
     {
         $stock->decrement('cantidad_act', $cantidad);
+        $stock->loadMissing('get_medicamento');
+        $nombre = optional($stock->get_medicamento)->nombre ?? 'Insumo';
 
+        // Si ese lote ya se cargó hoy para esta cirugía, suma a la misma fila de consumo
         $movimiento = \App\Models\Historial_stock::where('cirugia_id', $cirugia->id)
             ->where('stock_id', $stock->id)
-            ->where('comentario', 'cirugia ' . $cirugia->id)
             ->where('cantidad', '<', 0)
             ->whereDate('fecha', now()->toDateString())
             ->lockForUpdate()
@@ -837,7 +855,7 @@ class CirugiaController extends Controller
             'fecha'       => now()->toDateString(),
             'empleado_id' => $cirugia->cirujano_id,
             'paciente_id' => $cirugia->paciente_id,
-            'comentario'  => 'cirugia ' . $cirugia->id,
+            'comentario'  => "Consumido en cirugía #{$cirugia->id} ({$nombre})",
             'creado_por'  => auth()->id(),
         ]);
     }
@@ -849,7 +867,9 @@ class CirugiaController extends Controller
      */
     public function eliminarMedicamento(Request $request, Cirugia $cirugia, \App\Models\Historial_stock $historial)
     {
-        if ($historial->comentario !== 'cirugia ' . $cirugia->id || $historial->cantidad >= 0) {
+        $pertenece = $historial->cirugia_id == $cirugia->id || $historial->comentario === 'cirugia ' . $cirugia->id;
+
+        if (!$pertenece || $historial->cantidad >= 0) {
             return redirect()->back()->withErrors(['error' => 'El registro de historial no pertenece a esta cirugía.']);
         }
 
@@ -860,10 +880,29 @@ class CirugiaController extends Controller
             'cantidad.min'     => 'La cantidad a devolver debe ser al menos 1.',
         ]);
 
-        $mensaje = DB::transaction(function () use ($request, $historial) {
-            $historial = \App\Models\Historial_stock::lockForUpdate()->findOrFail($historial->id);
-            $cargadas  = abs((int) $historial->cantidad);
-            $devolver  = $request->boolean('todo') ? $cargadas : (int) ($request->input('cantidad') ?? 1);
+        $mensaje = DB::transaction(function () use ($request, $cirugia, $historial) {
+            $stock = \App\Models\Stock::with('get_medicamento')->lockForUpdate()->find($historial->stock_id);
+
+            if (!$stock) {
+                throw ValidationException::withMessages(['error' => 'El lote de este insumo ya no existe.']);
+            }
+
+            // Lo que quedó cargado en la cirugía para este lote (consumos menos devoluciones previas)
+            $movimientos = \App\Models\Historial_stock::where('stock_id', $stock->id)
+                ->where(function ($q) use ($cirugia) {
+                    $q->where('cirugia_id', $cirugia->id)
+                        ->orWhere('comentario', 'cirugia ' . $cirugia->id);
+                })
+                ->lockForUpdate()
+                ->get();
+
+            $cargadas = -(int) $movimientos->sum('cantidad');
+
+            if ($cargadas <= 0) {
+                throw ValidationException::withMessages(['cantidad' => 'Este insumo ya fue devuelto por completo.']);
+            }
+
+            $devolver = $request->boolean('todo') ? $cargadas : (int) ($request->input('cantidad') ?? 1);
 
             if ($devolver > $cargadas) {
                 throw ValidationException::withMessages([
@@ -871,21 +910,22 @@ class CirugiaController extends Controller
                 ]);
             }
 
-            $stock = \App\Models\Stock::lockForUpdate()->find($historial->stock_id);
-            if ($stock) {
-                $stock->increment('cantidad_act', $devolver);
-            }
+            $stock->increment('cantidad_act', $devolver);
 
-            if ($devolver === $cargadas) {
-                $historial->delete();
+            \App\Models\Historial_stock::create([
+                'stock_id'    => $stock->id,
+                'cirugia_id'  => $cirugia->id,
+                'cantidad'    => $devolver, // positivo = reingreso
+                'fecha'       => now()->toDateString(),
+                'empleado_id' => $cirugia->cirujano_id,
+                'paciente_id' => $cirugia->paciente_id,
+                'comentario'  => "Devolución por corrección en cirugía #{$cirugia->id} (" . optional($stock->get_medicamento)->nombre . ")",
+                'creado_por'  => auth()->id(),
+            ]);
 
-                return 'Carga eliminada y stock restaurado.';
-            }
-
-            $historial->cantidad = -($cargadas - $devolver);
-            $historial->save();
-
-            return "Se devolvieron {$devolver} unidad(es) al stock. Quedan " . ($cargadas - $devolver) . ' cargadas en la cirugía.';
+            return $devolver === $cargadas
+                ? 'Carga devuelta al stock por completo.'
+                : "Se devolvieron {$devolver} unidad(es) al stock. Quedan " . ($cargadas - $devolver) . ' cargadas en la cirugía.';
         });
 
         return redirect()->route('cirugias.medicamentos', $cirugia)->with('success', $mensaje);

@@ -376,14 +376,24 @@ class StockController extends Controller
         $movimientosPeriodo = Historial_stock::whereIn('stock_id', $stockIdsFiltrados)
             ->whereBetween('fecha', [$desde, $hasta]);
 
-        $totalAgregados = (clone $movimientosPeriodo)->where('cantidad', '>', 0)->sum('cantidad');
-        $totalExtraidos = abs((clone $movimientosPeriodo)->where('cantidad', '<', 0)->sum('cantidad'));
+        // Ingresados: solo reposiciones reales (no las devoluciones de estudios o cirugías)
+        $totalAgregados = (clone $movimientosPeriodo)
+            ->where('cantidad', '>', 0)
+            ->whereNull('estudio_medico_id')
+            ->whereNull('cirugia_id')
+            ->sum('cantidad');
 
-        // Top 5 de insumos más extraídos: solo cuenta las salidas de cada lote
+        // Utilizados: salidas menos devoluciones de estudios/cirugías
+        $totalExtraidos = max(0, -1 * (int) (clone $movimientosPeriodo)
+            ->where($this->esConsumoNeto())
+            ->sum('cantidad'));
+
+        // Top 5 de insumos con más consumo neto
         $insumos = (clone $movimientosPeriodo)
-            ->select('stock_id', DB::raw('SUM(ABS(cantidad)) as total'))
-            ->where('cantidad', '<', 0)
+            ->select('stock_id', DB::raw('SUM(-cantidad) as total'))
+            ->where($this->esConsumoNeto())
             ->groupBy('stock_id')
+            ->having('total', '>', 0)
             ->with('get_stock.get_medicamento')
             ->orderByDesc('total')
             ->take(5)
@@ -441,22 +451,39 @@ class StockController extends Controller
         ));
     }
 
+    /**
+     * Movimientos que cuentan como consumo neto: las salidas, más las devoluciones
+     * vinculadas a un estudio o a una cirugía (restan del consumo, no son un ingreso).
+     */
+    private function esConsumoNeto(): \Closure
+    {
+        return function ($q) {
+            $q->where('cantidad', '<', 0)
+                ->orWhere(function ($q2) {
+                    $q2->where('cantidad', '>', 0)
+                        ->where(function ($q3) {
+                            $q3->whereNotNull('estudio_medico_id')->orWhereNotNull('cirugia_id');
+                        });
+                });
+        };
+    }
+
     private function calcularProyeccion(Stock $stock, int $ventanaDias = self::VENTANA_PROYECCION): array
     {
         $hoy = now()->startOfDay();
         $fechaInicio = $hoy->copy()->subDays($ventanaDias - 1);
 
         $movimientosPorDia = Historial_stock::where('stock_id', $stock->id)
-            ->where('cantidad', '<', 0)
+            ->where($this->esConsumoNeto())
             ->whereBetween('fecha', [$fechaInicio->toDateString(), $hoy->toDateString() . ' 23:59:59'])
-            ->select(DB::raw('DATE(fecha) as fecha_dia'), DB::raw('SUM(ABS(cantidad)) as consumo'))
+            ->select(DB::raw('DATE(fecha) as fecha_dia'), DB::raw('SUM(-cantidad) as consumo'))
             ->groupBy('fecha_dia')
             ->pluck('consumo', 'fecha_dia');
 
         $serie = [];
         for ($i = 0; $i < $ventanaDias; $i++) {
             $fecha = $fechaInicio->copy()->addDays($i)->toDateString();
-            $serie[] = (float) ($movimientosPorDia[$fecha] ?? 0);
+            $serie[] = max(0.0, (float) ($movimientosPorDia[$fecha] ?? 0));
         }
 
         $n = count($serie);
