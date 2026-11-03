@@ -49,6 +49,56 @@
                 </div>
             </div>
 
+            {{-- Tarjetas filtro --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center shrink-0 text-red-500">
+                        <i data-lucide="calendar-x" class="w-6 h-6"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm text-gray-500 mb-1 px-2">Vencimientos</p>
+                        <div class="flex items-stretch gap-1">
+                            <button type="button" class="kpi-op" data-filtro="vencido" aria-pressed="false">
+                                <span class="kpi-num" id="kpiVencidos">0</span>
+                                <span class="kpi-lbl">Vencidos</span>
+                            </button>
+                            <span class="w-px bg-gray-200 mx-1"></span>
+                            <button type="button" class="kpi-op" data-filtro="por_vencer" aria-pressed="false">
+                                <span class="kpi-num" id="kpiPorVencer">0</span>
+                                <span class="kpi-lbl">Por vencer (90 d)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4"
+                    title="Según los umbrales de aviso y crítico de cada lote y la proyección de consumo">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
+                        <i data-lucide="package-minus" class="w-6 h-6"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm text-gray-500 mb-1 px-2">Stock bajo</p>
+                        <div class="flex items-stretch gap-1">
+                            <button type="button" class="kpi-op" data-filtro="critico" aria-pressed="false">
+                                <span class="kpi-num" id="kpiCritico">0</span>
+                                <span class="kpi-lbl">Crítico</span>
+                            </button>
+                            <span class="w-px bg-gray-200 mx-1"></span>
+                            <button type="button" class="kpi-op" data-filtro="aviso" aria-pressed="false">
+                                <span class="kpi-num" id="kpiAviso">0</span>
+                                <span class="kpi-lbl">En aviso</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="kpiBarra" class="hidden mb-4 flex items-center gap-3 text-sm text-gray-500 px-1">
+                <span id="kpiBarraTexto"></span>
+                <button type="button" id="kpiLimpiar" class="font-semibold text-[#1B7D8F] hover:underline">Quitar
+                    filtro</button>
+            </div>
+
             {{-- Filtros y Controles --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
                 <div class="flex flex-col lg:flex-row gap-5 justify-between items-end lg:items-center">
@@ -82,7 +132,8 @@
                         <label for="customSearch"
                             class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Buscar</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i data-lucide="search" class="w-4 h-4"></i>
                             </div>
                             <input type="text" id="customSearch" placeholder="Medicamentos, Servicio..."
@@ -159,10 +210,26 @@
                                             'Sin consumo reciente',
                                         ],
                                     };
+                                    $vencEstado =
+                                        $diasVenc === null
+                                            ? 'ok'
+                                            : ($diasVenc < 0
+                                                ? 'vencido'
+                                                : ($diasVenc <= 90
+                                                    ? 'por_vencer'
+                                                    : 'ok'));
+
+                                    $nivelBajo =
+                                        $estado === 'critico' || $urgenciaProy === 'critico'
+                                            ? 'critico'
+                                            : ($estado === 'aviso' || $urgenciaProy === 'aviso'
+                                                ? 'aviso'
+                                                : 'ok');
                                 @endphp
 
                                 <tr class="hover:bg-gray-50 transition-colors" data-stock-id="{{ $item->id }}"
-                                    data-medicamento-id="{{ $item->medicamento_id }}">
+                                    data-medicamento-id="{{ $item->medicamento_id }}" data-venc="{{ $vencEstado }}"
+                                    data-nivel="{{ $nivelBajo }}">
                                     <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                         {{ $item->get_medicamento->nombre }}</td>
                                     <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
@@ -291,6 +358,83 @@
                     aplicarResaltado();
                 }
             });
+
+            // --- TARJETAS FILTRO (vencimientos / stock bajo) ---
+            let filtroKpi = null; // 'vencido' | 'por_vencer' | 'critico' | 'aviso'
+            const textosKpi = {
+                vencido: 'lotes vencidos',
+                por_vencer: 'lotes que vencen en los próximos 90 días',
+                critico: 'lotes con stock crítico',
+                aviso: 'lotes con stock en aviso'
+            };
+
+            function contarKpi() {
+                const c = {
+                    vencido: 0,
+                    por_vencer: 0,
+                    critico: 0,
+                    aviso: 0
+                };
+                tabla.rows().every(function() {
+                    const fila = $(this.node());
+                    const v = fila.attr('data-venc');
+                    const n = fila.attr('data-nivel');
+                    if (c[v] !== undefined) c[v]++;
+                    if (c[n] !== undefined) c[n]++;
+                });
+                const poner = (id, valor, clase) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.textContent = valor;
+                    el.classList.remove('on-red', 'on-amber');
+                    if (valor > 0) el.classList.add(clase);
+                };
+                poner('kpiVencidos', c.vencido, 'on-red');
+                poner('kpiPorVencer', c.por_vencer, 'on-amber');
+                poner('kpiCritico', c.critico, 'on-red');
+                poner('kpiAviso', c.aviso, 'on-amber');
+            }
+
+            function actualizarKpiUI() {
+                document.querySelectorAll('.kpi-op').forEach(function(btn) {
+                    const activo = btn.dataset.filtro === filtroKpi;
+                    btn.classList.toggle('activo', activo);
+                    btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
+                });
+                const barra = document.getElementById('kpiBarra');
+                if (!barra) return;
+                barra.classList.toggle('hidden', !filtroKpi);
+                if (filtroKpi) {
+                    document.getElementById('kpiBarraTexto').textContent = 'Mostrando solo ' + textosKpi[filtroKpi];
+                }
+            }
+
+            // Filtro de la tabla según la tarjeta elegida
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'tablaStock' || !filtroKpi) return true;
+                const fila = $(tabla.row(dataIndex).node());
+                return fila.attr('data-venc') === filtroKpi || fila.attr('data-nivel') === filtroKpi;
+            });
+
+            document.querySelectorAll('.kpi-op').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    // Segundo clic sobre el mismo número = quitar el filtro
+                    filtroKpi = (filtroKpi === btn.dataset.filtro) ? null : btn.dataset.filtro;
+                    actualizarKpiUI();
+                    tabla.draw();
+                });
+            });
+
+            const btnKpiLimpiar = document.getElementById('kpiLimpiar');
+            if (btnKpiLimpiar) {
+                btnKpiLimpiar.addEventListener('click', function() {
+                    filtroKpi = null;
+                    actualizarKpiUI();
+                    tabla.draw();
+                });
+            }
+
+            contarKpi();
 
             // --- BÚSQUEDA CUSTOM ---
             $('#customSearch').on('keyup', function() {
@@ -515,6 +659,48 @@
             #tablaStock_wrapper .dataTables_info {
                 font-size: 0.75rem !important;
             }
+        }
+
+        .kpi-op {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.75rem;
+            text-align: left;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+        }
+
+        .kpi-op:hover {
+            background: #f3f4f6;
+        }
+
+        .kpi-op.activo {
+            background: #e6f4f3;
+            border-color: #32989D;
+        }
+
+        .kpi-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #9ca3af;
+        }
+
+        .kpi-num.on-red {
+            color: #dc2626;
+        }
+
+        .kpi-num.on-amber {
+            color: #d97706;
+        }
+
+        .kpi-lbl {
+            font-size: 0.7rem;
+            color: #6b7280;
         }
     </style>
 @endpush
