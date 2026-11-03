@@ -18,6 +18,13 @@ class DatabaseSeeder extends Seeder
             ProvinciaSeeder::class,
             CodigoPostalSeeder::class,
             ProcedimientoSeeder::class,
+            // Datos de ejemplo para demostración (idempotentes, sin códigos de barras)
+            PersonalDemoSeeder::class,
+            PacienteDemoSeeder::class,
+            InsumoDemoSeeder::class,
+            EstudioDemoSeeder::class,
+            CirugiaDemoSeeder::class,
+            CajaDemoSeeder::class,
         ]);
         // \App\Models\User::factory(10)->create();
 
