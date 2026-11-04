@@ -123,7 +123,7 @@
 
                     <!-- Botón Eliminar -->
                     @if(auth()->user()->hasAccess(['admin', 'trazabilidad']))
-                        <form action="{{ route('trazabilidad.destroy', $caja->id) }}" method="POST" class="m-0" onsubmit="return confirm('⚠️ ¿Estás seguro de enviar la caja a desuso?');">
+                        <form action="{{ route('trazabilidad.destroy', $caja->id) }}" method="POST" class="m-0 form-desuso" data-caja="{{ $caja->codigo ?? $caja->nombre }}">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" title="Enviar a Desuso" style="height: 31px; width: 32px; padding: 0;">
@@ -209,8 +209,33 @@
 @endforeach
 
 
-<script>     
-    document.addEventListener("DOMContentLoaded", function() {                  
+<script src="{{ asset('vendor/js/sweetalert2.all.min.js') }}"></script>
+<script>
+    // Confirmación para enviar una caja a desuso (misma alerta que el retroceso en la línea de tiempo)
+    document.addEventListener('submit', function(e) {
+        const form = e.target.closest ? e.target.closest('.form-desuso') : null;
+        if (!form) return;
+        e.preventDefault();
+        Swal.fire({
+            title: '¿Enviar a desuso?',
+            text: `Estás a punto de enviar la caja ${form.dataset.caja} a desuso.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#cf1111',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, enviar a desuso',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-xl shadow-lg border border-gray-100'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) form.submit();
+        });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
         $.fn.dataTable.ext.errMode = 'none';          
         $('#tablaCajas').DataTable({             
             "stateSave": true,             
