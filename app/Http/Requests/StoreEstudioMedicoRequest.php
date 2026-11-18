@@ -23,16 +23,21 @@ class StoreEstudioMedicoRequest extends FormRequest
             // Ámbito: Interno (I) o Ambulatorio (A) -> viene del toggle switch
             'ia'                    => ['nullable', 'string', 'in:I,A'],
 
+            // Urgencia: el estudio se pidió desde la Guardia / es urgente
+            'urgencia'              => ['nullable', 'boolean'],
+
             // Modalidad (Rayos / Tomografía) -> restringida a especialidades marcadas como modalidad de imagen
             'especialidad_id'       => [
-                'required', 'integer',
-                Rule::exists('especialidads', 'id')->where(fn ($q) => $q->where('es_modalidad_imagen', true)),
+                'required',
+                'integer',
+                Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', true)),
             ],
 
             // Estudio real -> tiene que pertenecer a la modalidad seleccionada arriba
             'estudio_id'            => [
-                'required', 'integer',
-                Rule::exists('estudios', 'id')->where(fn ($q) => $q->where('especialidad_id', $this->input('especialidad_id'))),
+                'required',
+                'integer',
+                Rule::exists('estudios', 'id')->where(fn($q) => $q->where('especialidad_id', $this->input('especialidad_id'))),
             ],
 
             // Cantidad de regiones vistas (numeral)

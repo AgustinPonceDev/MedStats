@@ -145,8 +145,8 @@
                                     value="{{ old('unidades', 1) }}"
                                     class="w-full rounded-lg border border-gray-200 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F] focus:border-transparent text-sm">
                             </div>
-                            <p class="text-xs text-gray-400">Escaneá el código, indicá las unidades y presioná Enter (o el
-                                botón) para descontar.</p>
+                            <p class="text-xs text-gray-400">Al escanear, se descuenta al instante la cantidad indicada (1
+                                por defecto). Si necesitás más unidades, cambialas antes de escanear.</p>
                             <button type="submit"
                                 class="w-full border border-[#1B7D8F] text-[#1B7D8F] hover:bg-[#e6f4f3] font-semibold py-2 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm">
                                 <i data-lucide="scan-barcode" class="w-4 h-4"></i> Descontar lectura
@@ -294,6 +294,7 @@
 
         </div>
     </div>
+
     <div id="modalDevolucion" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4"
         role="dialog" aria-modal="true" aria-labelledby="modalDevTitulo">
         <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
@@ -323,13 +324,13 @@
 
     @push('scripts')
         <script>
-            // Confirmación propia para devolver insumos al stock    
+            // Confirmación propia para devolver insumos al stock
             let formDevolucion = null;
             let devolverTodo = false;
 
             function confirmarDevolucion(form, ev) {
                 const modal = document.getElementById('modalDevolucion');
-                if (!modal) return true; // si falta el modal, cae al envío normal        
+                if (!modal) return true; // si falta el modal, cae al envío normal
 
                 devolverTodo = !!(ev.submitter && ev.submitter.name === 'todo');
                 formDevolucion = form;
@@ -348,25 +349,25 @@
                 btnCancel.textContent = 'Cancelar';
 
                 if (!devolverTodo && (!n || n < 1 || n > cargadas)) {
-                    // Cantidad inválida: avisamos y no dejamos confirmar            
+                    // Cantidad inválida: avisamos y no dejamos confirmar
                     titulo.textContent = 'Cantidad no válida';
                     texto.textContent = 'Indicá una cantidad entre 1 y ' + cargadas + ' para ' + insumo + '.';
                     btnOk.classList.add('hidden');
                     btnCancel.textContent = 'Entendido';
                 } else if (devolverTodo) {
                     titulo.textContent = 'Quitar toda la carga';
-                    texto.textContent = 'Se van a devolver ' + cargadas + ' unidad(es) de ' + insumo + ' (lote ' + lote +
-                        ') al stock de Quirófano.';
+                    texto.textContent = 'Se van a devolver ' + cargadas + ' unidad(es) de ' + insumo +
+                        ' (lote ' + lote + ') al stock de Quirófano.';
                 } else {
                     titulo.textContent = 'Devolver al stock';
-                    texto.textContent = 'Vas a devolver ' + n + ' unidad(es) de ' + insumo + ' (lote ' + lote +
-                        ') al stock de Quirófano.';
+                    texto.textContent = 'Vas a devolver ' + n + ' unidad(es) de ' + insumo +
+                        ' (lote ' + lote + ') al stock de Quirófano.';
                 }
 
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 (btnOk.classList.contains('hidden') ? btnCancel : btnOk).focus();
-                return false; // frena el envío hasta que el usuario acepte    
+                return false; // frena el envío hasta que el usuario acepte
             }
 
             function cerrarModalDevolucion() {
@@ -381,32 +382,31 @@
                 if (!modal) return;
 
                 document.getElementById('modalDevCancel').addEventListener('click', cerrarModalDevolucion);
+
                 document.getElementById('modalDevOk').addEventListener('click', function() {
                     if (!formDevolucion) return;
                     const form = formDevolucion;
                     if (devolverTodo) {
-                        // form.submit() no manda el botón que se apretó, así que agregamos "todo" a mano                
+                        // form.submit() no manda el botón que se apretó, así que agregamos "todo" a mano
                         const h = document.createElement('input');
                         h.type = 'hidden';
                         h.name = 'todo';
                         h.value = '1';
                         form.appendChild(h);
                     }
-                    this.disabled = true; // evita doble clic            
+                    this.disabled = true; // evita doble clic
                     form.submit();
                 });
 
-                // Clic en el fondo oscuro o Esc = cancelar        
+                // Clic en el fondo oscuro o Esc = cancelar
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) cerrarModalDevolucion();
                 });
-
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape' && !modal.classList.contains('hidden')) cerrarModalDevolucion();
                 });
             });
 
-            // Configuración de Select2 y Lector de códigos de barra
             $(document).ready(function() {
                 $('.select2').select2({
                     placeholder: "Seleccione un insumo/medicamento",
@@ -414,6 +414,7 @@
                     width: '100%'
                 });
 
+                // Dejar el foco listo para el lector apenas carga la página (y después de cada lectura)
                 const scanInput = document.getElementById('barcode_scan');
                 if (scanInput) {
                     scanInput.focus();
@@ -421,14 +422,25 @@
                     const unidadesInput = document.getElementById('unidades_scan');
                     const formEscaneo = document.getElementById('formEscaneo');
 
+                    // Evita que dos lecturas seguidas manden el formulario dos veces
+                    let enviando = false;
+                    formEscaneo.addEventListener('submit', function(e) {
+                        if (enviando) {
+                            e.preventDefault();
+                            return;
+                        }
+                        enviando = true;
+                    });
+
+                    // El lector manda Enter al terminar la lectura: descuenta directo, sin pasos intermedios
                     scanInput.addEventListener('keydown', function(e) {
                         if (e.key !== 'Enter') return;
                         e.preventDefault();
                         if (scanInput.value.trim() === '') return;
-                        unidadesInput.focus();
-                        unidadesInput.select();
+                        formEscaneo.requestSubmit();
                     });
 
+                    // Enter en unidades = confirmar el descuento
                     unidadesInput.addEventListener('keydown', function(e) {
                         if (e.key !== 'Enter') return;
                         e.preventDefault();
@@ -439,6 +451,8 @@
                         formEscaneo.requestSubmit();
                     });
 
+                    // Si escanean otro producto estando en "unidades", los dígitos del código caerían ahí:
+                    // los pasamos al campo del código y dejamos las unidades en 1.
                     unidadesInput.addEventListener('input', function() {
                         if (unidadesInput.value.length > 4) {
                             scanInput.value = unidadesInput.value;
@@ -447,6 +461,7 @@
                         }
                     });
 
+                    // Si el usuario hace clic fuera de un campo, volvemos al lector
                     document.addEventListener('click', function(e) {
                         const tag = (e.target.tagName || '').toLowerCase();
                         const enCampo = ['input', 'select', 'textarea', 'button', 'a'].includes(tag) ||

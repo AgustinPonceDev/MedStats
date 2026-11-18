@@ -48,6 +48,28 @@
                         </div>
                     </div>
 
+                    <div class="w-full sm:w-auto">
+                        <label for="filtroIA"
+                            class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Ámbito</label>
+                        <select id="filtroIA"
+                            class="px-3 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] block w-full h-[38px] transition-colors">
+                            <option value="">Todos</option>
+                            <option value="I">Internados</option>
+                            <option value="A">Ambulatorios</option>
+                        </select>
+                    </div>
+
+                    <div class="w-full sm:w-auto">
+                        <label for="filtroUrgencia"
+                            class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Urgencia</label>
+                        <select id="filtroUrgencia"
+                            class="px-3 py-2 bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1B7D8F] focus:border-[#1B7D8F] block w-full h-[38px] transition-colors">
+                            <option value="">Todos</option>
+                            <option value="1">Guardia (urgentes)</option>
+                            <option value="0">Programados</option>
+                        </select>
+                    </div>
+
                     <button id="limpiarFechas"
                         class="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 hover:text-[#1B7D8F] hover:border-[#1B7D8F] transition-all flex items-center gap-2 h-[38px]">
                         <i data-lucide="x" class="w-4 h-4"></i>
@@ -80,6 +102,7 @@
                             <th class="px-3 py-4 font-semibold whitespace-nowrap">Hora</th>
                             <th class="px-3 py-4 font-semibold whitespace-nowrap">Apellido y Nombre</th>
                             <th class="px-3 py-4 font-semibold text-center">I-A</th>
+                            <th class="px-3 py-4 font-semibold text-center">Urgencia</th>
                             <th class="px-3 py-4 font-semibold">DNI</th>
                             <th class="px-3 py-4 font-semibold">Estudio Real</th>
                             <th class="px-3 py-4 font-semibold">Regiones</th>
@@ -93,7 +116,19 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($estudios as $estudio)
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            @php
+                                // Resumen de lo que se devuelve al stock si se elimina el estudio
+                                $insumosDev = collect([
+                                    ['Contraste 50ml', (int) $estudio->cont_50ml],
+                                    ['Contraste 100ml', (int) $estudio->cont_100ml],
+                                    ['Jeringa prellenada', (int) $estudio->jeringa_prellenada],
+                                ])
+                                    ->filter(fn($i) => $i[1] > 0)
+                                    ->map(fn($i) => $i[1] . ' × ' . $i[0])
+                                    ->implode(', ');
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition-colors" data-ia="{{ $estudio->ia }}"
+                                data-urgencia="{{ $estudio->urgencia ? 1 : 0 }}">
                                 {{-- Fecha --}}
                                 <td class="px-3 py-3.5 font-medium text-gray-900 whitespace-nowrap"
                                     data-fecha="{{ $estudio->fecha->format('Y-m-d') }}"
@@ -107,7 +142,8 @@
                                 </td>
                                 {{-- Apellido y Nombre --}}
                                 <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
-                                    {{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}
+                                    {{ optional($estudio->paciente)->apellido }},
+                                    {{ optional($estudio->paciente)->nombre }}
                                 </td>
                                 {{-- I-A --}}
                                 <td class="px-3 py-3.5 text-center">
@@ -124,6 +160,17 @@
                                             {{ $estudio->ia ?? '-' }}
                                         </span>
                                     </div>
+                                </td>
+                                {{-- Urgencia --}}
+                                <td class="px-3 py-3.5 text-center whitespace-nowrap"
+                                    data-order="{{ $estudio->urgencia ? 1 : 0 }}">
+                                    @if ($estudio->urgencia)
+                                        <span
+                                            class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200"
+                                            title="Pedido desde Guardia">Guardia</span>
+                                    @else
+                                        <span class="text-[10px] font-semibold text-gray-400">Programado</span>
+                                    @endif
                                 </td>
                                 {{-- DNI --}}
                                 <td class="px-3 py-3.5 font-mono text-gray-600">
@@ -174,8 +221,11 @@
                                             <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                                         </a>
                                         <form action="{{ route('estudios_medicos.destroy', $estudio->id) }}"
-                                            method="POST" class="inline"
-                                            onsubmit="return confirm('¿Está seguro de eliminar este registro clínico?');">
+                                            method="POST" class="inline" onsubmit="return confirmarEliminacion(this);"
+                                            data-estudio="{{ optional($estudio->estudio)->nombre ?? $estudio->tipo_estudio }}"
+                                            data-paciente="{{ optional($estudio->paciente)->apellido }}, {{ optional($estudio->paciente)->nombre }}"
+                                            data-fecha="{{ $estudio->fecha->format('d/m/Y') }}"
+                                            data-insumos="{{ $insumosDev }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
@@ -188,7 +238,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="px-6 py-10 text-center text-gray-400">
+                                <td colspan="14" class="px-6 py-10 text-center text-gray-400">
                                     <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                                     No se encontraron registros de diagnóstico por imágenes.
                                 </td>
@@ -223,6 +273,42 @@
             </button>
         </div>
 
+    </div>
+
+    {{-- Aviso propio para eliminar un estudio --}}
+    <div id="modalEliminar" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4" role="dialog"
+        aria-modal="true" aria-labelledby="modalElimTitulo">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div class="flex items-start gap-4">
+                <div class="w-11 h-11 shrink-0 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 id="modalElimTitulo" class="text-base font-bold text-gray-800">Eliminar estudio</h3>
+                    <p class="mt-1 text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+                    <div class="mt-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm">
+                        <div id="modalElimEstudio" class="font-semibold text-gray-800"></div>
+                        <div id="modalElimPaciente" class="text-gray-500"></div>
+                    </div>
+                    <p id="modalElimStock" class="mt-3 text-sm text-gray-600 leading-relaxed"></p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button type="button" id="modalElimCancel"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">Cancelar</button>
+                <button type="button" id="modalElimOk"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition">Sí,
+                    eliminar</button>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -344,11 +430,11 @@
                 ],
                 columnDefs: [{
                         orderable: true,
-                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
                     },
                     {
                         orderable: false,
-                        targets: [12]
+                        targets: [13]
                     }
                 ],
                 drawCallback: function() {
@@ -379,15 +465,74 @@
                 return (!desde || fechaEstudio >= desde) && (!hasta || fechaEstudio <= hasta);
             });
 
-            $('#fechaDesde, #fechaHasta').on('change', function() {
+            // Filtros por ámbito (Internado / Ambulatorio) y por urgencia (Guardia / Programado)
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'miTabla') return true;
+                const fila = $(tabla.row(dataIndex).node());
+                const ia = $('#filtroIA').val();
+                const urg = $('#filtroUrgencia').val();
+                if (ia && String(fila.attr('data-ia')) !== ia) return false;
+                if (urg !== '' && String(fila.attr('data-urgencia')) !== urg) return false;
+                return true;
+            });
+
+            $('#fechaDesde, #fechaHasta, #filtroIA, #filtroUrgencia').on('change', function() {
                 tabla.draw();
             });
 
             $('#limpiarFechas').on('click', function() {
                 $('#fechaDesde').val('');
                 $('#fechaHasta').val('');
+                $('#filtroIA').val('');
+                $('#filtroUrgencia').val('');
                 $('#customSearch').val('');
                 tabla.search('').draw();
+            });
+        });
+
+        // --- AVISO PROPIO PARA ELIMINAR UN ESTUDIO ---
+        let formEliminar = null;
+
+        function confirmarEliminacion(form) {
+            const modal = document.getElementById('modalEliminar');
+            if (!modal) return confirm('¿Está seguro de eliminar este registro clínico?'); // por si falta el modal
+
+            formEliminar = form;
+            document.getElementById('modalElimEstudio').textContent = (form.dataset.estudio || 'Estudio') +
+                ' · ' + (form.dataset.fecha || '');
+            document.getElementById('modalElimPaciente').textContent = form.dataset.paciente || '';
+            document.getElementById('modalElimStock').textContent = form.dataset.insumos ?
+                'Se devolverán al stock de Diagnóstico por Imágenes: ' + form.dataset.insumos + '.' :
+                'Este estudio no tiene insumos de stock para devolver.';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('modalElimCancel').focus();
+            return false; // frena el envío hasta que el usuario acepte
+        }
+
+        function cerrarModalEliminar() {
+            const modal = document.getElementById('modalEliminar');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            formEliminar = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('modalEliminar');
+            if (!modal) return;
+
+            document.getElementById('modalElimCancel').addEventListener('click', cerrarModalEliminar);
+            document.getElementById('modalElimOk').addEventListener('click', function() {
+                if (!formEliminar) return;
+                this.disabled = true; // evita doble clic
+                formEliminar.submit();
+            });
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) cerrarModalEliminar();
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) cerrarModalEliminar();
             });
         });
 
@@ -408,8 +553,8 @@
             let datos = [];
             indices.each(function(idx) {
                 const tr = dt.row(idx).node();
-                // Tomamos las primeras 12 columnas (excluyendo Acciones) y limpiamos sus etiquetas HTML
-                const valoresFila = $(tr).find('td').slice(0, 12).map(function() {
+                // Tomamos las primeras 13 columnas (excluyendo Acciones) y limpiamos sus etiquetas HTML
+                const valoresFila = $(tr).find('td').slice(0, 13).map(function() {
                     const texto = $(this).text().trim();
                     return texto;
                 }).get();
@@ -427,7 +572,7 @@
         } [c]));
 
         const CABECERA_EXPORT = [
-            'Fecha', 'Hora', 'Apellido y Nombre', 'I-A', 'DNI', 'Estudio Real',
+            'Fecha', 'Hora', 'Apellido y Nombre', 'I-A', 'Urgencia', 'DNI', 'Estudio Real',
             'Regiones', 'Cont 50ml', 'Cont 100ml', 'Jer. Prel.', 'Descartables', 'Otros y Agujas'
         ];
 
@@ -502,14 +647,15 @@
                 Hora: f[1],
                 Apellido_y_Nombre: f[2],
                 IA: f[3],
-                DNI: f[4],
-                Estudio_Real: f[5],
-                Regiones: f[6],
-                Contraste_50ml: f[7],
-                Contraste_100ml: f[8],
-                Jeringa_Prellenada: f[9],
-                Descartables: f[10],
-                Otros_y_Agujas: f[11]
+                Urgencia: f[4],
+                DNI: f[5],
+                Estudio_Real: f[6],
+                Regiones: f[7],
+                Contraste_50ml: f[8],
+                Contraste_100ml: f[9],
+                Jeringa_Prellenada: f[10],
+                Descartables: f[11],
+                Otros_y_Agujas: f[12]
             }));
 
             const ws = XLSX.utils.json_to_sheet(dataExport);

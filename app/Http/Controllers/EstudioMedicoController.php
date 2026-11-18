@@ -58,6 +58,7 @@ class EstudioMedicoController extends Controller
     public function store(StoreEstudioMedicoRequest $request)
     {
         $data = $request->validated();
+        $data['urgencia'] = $request->boolean('urgencia');
         $estudioReal = Estudio::findOrFail($data['estudio_id']);
 
         // Mantener sincronizado el nombre del estudio guardado en el registro
@@ -131,6 +132,7 @@ class EstudioMedicoController extends Controller
             'hora_estudio'          => 'nullable|date_format:H:i|before_or_equal:today',
             'paciente_id'           => 'required|exists:pacientes,id',
             'ia'                    => 'nullable|string|max:20',
+            'urgencia'              => 'nullable|boolean',
             'especialidad_id'       => ['required', 'integer', \Illuminate\Validation\Rule::exists('especialidads', 'id')->where(fn($q) => $q->where('es_modalidad_imagen', true))],
             'estudio_id'            => ['required', 'integer', \Illuminate\Validation\Rule::exists('estudios', 'id')->where(fn($q) => $q->where('especialidad_id', $request->input('especialidad_id')))],
             'regiones'              => 'nullable|integer|min:1|max:20',
@@ -147,6 +149,7 @@ class EstudioMedicoController extends Controller
 
         $estudioReal = Estudio::findOrFail($data['estudio_id']);
         $data['tipo_estudio'] = $estudioReal->nombre;
+        $data['urgencia'] = $request->boolean('urgencia');
         DB::beginTransaction();
         try {
             // Evaluamos los deltas para cada uno de los 3 insumos fijos
@@ -321,6 +324,11 @@ class EstudioMedicoController extends Controller
         $internados   = (clone $base)->where('ia', 'I')->count();
         $ambulatorios = (clone $base)->where('ia', 'A')->count();
 
+        // Urgencias: estudios pedidos desde la Guardia, discriminados por ámbito
+        $urgentes             = (clone $base)->where('urgencia', true)->count();
+        $internadosUrgentes   = (clone $base)->where('ia', 'I')->where('urgencia', true)->count();
+        $ambulatoriosUrgentes = (clone $base)->where('ia', 'A')->where('urgencia', true)->count();
+
         // Regiones e insumos de contraste
         $totalRegiones   = (int) (clone $base)->sum('regiones');
         $promedioRegiones = $total > 0 ? round($totalRegiones / $total, 1) : 0;
@@ -357,6 +365,9 @@ class EstudioMedicoController extends Controller
             'diaValores',
             'internados',
             'ambulatorios',
+            'urgentes',
+            'internadosUrgentes',
+            'ambulatoriosUrgentes',
             'totalRegiones',
             'promedioRegiones',
             'conContraste',

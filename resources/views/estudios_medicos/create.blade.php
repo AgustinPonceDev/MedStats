@@ -90,6 +90,22 @@
                 </div>
             </div>
 
+            {{-- Fila: Urgencia / Guardia --}}
+            <div>
+                <input type="hidden" name="urgencia" value="0">
+                <label for="urgencia"
+                    class="urgencia-box flex items-start gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer select-none transition-colors">
+                    <input type="checkbox" name="urgencia" id="urgencia" value="1"
+                        class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        {{ old('urgencia', 0) ? 'checked' : '' }}>
+                    <span>
+                        <span class="block text-sm font-semibold text-gray-700">Urgente / Pedido desde Guardia</span>
+                        <span class="block text-xs text-gray-500">Marcalo si el estudio se solicitó desde la guardia o es
+                            una urgencia.</span>
+                    </span>
+                </label>
+            </div>
+
             {{-- Fila 3: Regiones (solo si el estudio las usa) --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                 <div>
@@ -319,6 +335,12 @@
             background-color: #f9fafb !important;
             opacity: 0.7;
             cursor: not-allowed;
+        }
+
+        /* Casilla de urgencia: se pinta de rojo suave cuando está tildada */
+        .urgencia-box:has(input:checked) {
+            background: #fef2f2;
+            border-color: #fca5a5;
         }
     </style>
 @endsection

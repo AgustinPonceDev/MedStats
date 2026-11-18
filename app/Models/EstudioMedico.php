@@ -14,6 +14,7 @@ class EstudioMedico extends Model
     protected $fillable = [
         'paciente_id',
         'ia',
+        'urgencia',
         'especialidad_id',
         'estudio_id',
         'tipo_estudio',
@@ -32,6 +33,7 @@ class EstudioMedico extends Model
     protected $casts = [
         'fecha' => 'date',
         'hora_estudio' => 'datetime:H:i',
+        'urgencia' => 'boolean',
         'regiones' => 'integer',
         'cont_50ml' => 'integer',
         'cont_100ml' => 'integer',

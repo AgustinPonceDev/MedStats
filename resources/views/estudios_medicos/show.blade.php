@@ -25,6 +25,19 @@
                     <span
                         class="text-xs font-bold uppercase tracking-wider {{ $estudio->ia == 'I' ? 'text-amber-700' : 'text-gray-400' }}">Internado</span>
                 </span>
+                <p class="mt-2 sm:text-right">
+                    @if ($estudio->urgencia)
+                        <span
+                            class="inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 text-xs font-bold px-3 py-1 rounded-full">
+                            <i data-lucide="siren" class="w-3.5 h-3.5"></i> Urgente · Pedido desde Guardia
+                        </span>
+                    @else
+                        <span
+                            class="inline-flex items-center bg-gray-50 text-gray-500 border border-gray-200 text-xs font-semibold px-3 py-1 rounded-full">
+                            Pedido programado
+                        </span>
+                    @endif
+                </p>
                 @if ($cama)
                     <p class="mt-2 text-xs font-semibold text-amber-700 sm:text-right">
                         Cama {{ $cama->cama }} · Hab. {{ $cama->habitacion }} · {{ $cama->sala }}
