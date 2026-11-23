@@ -28,6 +28,16 @@ class Especialidad extends Model
         return $this->hasMany(Procedimiento::class, 'especialidad_2_id');
     }
 
+    public function procedimientos_terciarios()
+    {
+        return $this->hasMany(Procedimiento::class, 'especialidad_3_id');
+    }
+
+    public function procedimientos_cuaternarios()
+    {
+        return $this->hasMany(Procedimiento::class, 'especialidad_4_id');
+    }
+
     // Estudios de Diagnóstico por Imagen que pertenecen a esta modalidad (Rayos / Tomografía)
     public function estudios()
     {

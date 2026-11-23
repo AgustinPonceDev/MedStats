@@ -555,8 +555,7 @@
                 const tr = dt.row(idx).node();
                 // Tomamos las primeras 13 columnas (excluyendo Acciones) y limpiamos sus etiquetas HTML
                 const valoresFila = $(tr).find('td').slice(0, 13).map(function() {
-                    const texto = $(this).text().trim();
-                    return texto;
+                    return $(this).text().replace(/\s+/g, ' ').trim();
                 }).get();
                 datos.push(valoresFila);
             });

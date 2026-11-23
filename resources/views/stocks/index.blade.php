@@ -93,9 +93,14 @@
                 </div>
             </div>
 
-            <div id="kpiBarra" class="hidden mb-4 flex items-center gap-3 text-sm text-gray-500 px-1">
-                <span id="kpiBarraTexto"></span>
-                <button type="button" id="kpiLimpiar" class="font-semibold text-[#1B7D8F] hover:underline">Quitar filtro</button>
+            <div id="kpiBarra"
+                class="hidden mb-4 flex flex-wrap items-center gap-3 text-sm text-[#156370] bg-[#e6f4f3] border border-[#1B7D8F]/30 rounded-xl px-4 py-2.5">
+                <span class="font-semibold">Filtro activo:</span>
+                <span id="kpiBarraTexto" class="text-gray-700"></span>
+                <button type="button" id="kpiLimpiar"
+                    class="ml-auto inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#1B7D8F] hover:bg-[#156370] text-white font-semibold shadow-sm transition-colors">
+                    <span aria-hidden="true">✕</span> Quitar filtro
+                </button>
             </div>
 
             {{-- Filtros y Controles --}}
@@ -131,7 +136,8 @@
                         <label for="customSearch"
                             class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Buscar</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <div
+                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <i data-lucide="search" class="w-4 h-4"></i>
                             </div>
                             <input type="text" id="customSearch" placeholder="Medicamentos, Servicio..."
@@ -209,18 +215,26 @@
                                         ],
                                     };
 
-                                    $vencEstado = $diasVenc === null
-                                        ? 'ok'
-                                        : ($diasVenc < 0 ? 'vencido' : ($diasVenc <= 90 ? 'por_vencer' : 'ok'));
+                                    $vencEstado =
+                                        $diasVenc === null
+                                            ? 'ok'
+                                            : ($diasVenc < 0
+                                                ? 'vencido'
+                                                : ($diasVenc <= 90
+                                                    ? 'por_vencer'
+                                                    : 'ok'));
 
-                                    $nivelBajo = ($estado === 'critico' || $urgenciaProy === 'critico')
-                                        ? 'critico'
-                                        : (($estado === 'aviso' || $urgenciaProy === 'aviso') ? 'aviso' : 'ok');
+                                    $nivelBajo =
+                                        $estado === 'critico' || $urgenciaProy === 'critico'
+                                            ? 'critico'
+                                            : ($estado === 'aviso' || $urgenciaProy === 'aviso'
+                                                ? 'aviso'
+                                                : 'ok');
                                 @endphp
 
                                 <tr class="hover:bg-gray-50 transition-colors" data-stock-id="{{ $item->id }}"
-                                    data-medicamento-id="{{ $item->medicamento_id }}"
-                                    data-venc="{{ $vencEstado }}" data-nivel="{{ $nivelBajo }}">
+                                    data-medicamento-id="{{ $item->medicamento_id }}" data-venc="{{ $vencEstado }}"
+                                    data-nivel="{{ $nivelBajo }}">
                                     <td class="px-3 py-3.5 font-semibold text-[#1B7D8F] whitespace-nowrap">
                                         {{ $item->get_medicamento->nombre }}</td>
                                     <td class="px-3 py-3.5 text-gray-600 whitespace-nowrap">
@@ -360,8 +374,13 @@
             };
 
             function contarKpi() {
-                const c = { vencido: 0, por_vencer: 0, critico: 0, aviso: 0 };
-                tabla.rows().every(function () {
+                const c = {
+                    vencido: 0,
+                    por_vencer: 0,
+                    critico: 0,
+                    aviso: 0
+                };
+                tabla.rows().every(function() {
                     const fila = $(this.node());
                     const v = fila.attr('data-venc');
                     const n = fila.attr('data-nivel');
@@ -382,7 +401,7 @@
             }
 
             function actualizarKpiUI() {
-                document.querySelectorAll('.kpi-op').forEach(function (btn) {
+                document.querySelectorAll('.kpi-op').forEach(function(btn) {
                     const activo = btn.dataset.filtro === filtroKpi;
                     btn.classList.toggle('activo', activo);
                     btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
@@ -396,14 +415,14 @@
             }
 
             // Filtro de la tabla según la tarjeta elegida
-            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
                 if (settings.nTable.id !== 'tablaStock' || !filtroKpi) return true;
                 const fila = $(tabla.row(dataIndex).node());
                 return fila.attr('data-venc') === filtroKpi || fila.attr('data-nivel') === filtroKpi;
             });
 
-            document.querySelectorAll('.kpi-op').forEach(function (btn) {
-                btn.addEventListener('click', function () {
+            document.querySelectorAll('.kpi-op').forEach(function(btn) {
+                btn.addEventListener('click', function() {
                     // Segundo clic sobre el mismo número = quitar el filtro
                     filtroKpi = (filtroKpi === btn.dataset.filtro) ? null : btn.dataset.filtro;
                     actualizarKpiUI();
@@ -413,7 +432,7 @@
 
             const btnKpiLimpiar = document.getElementById('kpiLimpiar');
             if (btnKpiLimpiar) {
-                btnKpiLimpiar.addEventListener('click', function () {
+                btnKpiLimpiar.addEventListener('click', function() {
                     filtroKpi = null;
                     actualizarKpiUI();
                     tabla.draw();
@@ -648,16 +667,45 @@
         }
 
         .kpi-op {
-            display: flex; flex-direction: column; align-items: flex-start;
-            padding: 0.25rem 0.6rem; border-radius: 0.75rem; text-align: left;
-            border: 1px solid transparent; background: transparent; cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0.25rem 0.6rem;
+            border-radius: 0.75rem;
+            text-align: left;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
             transition: background .15s, border-color .15s;
         }
-        .kpi-op:hover { background: #f3f4f6; }
-        .kpi-op.activo { background: #e6f4f3; border-color: #32989D; }
-        .kpi-num { font-size: 1.5rem; font-weight: 700; line-height: 1.2; color: #9ca3af; }
-        .kpi-num.on-red { color: #dc2626; }
-        .kpi-num.on-amber { color: #d97706; }
-        .kpi-lbl { font-size: 0.7rem; color: #6b7280; }
+
+        .kpi-op:hover {
+            background: #f3f4f6;
+        }
+
+        .kpi-op.activo {
+            background: #e6f4f3;
+            border-color: #32989D;
+        }
+
+        .kpi-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #9ca3af;
+        }
+
+        .kpi-num.on-red {
+            color: #dc2626;
+        }
+
+        .kpi-num.on-amber {
+            color: #d97706;
+        }
+
+        .kpi-lbl {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
     </style>
 @endpush

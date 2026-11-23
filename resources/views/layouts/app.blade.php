@@ -18,6 +18,8 @@
     <link href="{{ asset('vendor/css/fonts-local.css') }}" rel="stylesheet">
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="{{ asset('vendor/css/dataTables.bootstrap5.min.css') }}">
+    <!-- Flatpickr CSS (local) -->
+    <link rel="stylesheet" href="{{ asset('vendor/css/flatpickr.min.css') }}">
     <script src="{{ asset('vendor/js/tailwindcss.js') }}"></script>
     <link href="{{ asset('vendor/css/bootstrap-4.5.2.min.css') }}" rel="stylesheet">
 

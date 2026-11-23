@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            {{-- Fila 2: I-A, Modalidad, Estudio Real --}}
+            {{-- Fila 2: toggles (I-A + Urgencia) --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">I-A (Interno / Ambulatorio)</label>
@@ -69,6 +69,29 @@
                     <div id="ia_cama_info" class="hidden"></div>
                 </div>
 
+                {{-- Urgencia / Guardia (a la derecha del I-A) --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Urgencia / Guardia</label>
+                    <div class="flex items-center gap-3 h-[42px]">
+                        <span id="urg_label_no" class="text-sm font-semibold text-gray-600">Programado</span>
+                        <input type="hidden" name="urgencia" value="0">
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" name="urgencia" id="urgencia" value="1" class="sr-only peer"
+                                {{ old('urgencia', $estudio->urgencia) ? 'checked' : '' }}>
+                            <div
+                                class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-red-500 transition-colors duration-300">
+                            </div>
+                            <div
+                                class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform duration-300 peer-checked:translate-x-5">
+                            </div>
+                        </label>
+                        <span id="urg_label_si" class="text-sm font-semibold text-red-600">Urgente / Guardia</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Fila 3: Modalidad, Estudio Real y Regiones --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label for="especialidad_id" class="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
                     <select name="especialidad_id" id="especialidad_id" class="select2 w-full"
@@ -96,39 +119,27 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
 
-            {{-- Fila: Urgencia / Guardia --}}
-            <div>
-                <input type="hidden" name="urgencia" value="0">
-                <label for="urgencia"
-                    class="urgencia-box flex items-start gap-3 p-4 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer select-none transition-colors">
-                    <input type="checkbox" name="urgencia" id="urgencia" value="1"
-                        class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                        {{ old('urgencia', $estudio->urgencia) ? 'checked' : '' }}>
-                    <span>
-                        <span class="block text-sm font-semibold text-gray-700">Urgente / Pedido desde Guardia</span>
-                        <span class="block text-xs text-gray-500">Marcalo si el estudio se solicitó desde la guardia o es
-                            una urgencia.</span>
-                    </span>
-                </label>
-            </div>
-
-            {{-- Fila 3: Regiones (solo si el estudio las usa) --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                 <div>
-                    <label class="inline-flex items-center gap-2 h-[42px] text-sm text-gray-700 cursor-pointer select-none">
-                        <input type="checkbox" id="usa_regiones"
-                            class="rounded border-gray-300 text-[#1B7D8F] focus:ring-[#1B7D8F]">
-                        Este estudio tiene regiones
-                    </label>
-                </div>
-                <div id="regiones_wrap" class="hidden">
-                    <label for="regiones" class="block text-sm font-medium text-gray-700 mb-1">Cantidad de Regiones
-                        Vistas</label>
-                    <input type="number" name="regiones" id="regiones" min="1" max="20"
-                        class="w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
-                        value="{{ old('regiones', $estudio->regiones) }}" required>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Regiones vistas</label>
+                    <div class="flex items-center gap-3 h-[42px]">
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="usa_regiones" class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#1B7D8F] transition-colors duration-300">
+                            </div>
+                            <div
+                                class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-transform duration-300 peer-checked:translate-x-5">
+                            </div>
+                        </label>
+                        <span class="text-sm font-semibold text-gray-700">Tiene regiones</span>
+                        <div id="regiones_wrap" class="hidden">
+                            <input type="number" name="regiones" id="regiones" min="1" max="20"
+                                aria-label="Cantidad de regiones vistas" title="Cantidad de regiones vistas"
+                                class="w-20 rounded-md border border-gray-300 shadow-sm px-3 py-2 focus:ring-2 focus:ring-[#1B7D8F]"
+                                placeholder="Cant." value="{{ old('regiones', $estudio->regiones) }}" required>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -341,12 +352,6 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
-
-        /* Casilla de urgencia: se pinta de rojo suave cuando está tildada */
-        .urgencia-box:has(input:checked) {
-            background: #fef2f2;
-            border-color: #fca5a5;
-        }
     </style>
 @endsection
 
@@ -427,6 +432,19 @@
             if (toggle) {
                 toggle.addEventListener('change', syncIaLabels);
                 syncIaLabels();
+            }
+            // ---------- Toggle Urgencia ----------
+            const urgToggle = document.getElementById('urgencia');
+            const urgNo = document.getElementById('urg_label_no');
+            const urgSi = document.getElementById('urg_label_si');
+
+            function syncUrgenciaLabels() {
+                urgNo.classList.toggle('opacity-40', urgToggle.checked);
+                urgSi.classList.toggle('opacity-40', !urgToggle.checked);
+            }
+            if (urgToggle) {
+                urgToggle.addEventListener('change', syncUrgenciaLabels);
+                syncUrgenciaLabels();
             }
             // ---------- Internación automática según la cama ----------
             const selectPaciente = document.getElementById('paciente_id');

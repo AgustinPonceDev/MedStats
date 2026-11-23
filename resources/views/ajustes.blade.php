@@ -77,6 +77,13 @@
                             'access' => 'admin',
                         ],
                         [
+                            'title' => 'Plantillas de Programación',
+                            'text' => 'Configurar reservas de turnos semanales recurrentes por quirófano y especialidad.',
+                            'route' => route('plantillas-programacion.index'),
+                            'btn' => 'Gestionar Plantillas',
+                            'access' => ['admin', 'cirugias'],
+                        ],
+                        [
                             'title' => 'Salas',
                             'text' => 'Definir salas del establecimiento y su capacidad.',
                             'route' => route('salas.index'),
